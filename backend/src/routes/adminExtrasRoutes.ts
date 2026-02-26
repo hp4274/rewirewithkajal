@@ -2,6 +2,7 @@ import express from 'express';
 import {
     getCustomerPayments,
     addPayment,
+    getTurnover,
     updateCustomerSettings,
     getCustomerNotes,
     addCustomerNote,
@@ -28,5 +29,8 @@ router.route('/historical-forms')
 
 router.route('/historical-forms/:formId')
     .get(protect, getHistoricalFormById);
+
+router.route('/turnover')
+    .get(protect, getTurnover);
 
 export default router;

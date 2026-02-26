@@ -1,8 +1,9 @@
 import express from 'express';
-import { loginAdmin, registerAdmin } from '../controllers/authController';
+import { loginAdmin, registerAdmin, sendOtp } from '../controllers/authController';
 
 const router = express.Router();
 
+router.post('/send-otp', sendOtp);
 router.post('/login', loginAdmin);
 router.post('/register', registerAdmin); // Ideally this is protected or used once
 

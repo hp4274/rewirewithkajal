@@ -24,6 +24,10 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminExtrasRoutes);
 
+// Statically serve uploads folder
+import path from 'path';
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Basic health check route
 app.get('/api/health', async (req: Request, res: Response) => {
     try {

@@ -18,7 +18,7 @@ export const getCustomers = async (req: Request, res: Response) => {
               l.email AS lead_email, 
               l.phone as lead_phone, 
               l.dob as lead_dob,
-              l.concern, 
+              COALESCE(l.concern, c.form_data->>'concern', c.form_data->>'primary_concern') as concern, 
               c.form_data,
               COALESCE(l.first_name, c.form_data->>'first_name') as computed_first,
               COALESCE(l.last_name, c.form_data->>'last_name') as computed_last,
@@ -33,7 +33,7 @@ export const getCustomers = async (req: Request, res: Response) => {
                   ORDER BY c.created_at DESC
               ) as rn
           FROM customers c 
-          LEFT JOIN leads l ON c.lead_id = l.id 
+          LEFT JOIN leads l ON c.lead_id = l.id
       )
       SELECT * FROM RankedCustomers WHERE rn = 1
       ORDER BY created_at DESC
@@ -45,6 +45,7 @@ export const getCustomers = async (req: Request, res: Response) => {
             ...row,
             name: `${row.computed_first || ''} ${row.computed_last || ''}`.trim(),
             email: row.lead_email || row.form_data?.email,
+            concern: row.concern,
             phone: row.computed_phone,
             dob: row.computed_dob
         }));
@@ -137,6 +138,26 @@ export const updateCustomerStatus = async (req: Request, res: Response) => {
         const result = await pool.query(
             'UPDATE customers SET status = $1 WHERE id = $2 RETURNING *',
             [status, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+    }
+};
+
+export const updateCustomerAppointment = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { appointment_date } = req.body;
+
+        const result = await pool.query(
+            'UPDATE customers SET appointment_date = $1 WHERE id = $2 RETURNING *',
+            [appointment_date || null, id]
         );
 
         if (result.rows.length === 0) {

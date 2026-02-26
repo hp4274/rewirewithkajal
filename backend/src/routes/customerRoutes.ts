@@ -4,7 +4,8 @@ import {
     getCustomerByToken,
     submitHiddenForm,
     submitPublicForm,
-    updateCustomerStatus
+    updateCustomerStatus,
+    updateCustomerAppointment
 } from '../controllers/customerController';
 import { protect } from '../middleware/authMiddleware';
 
@@ -20,5 +21,8 @@ router.route('/token/:token')
 
 router.route('/:id/status')
     .put(protect, updateCustomerStatus);
+
+router.route('/:id/appointment')
+    .put(protect, updateCustomerAppointment);
 
 export default router;

@@ -11,6 +11,39 @@ export const getCustomerPayments = async (req: Request, res: Response) => {
     }
 };
 
+export const getTurnover = async (req: Request, res: Response) => {
+    try {
+        const turnoverResult = await pool.query('SELECT SUM(amount) as turnover FROM payments');
+        const turnover = parseInt(turnoverResult.rows[0].turnover) || 0;
+
+        const graphDataResult = await pool.query(`
+            SELECT DATE(payment_date) as date, SUM(amount) as amount 
+            FROM payments 
+            GROUP BY DATE(payment_date) 
+            ORDER BY DATE(payment_date) ASC
+        `);
+        const graphData = graphDataResult.rows.map(row => ({
+            date: new Date(row.date).toLocaleDateString('en-GB'), // e.g., '25/02/2026'
+            amount: parseInt(row.amount) || 0
+        }));
+
+        const sessionInsightsResult = await pool.query(`
+            SELECT payment_type as name, COUNT(*) as count, SUM(amount) as total_amount 
+            FROM payments 
+            GROUP BY payment_type
+        `);
+        const sessionInsights = sessionInsightsResult.rows.map(row => ({
+            name: row.name || 'Unknown',
+            value: parseInt(row.total_amount) || 0,
+            count: parseInt(row.count) || 0
+        }));
+
+        res.json({ turnover, graphData, sessionInsights });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+    }
+};
+
 export const addPayment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;

@@ -42,7 +42,11 @@ export const createLead = async (req: Request, res: Response) => {
 export const getLeads = async (req: Request, res: Response) => {
     try {
         const result = await pool.query('SELECT * FROM leads ORDER BY created_at DESC');
-        res.json(result.rows);
+        const leads = result.rows.map(row => ({
+            ...row,
+            name: `${row.first_name || ''} ${row.last_name || ''}`.trim()
+        }));
+        res.json(leads);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -99,6 +103,28 @@ export const acceptLead = async (req: Request, res: Response) => {
             message: 'Lead accepted and moved to customers',
             lead,
             customer: customerResult.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+    }
+};
+
+export const rejectLead = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const leadResult = await pool.query(
+            'UPDATE leads SET status = $1 WHERE id = $2 RETURNING *',
+            ['rejected', id]
+        );
+
+        if (leadResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Lead not found' });
+        }
+
+        res.json({
+            message: 'Lead rejected',
+            lead: leadResult.rows[0]
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
