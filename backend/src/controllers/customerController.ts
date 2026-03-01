@@ -5,9 +5,7 @@ import { sendEmail } from '../utils/mailer';
 export const getCustomers = async (req: Request, res: Response) => {
     try {
         // Deduplicate strategy:
-        // We partition by the 4 unique identifiers. If a user submitted a public form 5 times with the exact same
-        // first_name, last_name, phone, and dob, they will be given row_number > 1.
-        // We only SELECT row_number = 1, essentially giving the Admin Dashboard a single distinct "Customer" entity!
+        // We partition by the 2 unique identifiers (email and phone) to merge multiple form submissions.
         // We use COALESCE to gracefully fall back on the Leads table data OR the Public Intake Form JSON data.
         const query = `
       WITH RankedCustomers AS (
@@ -23,13 +21,12 @@ export const getCustomers = async (req: Request, res: Response) => {
               COALESCE(l.first_name, c.form_data->>'first_name') as computed_first,
               COALESCE(l.last_name, c.form_data->>'last_name') as computed_last,
               COALESCE(l.phone, c.form_data->>'phone') as computed_phone,
+              COALESCE(l.email, c.form_data->>'email') as computed_email,
               COALESCE(TO_CHAR(l.dob, 'YYYY-MM-DD'), c.form_data->>'dob') as computed_dob,
               ROW_NUMBER() OVER(
                   PARTITION BY 
-                      COALESCE(l.first_name, c.form_data->>'first_name'),
-                      COALESCE(l.last_name, c.form_data->>'last_name'),
-                      COALESCE(l.phone, c.form_data->>'phone'),
-                      COALESCE(TO_CHAR(l.dob, 'YYYY-MM-DD'), c.form_data->>'dob')
+                      COALESCE(l.email, c.form_data->>'email'),
+                      COALESCE(l.phone, c.form_data->>'phone')
                   ORDER BY c.created_at DESC
               ) as rn
           FROM customers c 
@@ -45,10 +42,10 @@ export const getCustomers = async (req: Request, res: Response) => {
         const normalizedRows = result.rows.map(row => ({
             ...row,
             name: `${row.computed_first || ''} ${row.computed_last || ''}`.trim(),
-            email: row.form_data?.email || row.lead_email,
+            email: row.computed_email,
             concern: row.concern,
-            phone: row.form_data?.phone || row.computed_phone,
-            dob: row.form_data?.dob || row.computed_dob
+            phone: row.computed_phone,
+            dob: row.computed_dob
         }));
 
         res.json(normalizedRows);
@@ -154,11 +151,35 @@ export const updateCustomerStatus = async (req: Request, res: Response) => {
 export const updateCustomerAppointment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { appointment_date } = req.body;
+        const { appointment_date, slot } = req.body;
+
+        if (appointment_date) {
+            // Check for conflicts: another customer with the same appointment_date (timestamp)
+            // We join with leads to get the name if available, otherwise fallback to form_data
+            const conflictCheck = await pool.query(
+                `SELECT c.id, 
+                        COALESCE(l.first_name, c.form_data->>'first_name', 'Another Customer') as first_name,
+                        COALESCE(l.last_name, c.form_data->>'last_name', '') as last_name
+                 FROM customers c 
+                 LEFT JOIN leads l ON c.lead_id = l.id
+                 WHERE c.appointment_date = $1 AND c.id != $2`,
+                [appointment_date, id]
+            );
+
+            if (conflictCheck.rows.length > 0) {
+                const conf = conflictCheck.rows[0];
+                const conflictName = `${conf.first_name} ${conf.last_name}`.trim();
+                return res.status(409).json({
+                    message: `Slot already booked by ${conflictName}.`,
+                    conflict: true
+                });
+            }
+        }
+
 
         const result = await pool.query(
-            'UPDATE customers SET appointment_date = $1 WHERE id = $2 RETURNING *',
-            [appointment_date || null, id]
+            'UPDATE customers SET appointment_date = $1, slot = $2 WHERE id = $3 RETURNING *',
+            [appointment_date || null, slot || null, id]
         );
 
         if (result.rows.length === 0) {
@@ -167,6 +188,8 @@ export const updateCustomerAppointment = async (req: Request, res: Response) => 
 
         res.json(result.rows[0]);
     } catch (error) {
+        console.error("Update Appointment Error:", error);
         res.status(500).json({ message: 'Server Error', error });
     }
 };
+
