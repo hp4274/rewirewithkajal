@@ -10,9 +10,22 @@ async function runMigration() {
             await pool.query('ALTER TABLE customers ADD COLUMN is_active BOOLEAN DEFAULT true;');
             await pool.query('ALTER TABLE customers ADD COLUMN per_session_price INTEGER DEFAULT 1500;');
             await pool.query('ALTER TABLE customers ADD COLUMN total_sessions INTEGER DEFAULT 4;');
-            await pool.query('ALTER TABLE customers ADD COLUMN appointment_date DATE;');
+            // Admin-scheduled appointment date+time (slot). Keep as TIMESTAMP so time is not lost.
+            await pool.query('ALTER TABLE customers ADD COLUMN appointment_date TIMESTAMP;');
         } catch (e: any) {
             console.log('Warning: some columns may already exist.', e.message);
+        }
+
+        // Ensure appointment_date is TIMESTAMP even if it was created as DATE previously.
+        try {
+            await pool.query(`
+                ALTER TABLE customers
+                ALTER COLUMN appointment_date
+                TYPE TIMESTAMP
+                USING appointment_date::timestamp;
+            `);
+        } catch (e: any) {
+            console.log('Warning: could not alter appointment_date type (maybe already TIMESTAMP).', e.message);
         }
 
         // 2. Create Payments Table

@@ -62,11 +62,11 @@ export const addPayment = async (req: Request, res: Response) => {
 export const updateCustomerSettings = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { is_active, per_session_price, total_sessions } = req.body;
+        const { is_active, per_session_price, total_sessions, status } = req.body;
 
         const result = await pool.query(
-            'UPDATE customers SET is_active = $1, per_session_price = $2, total_sessions = $3 WHERE id = $4 RETURNING *',
-            [is_active, per_session_price, total_sessions, id]
+            'UPDATE customers SET is_active = $1, per_session_price = $2, total_sessions = $3, status = $4 WHERE id = $5 RETURNING *',
+            [is_active, per_session_price, total_sessions, status || 'confirmed', id]
         );
         res.json(result.rows[0]);
     } catch (error) {

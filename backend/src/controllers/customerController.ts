@@ -35,7 +35,8 @@ export const getCustomers = async (req: Request, res: Response) => {
           FROM customers c 
           LEFT JOIN leads l ON c.lead_id = l.id
       )
-      SELECT * FROM RankedCustomers WHERE rn = 1
+      SELECT * FROM RankedCustomers 
+      WHERE rn = 1
       ORDER BY created_at DESC
     `;
         const result = await pool.query(query);
@@ -44,10 +45,10 @@ export const getCustomers = async (req: Request, res: Response) => {
         const normalizedRows = result.rows.map(row => ({
             ...row,
             name: `${row.computed_first || ''} ${row.computed_last || ''}`.trim(),
-            email: row.lead_email || row.form_data?.email,
+            email: row.form_data?.email || row.lead_email,
             concern: row.concern,
-            phone: row.computed_phone,
-            dob: row.computed_dob
+            phone: row.form_data?.phone || row.computed_phone,
+            dob: row.form_data?.dob || row.computed_dob
         }));
 
         res.json(normalizedRows);
