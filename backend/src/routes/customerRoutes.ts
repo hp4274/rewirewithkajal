@@ -5,7 +5,8 @@ import {
     submitHiddenForm,
     submitPublicForm,
     updateCustomerStatus,
-    updateCustomerAppointment
+    updateCustomerAppointment,
+    getCustomerForms
 } from '../controllers/customerController';
 import { protect } from '../middleware/authMiddleware';
 
@@ -18,6 +19,9 @@ router.route('/')
 router.route('/token/:token')
     .get(getCustomerByToken)
     .post(submitHiddenForm);
+
+router.route('/:id/forms')
+    .get(protect, getCustomerForms);
 
 router.route('/:id/status')
     .put(protect, updateCustomerStatus);

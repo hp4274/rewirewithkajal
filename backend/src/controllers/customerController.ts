@@ -2,6 +2,44 @@ import { Request, Response } from 'express';
 import pool from '../db';
 import { sendEmail } from '../utils/mailer';
 
+export const getCustomerForms = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const currentCustQuery = `
+            SELECT 
+                COALESCE(l.email, c.form_data->>'email') as email,
+                COALESCE(l.phone, c.form_data->>'phone') as phone
+            FROM customers c
+            LEFT JOIN leads l ON c.lead_id = l.id
+            WHERE c.id = $1
+        `;
+        const currentCust = await pool.query(currentCustQuery, [id]);
+
+        if (currentCust.rows.length === 0) {
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        const { email, phone } = currentCust.rows[0];
+
+        const formsQuery = `
+            SELECT 
+                c.id, c.created_at, c.form_data
+            FROM customers c
+            LEFT JOIN leads l ON c.lead_id = l.id
+            WHERE 
+                (COALESCE(l.email, c.form_data->>'email') = $1 AND $1 IS NOT NULL)
+                OR 
+                (COALESCE(l.phone, c.form_data->>'phone') = $2 AND $2 IS NOT NULL)
+            ORDER BY c.created_at DESC
+        `;
+        const formsResult = await pool.query(formsQuery, [email, phone]);
+
+        res.json({ matchParams: { email, phone }, forms: formsResult.rows });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+    }
+};
+
 export const getCustomers = async (req: Request, res: Response) => {
     try {
         // Deduplicate strategy:
@@ -133,9 +171,11 @@ export const updateCustomerStatus = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { status } = req.body; // pending, confirmed, declined
 
+        const isActive = status === 'confirmed';
+
         const result = await pool.query(
-            'UPDATE customers SET status = $1 WHERE id = $2 RETURNING *',
-            [status, id]
+            'UPDATE customers SET status = $1, is_active = $2 WHERE id = $3 RETURNING *',
+            [status, isActive, id]
         );
 
         if (result.rows.length === 0) {
