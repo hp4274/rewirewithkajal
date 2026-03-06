@@ -1,0 +1,155 @@
+/* ===== Page Transition Overlay ===== */
+.page-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99999;
+    pointer-events: none;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Three vertical slices for staggered wipe */
+.transition-slice {
+    flex: 1;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    transform: translateY(-105%);
+}
+
+/* Cover phase: slices slide down — slow & smooth */
+.page-transition-overlay.cover .transition-slice {
+    animation: sliceCoverDown 0.65s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.page-transition-overlay.cover .slice-1 {
+    animation-delay: 0ms;
+}
+
+.page-transition-overlay.cover .slice-2 {
+    animation-delay: 100ms;
+}
+
+.page-transition-overlay.cover .slice-3 {
+    animation-delay: 200ms;
+}
+
+/* Reveal phase: slices slide down and out — slow & smooth */
+.page-transition-overlay.reveal .transition-slice {
+    transform: translateY(0);
+    animation: sliceRevealDown 0.65s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.page-transition-overlay.reveal .slice-1 {
+    animation-delay: 0ms;
+}
+
+.page-transition-overlay.reveal .slice-2 {
+    animation-delay: 100ms;
+}
+
+.page-transition-overlay.reveal .slice-3 {
+    animation-delay: 200ms;
+}
+
+@keyframes sliceCoverDown {
+    0% {
+        transform: translateY(-105%);
+    }
+
+    100% {
+        transform: translateY(0%);
+    }
+}
+
+@keyframes sliceRevealDown {
+    0% {
+        transform: translateY(0%);
+    }
+
+    100% {
+        transform: translateY(105%);
+    }
+}
+
+/* Loader dots in center */
+.transition-loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 10px;
+    z-index: 100000;
+    opacity: 0;
+}
+
+.page-transition-overlay.cover .transition-loader {
+    animation: loaderFadeIn 0.3s 0.35s ease forwards;
+}
+
+.page-transition-overlay.reveal .transition-loader {
+    animation: loaderFadeOut 0.25s ease forwards;
+}
+
+@keyframes loaderFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes loaderFadeOut {
+    to {
+        opacity: 0;
+    }
+}
+
+.loader-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    animation: dotBounce 0.8s ease-in-out infinite alternate;
+}
+
+.loader-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loader-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: translateY(-14px) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===== Page Content Enter Animation ===== */
+.page-content {
+    will-change: opacity, transform;
+}
+
+.page-entering {
+    animation: pageContentEnter 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes pageContentEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

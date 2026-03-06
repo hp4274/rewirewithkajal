@@ -1,0 +1,195 @@
+.blogs-page {
+    padding: 0 24px 60px;
+}
+
+.blogs-header {
+    margin-bottom: 60px;
+}
+
+.blogs-header h2 {
+    font-size: 3rem;
+    color: var(--color-primary-dark);
+}
+
+.blogs-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+}
+
+/* Featured Top Blog - Landscape */
+.featured-blog {
+    background-color: var(--color-white);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: row;
+    min-height: 400px;
+    transition: var(--transition-smooth);
+}
+
+.featured-blog:hover {
+    box-shadow: 0 16px 40px rgba(255, 143, 75, 0.15);
+    transform: translateY(-4px);
+}
+
+.featured-image {
+    flex: 1.2;
+    overflow: hidden;
+}
+
+.featured-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.featured-blog:hover .featured-image img {
+    transform: scale(1.03);
+}
+
+.featured-content {
+    flex: 1;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.featured-content h3 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    color: var(--color-text-main);
+    line-height: 1.3;
+}
+
+.featured-content p {
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    line-height: 1.6;
+    margin-bottom: 30px;
+    white-space: pre-wrap;
+}
+
+/* Remaining Blogs - Masonry Grid (Uneven Blocks) */
+.blogs-masonry {
+    column-count: 3;
+    column-gap: 40px;
+}
+
+.masonry-item {
+    break-inside: avoid;
+    margin-bottom: 40px;
+    display: block;
+    /* Overriding flex to let height adjust to content naturally */
+}
+
+/* Standard Blog Card styles used in masonry */
+.blog-card {
+    background-color: var(--color-white);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition-smooth);
+}
+
+.blog-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(255, 143, 75, 0.12);
+}
+
+.blog-card .blog-image {
+    max-height: 250px;
+    overflow: hidden;
+}
+
+.blog-card .blog-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.8s ease;
+}
+
+.blog-card:hover .blog-image img {
+    transform: scale(1.05);
+}
+
+.blog-content {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.blog-date {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.blog-content h3 {
+    font-size: 1.5rem;
+    color: var(--color-text-main);
+    margin-bottom: 16px;
+    line-height: 1.3;
+}
+
+.blog-content p {
+    color: var(--color-text-light);
+    line-height: 1.6;
+    margin-bottom: 24px;
+    white-space: pre-wrap;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.read-more-btn {
+    align-self: flex-start;
+    padding: 10px 24px;
+}
+
+.no-blogs {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    padding: 60px;
+    background-color: var(--color-white);
+    border-radius: var(--radius-xl);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .blogs-masonry {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .featured-blog {
+        flex-direction: column;
+    }
+
+    .featured-image {
+        min-height: 250px;
+    }
+
+    .featured-content {
+        padding: 30px;
+    }
+
+    .blogs-masonry {
+        column-count: 1;
+        column-gap: 0;
+    }
+}

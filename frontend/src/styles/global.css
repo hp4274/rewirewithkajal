@@ -1,0 +1,170 @@
+:root {
+  --color-primary: #FF8F4B;
+  /* Soft Orange */
+  --color-primary-light: #FFB385;
+  --color-primary-dark: #E67E3F;
+  --color-accent: #FF8F4B;
+  --color-secondary: #FFFDF8;
+  /* Cream base */
+  --color-white: #FFFFFF;
+  --color-text-main: #2D3748;
+  /* Softer, richer dark grey */
+  --color-text-light: #718096;
+  /* Cooler grey for secondary text */
+  --color-background: #FFFAF0;
+  /* A slightly warmer, peaceful cream */
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 36px;
+  --radius-full: 9999px;
+
+  /* Enhanced, Softer Shadows */
+  --shadow-soft: 0 10px 40px rgba(255, 143, 75, 0.08);
+  --shadow-softer: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-elevated: 0 20px 60px rgba(0, 0, 0, 0.05);
+
+  --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--color-background);
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c13.866 0 25.332-9.435 28.182-22H50c-3.116 16.568-17.587 29-35 29zM89 82c-13.866 0-25.332 9.435-28.182 22H50c3.116-16.568 17.587-29 35-29zM11 82c13.866 0 25.332 9.435 28.182 22h-10.816c-2.617-8.312-10.395-14.33-19.53-14.832V82zm78-64c-13.866 0-25.332-9.435-28.182-22h10.816c2.617 8.312 10.395 14.33 19.53 14.832V18z' fill='%23e67e3f' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Playfair Display', serif;
+  line-height: 1.2;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  /* Increased side padding for breathing room */
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Global Section Headers */
+.section-header {
+  margin-bottom: 48px;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  color: var(--color-primary-dark);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.section-header .subtitle {
+  font-size: 1.15rem;
+  color: var(--color-text-light);
+}
+
+/* Global inputs avoiding black borders */
+input,
+textarea,
+select {
+  border: 1.5px solid var(--color-primary-light);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  background-color: var(--color-white);
+  color: var(--color-text-main);
+  outline: none;
+  transition: var(--transition-smooth);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 143, 75, 0.15);
+}
+
+/* Base button styles */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: 12px 28px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  font-size: 1rem;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 143, 75, 0.15);
+}
+
+.btn-secondary {
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  padding: 12px 28px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  font-size: 1rem;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-softer);
+  border: 1.5px solid var(--color-primary-light);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-secondary);
+  border-color: var(--color-primary);
+}
+
+/* Glassmorphism Panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-elevated);
+}
