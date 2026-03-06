@@ -2,14 +2,50 @@ import { Request, Response } from 'express';
 import pool from '../db';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/mailer';
+import {
+    isDobNotFuture,
+    isTodayOrFutureDate,
+    isValidEmail,
+    isValidMobile10,
+    normalizeDateInput
+} from '../utils/validation';
 
 export const createLead = async (req: Request, res: Response) => {
     try {
         const { first_name, last_name, dob, email, phone, concern, message, preferred_date } = req.body;
 
+        const normalizedDob = normalizeDateInput(dob);
+        const normalizedPreferredDate = preferred_date ? normalizeDateInput(preferred_date) : null;
+        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+        const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
+
+        if (!normalizedDob) {
+            return res.status(400).json({ message: 'DOB must be in DD-MM-YYYY format.' });
+        }
+
+        if (!isDobNotFuture(normalizedDob)) {
+            return res.status(400).json({ message: 'DOB cannot be in the future.' });
+        }
+
+        if (preferred_date && !normalizedPreferredDate) {
+            return res.status(400).json({ message: 'Preferred date must be in DD-MM-YYYY format.' });
+        }
+
+        if (normalizedPreferredDate && !isTodayOrFutureDate(normalizedPreferredDate)) {
+            return res.status(400).json({ message: 'Preferred date cannot be in the past.' });
+        }
+
+        if (!isValidMobile10(normalizedPhone)) {
+            return res.status(400).json({ message: 'Phone number must be exactly 10 digits.' });
+        }
+
+        if (!isValidEmail(normalizedEmail)) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+
         const result = await pool.query(
             'INSERT INTO leads (first_name, last_name, dob, email, phone, concern, message, preferred_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [first_name, last_name, dob, email, phone, concern, message, preferred_date]
+            [first_name, last_name, normalizedDob, normalizedEmail, normalizedPhone, concern, message, normalizedPreferredDate]
         );
 
         // Send Welcome/Thank you Email
@@ -69,8 +105,8 @@ export const acceptLead = async (req: Request, res: Response) => {
 
         // Create a customer without any hidden tokens
         const customerResult = await pool.query(
-            'INSERT INTO customers (lead_id, status) VALUES ($1, $2) RETURNING *',
-            [lead.id, 'pending']
+            'INSERT INTO customers (lead_id, status, is_active) VALUES ($1, $2, $3) RETURNING *',
+            [lead.id, 'confirmed', true]
         );
 
         // Send Confirmation Link Email (Directing to Public Intake Page)

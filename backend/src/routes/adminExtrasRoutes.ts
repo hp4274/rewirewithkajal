@@ -7,7 +7,9 @@ import {
     getCustomerNotes,
     addCustomerNote,
     getHistoricalForms,
-    getHistoricalFormById
+    getHistoricalFormById,
+    getCustomerSessions,
+    updateSessionPresence
 } from '../controllers/adminExtrasController';
 import { protect } from '../middleware/authMiddleware';
 
@@ -23,6 +25,12 @@ router.route('/customers/:id/settings')
 router.route('/customers/:id/notes')
     .get(protect, getCustomerNotes)
     .post(protect, addCustomerNote);
+
+router.route('/customers/:id/sessions')
+    .get(protect, getCustomerSessions);
+
+router.route('/customers/:id/sessions/:sessionId/presence')
+    .put(protect, updateSessionPresence);
 
 router.route('/historical-forms')
     .get(protect, getHistoricalForms);

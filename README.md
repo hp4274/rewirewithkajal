@@ -1,46 +1,238 @@
-# Getting Started with Create React App
+# Rewire With Kajal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Full-stack therapy website and admin CRM platform built with React, Express, and PostgreSQL.
 
-## Available Scripts
+This repository includes:
+- A public marketing website with appointment and intake flows
+- A secured admin portal at `/admin`
+- Backend APIs for leads, customers, blogs, scheduling, notes, payments, and analytics
 
-In the project directory, you can run:
+## Website Features
 
-### `npm start`
+### Public Website
+- Hero landing page with animated sections and smooth reveal effects
+- About page with therapy philosophy and methodology content
+- Blog listing page with featured card layout, secondary grid, active-only filtering, and inline read-more expansion
+- Appointment request form (`/appointment`) posting to lead intake
+- Public intake questionnaire form (`/intake-form`) with personal details, date/time preference capture, two 18-question blocks, and automatic `total_score` calculation for admin review
+- Shared site UI: sticky header, footer, preloader, animated background
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Admin Features
+- OTP-based admin login
+- JWT-protected API access for admin-only operations
+- Dashboard overview with leads/customers/blog/turnover KPIs, charting, and booked-slot calendar view
+- Lead pipeline to view and process new, accepted, and rejected leads
+- Lead acceptance flow that auto-creates customer records
+- Customer management with deduplicated listing, profile/history view, status toggles, pricing/session config, notes, and payment ledger
+- Session scheduling with past-slot protection, cross-customer conflict detection, and `customer_sessions` synchronization
+- Presence tracking (`present`, `absent`, `not_marked`) with lock behavior and next-session auto-scheduling (+7 days)
+- Session-limit awareness that stops auto-scheduling when configured total sessions are reached
+- Blog CMS for create/edit/delete, image upload, active-state control, and rich text editing
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Automated Email Workflows
+- Admin OTP email (`/api/auth/send-otp`)
+- Lead thank-you email after appointment request
+- Acceptance email with intake-form link
+- Intake submission confirmation email
 
-### `npm test`
+## Backend Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Express API server with modular routes/controllers
+- PostgreSQL integration (`pg` pool)
+- Health endpoint with DB connectivity check: `GET /api/health`
+- Static file serving for blog image uploads: `/uploads/*`
+- Validation utilities for email format, 10-digit mobile numbers, date normalization (`DD-MM-YYYY` and `YYYY-MM-DD`), future/past date checks, and slot format (`HH:mm`)
+- Session storage utilities that ensure `customer_sessions` table/indexes exist
 
-### `npm run build`
+## Tech Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Frontend
+- React 19 + TypeScript
+- React Router
+- Axios
+- Recharts
+- React Calendar
+- Lucide React
+- React Quill
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Backend
+- Node.js + Express 5 + TypeScript
+- PostgreSQL (`pg`)
+- JWT auth (`jsonwebtoken`)
+- OTP + transactional email (`nodemailer`)
+- File upload (`multer`)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Project Structure
 
-### `npm run eject`
+```text
+rewirewithkajal/
+	backend/
+		src/
+			controllers/
+			middleware/
+			routes/
+			utils/
+			server.ts
+			db.ts
+		scripts/
+		uploads/
+	frontend/
+		src/
+			admin/
+			components/
+			pages/
+			styles/
+			App.tsx
+	database/
+		schema.sql
+		migration_v2.sql
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## API Overview
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Auth
+- `POST /api/auth/send-otp` - send login OTP to admin email
+- `POST /api/auth/login` - verify OTP and return JWT token
+- `POST /api/auth/register` - create admin account
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Blogs
+- `GET /api/blogs/public` - public active blogs
+- `GET /api/blogs` - admin blog list (requires token)
+- `POST /api/blogs` - create blog (requires token)
+- `PUT /api/blogs/:id` - update blog (requires token)
+- `DELETE /api/blogs/:id` - delete blog (requires token)
+- `POST /api/blogs/upload` - upload blog image (requires token)
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Leads
+- `POST /api/leads` - create lead from appointment form
+- `GET /api/leads` - list leads (requires token)
+- `PUT /api/leads/:id/accept` - accept lead (requires token)
+- `PUT /api/leads/:id/reject` - reject lead (requires token)
+- `DELETE /api/leads/:id` - delete lead (requires token)
 
-## Learn More
+### Customers
+- `POST /api/customers` - submit public intake form
+- `GET /api/customers` - list deduplicated customers (requires token)
+- `GET /api/customers/:id/forms` - get matched form submissions (requires token)
+- `PUT /api/customers/:id/status` - update customer status (requires token)
+- `PUT /api/customers/:id/appointment` - set/update appointment slot (requires token)
+- `GET /api/customers/token/:token` - legacy token endpoint
+- `POST /api/customers/token/:token` - deprecated endpoint
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Admin Extras
+- `GET /api/admin/turnover` - turnover and chart data (requires token)
+- `GET /api/admin/customers/:id/payments` - list payments (requires token)
+- `POST /api/admin/customers/:id/payments` - add payment (requires token)
+- `PUT /api/admin/customers/:id/settings` - update pricing/settings/status (requires token)
+- `GET /api/admin/customers/:id/notes` - list notes (requires token)
+- `POST /api/admin/customers/:id/notes` - add note (requires token)
+- `GET /api/admin/customers/:id/sessions` - list session history (requires token)
+- `PUT /api/admin/customers/:id/sessions/:sessionId/presence` - update presence (requires token)
+- `GET /api/admin/historical-forms` - query forms by phone + DOB (requires token)
+- `GET /api/admin/historical-forms/:formId` - get single historical form (requires token)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Environment Variables
+
+Create `backend/.env`:
+
+```env
+PORT=5000
+
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=rewire_kajal
+DB_PASSWORD=postgres
+DB_PORT=5432
+
+JWT_SECRET=replace_with_strong_secret
+
+EMAIL_USER=your_gmail_address
+EMAIL_PASS=your_gmail_app_password
+```
+
+## Local Setup
+
+### 1. Install Dependencies
+
+```bash
+cd backend
+npm install
+
+cd ../frontend
+npm install
+```
+
+### 2. Create Database
+
+Create a PostgreSQL database named `rewire_kajal`.
+
+### 3. Apply Schema
+
+From repository root:
+
+```bash
+psql -U postgres -d rewire_kajal -f database/schema.sql
+```
+
+Optional migration (adds `customer_sessions` and newer fields safely):
+
+```bash
+cd backend
+npx ts-node scripts/run_migration.ts
+```
+
+### 4. Seed Demo Blogs (Optional)
+
+```bash
+cd backend
+npx ts-node seed_blogs.ts
+```
+
+### 5. Start Backend
+
+```bash
+cd backend
+npm run dev
+```
+
+Backend runs on `http://localhost:5000`.
+
+### 6. Start Frontend
+
+```bash
+cd frontend
+npm start
+```
+
+Frontend runs on `http://localhost:3000`.
+
+## Admin Access Bootstrap
+
+If no admin exists, create one using:
+
+```bash
+curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"admin@example.com\",\"password\":\"StrongPassword123\"}"
+```
+
+Then login at:
+- `http://localhost:3000/admin/login`
+
+After login, token is stored in browser `localStorage` as `adminToken`.
+
+## Notes
+
+- Frontend API URLs are currently hardcoded to `http://localhost:5000`.
+- Public blogs are filtered by `is_active = true`.
+- Date validation supports both `DD-MM-YYYY` and `YYYY-MM-DD` input normalization.
+- `customer_sessions` is auto-managed by backend utilities and migration script.
+
+## Useful Script Files
+
+Additional utility scripts are available under:
+- `backend/scripts/`
+- `backend/migrate_customers.ts`
+- `backend/migrate_admin_schema.ts`
+- `backend/fix_schema.ts`
+- `backend/scripts/delete_all_data.ts` (and related cleanup helpers)
+
+Use these carefully in development/staging environments.

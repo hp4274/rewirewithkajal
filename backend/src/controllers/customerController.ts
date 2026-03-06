@@ -1,6 +1,21 @@
 import { Request, Response } from 'express';
 import pool from '../db';
 import { sendEmail } from '../utils/mailer';
+import {
+    buildAppointmentTimestamp,
+    isDateTimeInPast,
+    isDobNotFuture,
+    isTodayOrFutureDate,
+    isValidEmail,
+    isValidMobile10,
+    isValidSlotTime,
+    normalizeDateInput
+} from '../utils/validation';
+import {
+    ensureCurrentCustomerSessionRecord,
+    ensureCustomerSessionsTable,
+    normalizeSlotForSession
+} from '../utils/sessionStorage';
 
 export const getCustomerForms = async (req: Request, res: Response) => {
     try {
@@ -34,7 +49,17 @@ export const getCustomerForms = async (req: Request, res: Response) => {
         `;
         const formsResult = await pool.query(formsQuery, [email, phone]);
 
-        res.json({ matchParams: { email, phone }, forms: formsResult.rows });
+        // Filter out empty shells created by accepting a Lead
+        const validForms = formsResult.rows.filter(form =>
+            form.form_data && Array.isArray(form.form_data.q1) && Array.isArray(form.form_data.q2)
+        );
+
+        // Deduplicate forms that have identically matching form_data (prevent double-submit bugs)
+        const uniqueForms = validForms.filter((form, index, self) =>
+            index === self.findIndex((t) => JSON.stringify(t.form_data) === JSON.stringify(form.form_data))
+        );
+
+        res.json({ matchParams: { email, phone }, forms: uniqueForms });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -127,25 +152,70 @@ export const submitPublicForm = async (req: Request, res: Response) => {
     try {
         const { form_data } = req.body;
 
+        const email = typeof form_data?.email === 'string' ? form_data.email.trim().toLowerCase() : '';
+        const phone = typeof form_data?.phone === 'string' ? form_data.phone.trim() : '';
+        const dob = normalizeDateInput(form_data?.dob);
+        const daysPreferenceRaw = Array.isArray(form_data?.days_preference) ? form_data.days_preference : [];
+
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+
+        if (!isValidMobile10(phone)) {
+            return res.status(400).json({ message: 'Phone number must be exactly 10 digits.' });
+        }
+
+        if (!dob) {
+            return res.status(400).json({ message: 'DOB must be in DD-MM-YYYY format.' });
+        }
+
+        if (!isDobNotFuture(dob)) {
+            return res.status(400).json({ message: 'DOB cannot be in the future.' });
+        }
+
+        if (daysPreferenceRaw.length === 0) {
+            return res.status(400).json({ message: 'At least one preferred date is required.' });
+        }
+
+        const normalizedDaysPreference: string[] = [];
+        for (const dateValue of daysPreferenceRaw) {
+            const normalizedDate = normalizeDateInput(dateValue);
+            if (!normalizedDate) {
+                return res.status(400).json({ message: 'Preferred date must be in DD-MM-YYYY format.' });
+            }
+            if (!isTodayOrFutureDate(normalizedDate)) {
+                return res.status(400).json({ message: 'Preferred date cannot be in the past.' });
+            }
+            normalizedDaysPreference.push(normalizedDate);
+        }
+
+        const sanitizedFormData = {
+            ...(form_data || {}),
+            email,
+            phone,
+            dob,
+            days_preference: normalizedDaysPreference
+        };
+
         // This inserts a new customer entirely, without binding to a lead or a token
         const result = await pool.query(
             `INSERT INTO customers
             (status, form_data) 
             VALUES($1, $2) RETURNING * `,
-            ['pending', form_data || '{}']
+            ['pending', sanitizedFormData]
         );
 
         const newCustomer = result.rows[0];
 
         // Send a highly basic notification email back to the firm or patient (optional but good practice)
-        if (form_data && form_data.email) {
+        if (sanitizedFormData && sanitizedFormData.email) {
             try {
                 await sendEmail({
-                    to: form_data.email,
+                    to: sanitizedFormData.email,
                     subject: 'Rewire With Kajal - Intake Request Received',
                     html: `
         < div style = "font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;" >
-        <h2 style="color: #FF8F4B;" > Hello ${form_data.first_name}, </h2>
+        <h2 style="color: #FF8F4B;" > Hello ${sanitizedFormData.first_name}, </h2>
         < p > We have successfully received your intake and consultation preferences.</p>
         < p > Our team will review your answers and reach out to you directly shortly.</p>
         < br />
@@ -189,47 +259,245 @@ export const updateCustomerStatus = async (req: Request, res: Response) => {
 };
 
 export const updateCustomerAppointment = async (req: Request, res: Response) => {
+    const client = await pool.connect();
+    let queryStep = 'init';
     try {
         const { id } = req.params;
         const { appointment_date, slot } = req.body;
+        const customerId = Number(id);
 
-        if (appointment_date) {
-            // Check for conflicts: another customer with the same appointment_date (timestamp)
-            // We join with leads to get the name if available, otherwise fallback to form_data
-            const conflictCheck = await pool.query(
-                `SELECT c.id, 
-                        COALESCE(l.first_name, c.form_data->>'first_name', 'Another Customer') as first_name,
-                        COALESCE(l.last_name, c.form_data->>'last_name', '') as last_name
-                 FROM customers c 
-                 LEFT JOIN leads l ON c.lead_id = l.id
-                 WHERE c.appointment_date = $1 AND c.id != $2`,
-                [appointment_date, id]
-            );
-
-            if (conflictCheck.rows.length > 0) {
-                const conf = conflictCheck.rows[0];
-                const conflictName = `${conf.first_name} ${conf.last_name}`.trim();
-                return res.status(409).json({
-                    message: `Slot already booked by ${conflictName}.`,
-                    conflict: true
-                });
-            }
+        if (!Number.isInteger(customerId) || customerId <= 0) {
+            return res.status(400).json({ message: 'Invalid customer id.' });
         }
 
+        queryStep = 'begin-transaction';
+        await client.query('BEGIN');
+        queryStep = 'ensure-customer-sessions-table';
+        await ensureCustomerSessionsTable(client);
 
-        const result = await pool.query(
-            'UPDATE customers SET appointment_date = $1, slot = $2 WHERE id = $3 RETURNING *',
-            [appointment_date || null, slot || null, id]
+        queryStep = 'fetch-customer-for-update';
+        const customerResult = await client.query(
+            `SELECT
+                id,
+                appointment_date,
+                COALESCE(NULLIF(slot, ''), TO_CHAR(appointment_date, 'HH24:MI')) AS effective_slot
+             FROM customers
+             WHERE id = $1
+             FOR UPDATE`,
+            [customerId]
         );
 
-        if (result.rows.length === 0) {
+        if (customerResult.rows.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ message: 'Customer not found' });
         }
 
+        queryStep = 'ensure-current-session-record';
+        await ensureCurrentCustomerSessionRecord(client, customerId);
+
+        const currentCustomer = customerResult.rows[0];
+        const existingDate = normalizeDateInput(currentCustomer.appointment_date);
+        const existingSlot = normalizeSlotForSession(currentCustomer.effective_slot);
+        const isExistingPast = existingDate && existingSlot
+            ? isDateTimeInPast(existingDate, existingSlot)
+            : false;
+
+        let isExistingLockedByPresence = false;
+        if (existingDate && existingSlot) {
+            queryStep = 'fetch-existing-session-lock';
+            const existingSessionResult = await client.query(
+                `SELECT presence_status, locked
+                 FROM customer_sessions
+                 WHERE customer_id = $1
+                   AND session_date = $2::date
+                   AND slot = $3
+                 ORDER BY id DESC
+                 LIMIT 1`,
+                [customerId, existingDate, existingSlot]
+            );
+
+            if (existingSessionResult.rows.length > 0) {
+                const existingSession = existingSessionResult.rows[0];
+                isExistingLockedByPresence = existingSession.locked === true || existingSession.presence_status === 'present';
+            }
+        }
+
+        if (!appointment_date && !slot) {
+            if (isExistingPast) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ message: 'Cannot modify a session after its scheduled time has passed.' });
+            }
+
+            if (isExistingLockedByPresence) {
+                await client.query('ROLLBACK');
+                return res.status(409).json({ message: 'This session is locked and cannot be edited.' });
+            }
+
+            queryStep = 'clear-appointment';
+            const clearResult = await client.query(
+                'UPDATE customers SET appointment_date = NULL, slot = NULL WHERE id = $1 RETURNING *',
+                [customerId]
+            );
+
+            await client.query('COMMIT');
+            return res.json(clearResult.rows[0]);
+        }
+
+        if (!appointment_date || !slot) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Appointment date and slot are both required.' });
+        }
+
+        const normalizedDate = normalizeDateInput(appointment_date);
+        const normalizedSlot = String(slot).trim().slice(0, 5);
+
+        if (!normalizedDate) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Slot booking date must be in DD-MM-YYYY format.' });
+        }
+
+        if (!isTodayOrFutureDate(normalizedDate)) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Slot booking date cannot be in the past.' });
+        }
+
+        if (!isValidSlotTime(normalizedSlot)) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Slot time must be in HH:mm format.' });
+        }
+
+        if (isDateTimeInPast(normalizedDate, normalizedSlot)) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Cannot book a past time slot.' });
+        }
+
+        const isSameAsExisting = existingDate === normalizedDate && existingSlot === normalizedSlot;
+        if (!isSameAsExisting && isExistingPast) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Cannot modify a session after its scheduled time has passed.' });
+        }
+
+        if (!isSameAsExisting && isExistingLockedByPresence) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ message: 'This session is locked and cannot be edited.' });
+        }
+
+        queryStep = 'check-existing-self-booking';
+        const alreadyBookedForCustomer = await client.query(
+            `SELECT id FROM customers
+                         WHERE id = $1
+                             AND DATE(appointment_date) = $2::date
+                             AND COALESCE(NULLIF(slot, '')::text, TO_CHAR(appointment_date, 'HH24:MI')) = $3::text`,
+            [customerId, normalizedDate, normalizedSlot]
+        );
+
+        if (!isSameAsExisting && alreadyBookedForCustomer.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({
+                message: 'This customer already has an appointment at the selected date and time.',
+                conflict: true
+            });
+        }
+
+        // Check for slot overlap on the same date+time across all other customers.
+        queryStep = 'check-slot-conflict-other-customers';
+        const conflictCheck = await client.query(
+            `SELECT c.id, 
+                    COALESCE(l.first_name, c.form_data->>'first_name', 'Another Customer') as first_name,
+                    COALESCE(l.last_name, c.form_data->>'last_name', '') as last_name
+             FROM customers c 
+             LEFT JOIN leads l ON c.lead_id = l.id
+             WHERE DATE(c.appointment_date) = $1::date
+                                      AND COALESCE(NULLIF(c.slot, '')::text, TO_CHAR(c.appointment_date, 'HH24:MI')) = $2::text
+                    AND c.id != $3`,
+                [normalizedDate, normalizedSlot, customerId]
+        );
+
+        if (conflictCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            const conf = conflictCheck.rows[0];
+            const conflictName = `${conf.first_name} ${conf.last_name}`.trim();
+            return res.status(409).json({
+                message: `Slot already booked by ${conflictName}.`,
+                conflict: true
+            });
+        }
+
+        queryStep = 'check-slot-conflict-session-table';
+        const sessionConflict = await client.query(
+            `SELECT id FROM customer_sessions
+             WHERE session_date = $1::date
+               AND slot = $2
+               AND customer_id != $3
+             LIMIT 1`,
+            [normalizedDate, normalizedSlot, customerId]
+        );
+
+        if (sessionConflict.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({
+                message: 'Slot already exists in session schedule for another customer.',
+                conflict: true
+            });
+        }
+
+        const appointmentTimestamp = buildAppointmentTimestamp(normalizedDate, normalizedSlot);
+
+
+        queryStep = 'update-customer-appointment';
+        const result = await client.query(
+            'UPDATE customers SET appointment_date = $1, slot = $2 WHERE id = $3 RETURNING *',
+            [appointmentTimestamp, normalizedSlot, customerId]
+        );
+
+        queryStep = 'insert-session-row-if-missing';
+        const existingUnmarkedSession = await client.query(
+            `SELECT id
+             FROM customer_sessions
+             WHERE customer_id = $1
+               AND presence_status = 'not_marked'
+               AND COALESCE(locked, false) = false
+             ORDER BY updated_at DESC, id DESC
+             LIMIT 1
+             FOR UPDATE`,
+            [customerId]
+        );
+
+        if (existingUnmarkedSession.rows.length > 0) {
+            await client.query(
+                `UPDATE customer_sessions
+                 SET session_date = $1::date,
+                     slot = CAST($2 AS VARCHAR(5)),
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $3`,
+                [normalizedDate, normalizedSlot, existingUnmarkedSession.rows[0].id]
+            );
+        } else {
+            await client.query(
+                `INSERT INTO customer_sessions (customer_id, session_date, slot, presence_status, locked, updated_at)
+                 SELECT $1, $2::date, CAST($3 AS VARCHAR(5)), 'not_marked', false, CURRENT_TIMESTAMP
+                 WHERE NOT EXISTS (
+                    SELECT 1 FROM customer_sessions
+                    WHERE customer_id = $1 AND session_date = $2::date AND slot = CAST($4 AS VARCHAR(5))
+                 )`,
+                [customerId, normalizedDate, normalizedSlot, normalizedSlot]
+            );
+        }
+
+        queryStep = 'commit-transaction';
+        await client.query('COMMIT');
+
         res.json(result.rows[0]);
     } catch (error) {
-        console.error("Update Appointment Error:", error);
+        try {
+            await client.query('ROLLBACK');
+        } catch {
+            // Ignore rollback failure and return original error.
+        }
+        console.error("Update Appointment Error:", { queryStep, error });
         res.status(500).json({ message: 'Server Error', error });
+    } finally {
+        client.release();
     }
 };
 
