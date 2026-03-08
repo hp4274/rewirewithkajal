@@ -227,25 +227,58 @@ const CustomerProfile: React.FC = () => {
     const totalDueObj = (customer.per_session_price || 1500) * (customer.total_sessions || 4);
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const remaining = totalDueObj - totalPaid;
+    const profileName = customer.name || customer.form_data?.name || 'Customer';
+    const detailEmail = customer.email || customer.form_data?.email || 'N/A';
+    const detailPhone = customer.phone || customer.form_data?.phone || 'N/A';
+    const detailAgeDob = customer.dob || customer.form_data?.dob || customer.age || 'N/A';
+    const detailCity = customer.form_data?.city || customer.address || 'N/A';
+    const detailOccupation = customer.form_data?.occupation || customer.work || 'N/A';
+    const detailScore = customer.form_data?.total_score ?? 'N/A';
+    const detailStatus = (customer.status || 'pending').toUpperCase();
 
     return (
         <div className="profile-wrapper">
             <button className="back-btn" onClick={() => navigate('/admin?section=leads')}>← Back to Management</button>
-            <h2 className="profile-header">{customer.name || customer.form_data?.name}'s Profile</h2>
+            <h2 className="profile-header">{profileName}'s Profile</h2>
 
             <div className="profile-quadrants">
 
                 {/* Q1: Details */}
                 <div className="quadrant q1-details">
                     <h3>1. Customer Details</h3>
-                    <div className="detail-item"><strong>Email:</strong> {customer.email || customer.form_data?.email}</div>
-                    <div className="detail-item"><strong>Phone:</strong> {customer.phone || customer.form_data?.phone || 'N/A'}</div>
-                    <div className="detail-item"><strong>Age/DOB:</strong> {customer.dob || customer.form_data?.dob || customer.age || 'N/A'}</div>
-                    <div className="detail-item"><strong>City:</strong> {customer.form_data?.city || customer.address || 'N/A'}</div>
-                    <div className="detail-item"><strong>Occupation:</strong> {customer.form_data?.occupation || customer.work || 'N/A'}</div>
-                    <hr />
-                    <div className="detail-item"><strong>Score:</strong> <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>{customer.form_data?.total_score}</span></div>
-                    <div className="detail-item"><strong>Status:</strong> {customer.status.toUpperCase()}</div>
+                    <div className="detail-stack">
+                        <div className="detail-row">
+                            <span className="detail-label">Email</span>
+                            <span className="detail-value">{detailEmail}</span>
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">Phone</span>
+                            <span className="detail-value">{detailPhone}</span>
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">Age / DOB</span>
+                            <span className="detail-value">{detailAgeDob}</span>
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">City</span>
+                            <span className="detail-value">{detailCity}</span>
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">Occupation</span>
+                            <span className="detail-value">{detailOccupation}</span>
+                        </div>
+
+                        <div className="detail-divider"></div>
+
+                        <div className="detail-row detail-row-highlight">
+                            <span className="detail-label">Score</span>
+                            <span className="detail-value score-pill">{detailScore}</span>
+                        </div>
+                        <div className="detail-row detail-row-highlight">
+                            <span className="detail-label">Status</span>
+                            <span className="detail-value status-badge">{detailStatus}</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Q2: Payments */}
