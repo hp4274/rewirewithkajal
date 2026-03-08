@@ -1192,12 +1192,12 @@ const Admin: React.FC = () => {
                                 {/* 1 - Customer Info */}
                                 <div className="a2-panel a2-info-panel a2-info-stack-panel">
                                     <h3><User size={18} /> Customer Info</h3>
-                                    <div className="a2-info-grid">
-                                        <div><small>Email</small><p>{profileData.email || 'N/A'}</p></div>
-                                        <div><small>Phone</small><p>{fd.phone || profileData.phone || 'N/A'}</p></div>
-                                        <div><small>DOB</small><p>{fd.dob || profileData.dob || 'N/A'}</p></div>
-                                        <div><small>Occupation</small><p>{fd.work || fd.occupation || 'N/A'}</p></div>
-                                        <div><small>Address</small><p>{fd.city || 'N/A'}</p></div>
+                                    <div className="a2-info-grid a2-customer-info-grid">
+                                        <div className="a2-info-item a2-info-item-wide"><small>Email</small><p>{profileData.email || 'N/A'}</p></div>
+                                        <div className="a2-info-item"><small>Phone</small><p>{fd.phone || profileData.phone || 'N/A'}</p></div>
+                                        <div className="a2-info-item"><small>DOB</small><p>{fd.dob || profileData.dob || 'N/A'}</p></div>
+                                        <div className="a2-info-item"><small>Occupation</small><p>{fd.work || fd.occupation || 'N/A'}</p></div>
+                                        <div className="a2-info-item"><small>Address</small><p>{fd.city || 'N/A'}</p></div>
                                     </div>
                                 </div>
 
