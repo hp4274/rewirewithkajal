@@ -220,7 +220,7 @@ const IntakeForm: React.FC = () => {
                                 </div>
                                 <div className="form-group" style={{ flex: 1 }}>
                                     <label>Phone Number <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone" inputMode="numeric" minLength={10} maxLength={10} pattern="\\d{10}" title="Enter exactly 10 digits" required />
+                                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone" inputMode="numeric" minLength={10} maxLength={10} pattern="[0-9]{10}" title="Enter exactly 10 digits" required />
                                 </div>
                             </div>
 

@@ -1,1 +1,16 @@
-{"projectId":"prj_hN8aDT0N2kJiJsAUcEdyaOvTZg0X","orgId":"team_R9XABKKwoqLhBCh3W3OXCc0U","projectName":"rewirewithkajal"}
+{
+  "projectId": "prj_Al9xSyCzcVFTJrqgpBe8owbKdy94",
+  "orgId": "team_R9XABKKwoqLhBCh3W3OXCc0U",
+  "projectName": "rewirewithkajal",
+  "settings": {
+    "createdAt": 1772945417324,
+    "framework": "create-react-app",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": "npm run build",
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

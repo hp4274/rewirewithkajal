@@ -8,6 +8,7 @@ import blogRoutes from './routes/blogRoutes';
 import leadRoutes from './routes/leadRoutes';
 import customerRoutes from './routes/customerRoutes';
 import adminExtrasRoutes from './routes/adminExtrasRoutes';
+import { UPLOAD_DIR } from './middleware/upload';
 
 dotenv.config();
 
@@ -27,7 +28,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminExtrasRoutes);
 
 // Statically serve uploads folder
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // In production, serve the React app from the same Node process.
 if (process.env.NODE_ENV === 'production') {
@@ -53,7 +54,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req: Request, res: Response, next) => {
+    app.get(/.*/, (req: Request, res: Response, next) => {
         if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
             return next();
         }

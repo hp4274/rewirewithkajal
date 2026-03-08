@@ -133,7 +133,7 @@ const AppointmentForm: React.FC = () => {
                         <div className="form-row">
                             <div className="form-group" style={{ flex: '1 1 100%' }}>
                                 <label htmlFor="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} inputMode="numeric" minLength={10} maxLength={10} pattern="\\d{10}" title="Enter exactly 10 digits" required />
+                                <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} inputMode="numeric" minLength={10} maxLength={10} pattern="[0-9]{10}" title="Enter exactly 10 digits" required />
                             </div>
                         </div>
 

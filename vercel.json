@@ -16,18 +16,19 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/src/server.ts"
+      "dest": "/backend/src/server.ts"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "backend/src/server.ts"
+      "dest": "/backend/src/server.ts"
     },
     {
-      "handle": "filesystem"
+      "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|svg|ico|json|txt|map|webp|woff|woff2|ttf|eot))",
+      "dest": "/frontend/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/build/index.html"
+      "dest": "/frontend/index.html"
     }
   ]
 }
