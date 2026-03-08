@@ -150,6 +150,7 @@ DB_PORT=5432
 
 JWT_SECRET=replace_with_strong_secret
 
+ADMIN_EMAIL=admin@example.com
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
 ```
@@ -229,7 +230,11 @@ How it works:
 
 ## Admin Access Bootstrap
 
-If no admin exists, create one using:
+Admin OTP login now uses `ADMIN_EMAIL` (or falls back to `EMAIL_USER`) as the source of truth.
+
+Use this email in the admin login screen to receive OTP.
+
+Optional: create/update admin password record using the same configured email:
 
 ```bash
 curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"admin@example.com\",\"password\":\"StrongPassword123\"}"

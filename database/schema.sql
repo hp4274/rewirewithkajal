@@ -1,7 +1,9 @@
 CREATE TABLE admins (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL,
+    otp VARCHAR(10),
+    otp_expires_at TIMESTAMP
 );
 
 CREATE TABLE leads (
