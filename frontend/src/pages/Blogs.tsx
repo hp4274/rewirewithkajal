@@ -25,7 +25,7 @@ const Blogs: React.FC = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/blogs/public');
+                const response = await axios.get('/api/blogs/public');
                 setBlogs(response.data);
             } catch (error) {
                 console.error('Error fetching blogs:', error);
@@ -57,7 +57,7 @@ const Blogs: React.FC = () => {
                     {featuredBlog && (
                         <div className="featured-blog reveal active">
                             <div className="featured-image" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center', width: '100%', height: '300px', overflow: 'hidden', borderRadius: '8px' }}>
-                                <img src={featuredBlog.image_url ? `http://localhost:5000${featuredBlog.image_url}` : logo} alt={featuredBlog.title} style={featuredBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '120px', width: 'auto', objectFit: 'contain' }} />
+                                <img src={featuredBlog.image_url ? `${featuredBlog.image_url}` : logo} alt={featuredBlog.title} style={featuredBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '120px', width: 'auto', objectFit: 'contain' }} />
                             </div>
                             <div className="featured-content">
                                 <span className="blog-date">{new Date(featuredBlog.created_at).toLocaleDateString()}</span>
@@ -81,7 +81,7 @@ const Blogs: React.FC = () => {
                             {remainingBlogs.map(blog => (
                                 <article key={blog.id} className="blog-card masonry-item">
                                     <div className="blog-image" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', width: '100%', height: '200px', overflow: 'hidden', borderRadius: '8px', paddingTop: blog.image_url ? '0' : '20px' }}>
-                                        <img src={blog.image_url ? `http://localhost:5000${blog.image_url}` : logo} alt={blog.title} style={blog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '80px', width: 'auto', objectFit: 'contain' }} />
+                                        <img src={blog.image_url ? `${blog.image_url}` : logo} alt={blog.title} style={blog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '80px', width: 'auto', objectFit: 'contain' }} />
                                     </div>
                                     <div className="blog-content">
                                         <span className="blog-date">{new Date(blog.created_at).toLocaleDateString()}</span>

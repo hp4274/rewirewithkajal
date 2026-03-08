@@ -1,0 +1,14 @@
+{
+  "name": "rewirewithkajal",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install --legacy-peer-deps",
+    "build": "npm run install:all && cd frontend && npm run build && cd ../backend && npm run build",
+    "start": "cd backend && npm start",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

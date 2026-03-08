@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import pool from './db';
 import authRoutes from './routes/authRoutes';
 import blogRoutes from './routes/blogRoutes';
@@ -12,6 +13,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+const frontendBuildPath = path.resolve(__dirname, '../../frontend/build');
 
 // Middleware
 app.use(cors());
@@ -25,8 +27,12 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminExtrasRoutes);
 
 // Statically serve uploads folder
-import path from 'path';
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// In production, serve the React app from the same Node process.
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(frontendBuildPath));
+}
 
 // Basic health check route
 app.get('/api/health', async (req: Request, res: Response) => {
@@ -45,6 +51,15 @@ app.get('/api/health', async (req: Request, res: Response) => {
         });
     }
 });
+
+if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req: Request, res: Response, next) => {
+        if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+            return next();
+        }
+        res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+}
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

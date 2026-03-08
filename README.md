@@ -138,6 +138,10 @@ Create `backend/.env`:
 ```env
 PORT=5000
 
+# Preferred for Supabase hosted Postgres
+DATABASE_URL=postgresql://postgres:<password>@<host>:5432/postgres
+
+# Optional local fallback (used when DATABASE_URL is not set)
 DB_USER=postgres
 DB_HOST=localhost
 DB_NAME=rewire_kajal
@@ -155,11 +159,7 @@ EMAIL_PASS=your_gmail_app_password
 ### 1. Install Dependencies
 
 ```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
+npm run install:all
 ```
 
 ### 2. Create Database
@@ -206,6 +206,27 @@ npm start
 
 Frontend runs on `http://localhost:3000`.
 
+## Single Deployment (Frontend + Backend Together)
+
+This repository now supports a single combined deployment where the Express server also serves the React build in production.
+
+Build command (project root):
+
+```bash
+npm run build
+```
+
+Start command (project root):
+
+```bash
+npm start
+```
+
+How it works:
+- Frontend API calls use relative paths (e.g. `/api/...`) so they work on the same deployed domain.
+- In production, backend serves `frontend/build` and routes non-API requests to React `index.html`.
+- Supabase can be used by setting `DATABASE_URL` in environment variables.
+
 ## Admin Access Bootstrap
 
 If no admin exists, create one using:
@@ -221,7 +242,8 @@ After login, token is stored in browser `localStorage` as `adminToken`.
 
 ## Notes
 
-- Frontend API URLs are currently hardcoded to `http://localhost:5000`.
+- Frontend uses relative API URLs (`/api/...`).
+- For local frontend development on port 3000, CRA proxy is configured to `http://localhost:5000`.
 - Public blogs are filtered by `is_active = true`.
 - Date validation supports both `DD-MM-YYYY` and `YYYY-MM-DD` input normalization.
 - `customer_sessions` is auto-managed by backend utilities and migration script.

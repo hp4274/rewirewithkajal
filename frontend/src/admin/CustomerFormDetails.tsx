@@ -57,7 +57,7 @@ const CustomerFormDetails: React.FC = () => {
             try {
                 const token = localStorage.getItem('adminToken');
                 const headers = { Authorization: `Bearer ${token}` };
-                const res = await axios.get(`http://localhost:5000/api/admin/historical-forms/${formId}`, { headers });
+                const res = await axios.get(`/api/admin/historical-forms/${formId}`, { headers });
                 setFormData(res.data.form_data);
             } catch (err: any) {
                 console.error(err);

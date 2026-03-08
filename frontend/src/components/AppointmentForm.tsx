@@ -74,7 +74,7 @@ const AppointmentForm: React.FC = () => {
 
         try {
             // Assuming backend is running on 5000 or proxied
-            await axios.post('http://localhost:5000/api/leads', {
+            await axios.post('/api/leads', {
                 ...formData,
                 email: formData.email.trim().toLowerCase(),
                 phone: formData.phone.trim()
@@ -133,7 +133,7 @@ const AppointmentForm: React.FC = () => {
                         <div className="form-row">
                             <div className="form-group" style={{ flex: '1 1 100%' }}>
                                 <label htmlFor="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} inputMode="numeric" maxLength={10} pattern="\\d{10}" required />
+                                <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} inputMode="numeric" minLength={10} maxLength={10} pattern="\\d{10}" title="Enter exactly 10 digits" required />
                             </div>
                         </div>
 

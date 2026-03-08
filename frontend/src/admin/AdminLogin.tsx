@@ -17,7 +17,7 @@ const AdminLogin: React.FC = () => {
         setError('');
 
         try {
-            await axios.post('http://localhost:5000/api/auth/send-otp', {
+            await axios.post('/api/auth/send-otp', {
                 email,
             });
             setStep('otp');
@@ -34,7 +34,7 @@ const AdminLogin: React.FC = () => {
         setError('');
 
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', {
+            const response = await axios.post('/api/auth/login', {
                 email,
                 otp
             });

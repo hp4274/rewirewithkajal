@@ -24,7 +24,7 @@ const BlogsManager: React.FC = () => {
     const fetchBlogs = async () => {
         try {
             const token = localStorage.getItem('adminToken');
-            const res = await axios.get('http://localhost:5000/api/blogs', {
+            const res = await axios.get('/api/blogs', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setBlogs(res.data);
@@ -45,7 +45,7 @@ const BlogsManager: React.FC = () => {
             const formData = new FormData();
             formData.append('image', file);
 
-            const res = await axios.post('http://localhost:5000/api/blogs/upload', formData, {
+            const res = await axios.post('/api/blogs/upload', formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -83,12 +83,12 @@ const BlogsManager: React.FC = () => {
 
             if (formBlog.id) {
                 // Update
-                await axios.put(`http://localhost:5000/api/blogs/${formBlog.id}`, payload, {
+                await axios.put(`/api/blogs/${formBlog.id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
                 // Create
-                await axios.post('http://localhost:5000/api/blogs', payload, {
+                await axios.post('/api/blogs', payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
@@ -133,7 +133,7 @@ const BlogsManager: React.FC = () => {
         if (!window.confirm('Delete this blog?')) return;
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.delete(`http://localhost:5000/api/blogs/${id}`, {
+            await axios.delete(`/api/blogs/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchBlogs();
@@ -145,7 +145,7 @@ const BlogsManager: React.FC = () => {
     const toggleBlogStatus = async (blog: Blog) => {
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/blogs/${blog.id}`,
+            await axios.put(`/api/blogs/${blog.id}`,
                 { ...blog, is_active: !blog.is_active },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

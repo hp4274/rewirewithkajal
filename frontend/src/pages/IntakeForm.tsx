@@ -91,18 +91,6 @@ const IntakeForm: React.FC = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, listName: 'days_preference' | 'timings_preference') => {
-        const { value, checked } = e.target;
-        setFormData((prev) => {
-            const list = prev[listName];
-            if (checked) {
-                return { ...prev, [listName]: [...list, value] };
-            } else {
-                return { ...prev, [listName]: list.filter(item => item !== value) };
-            }
-        });
-    };
-
     const handleQChange = (qList: 'q1' | 'q2', index: number, value: string) => {
         setFormData((prev) => {
             const newQ = [...prev[qList]];
@@ -162,7 +150,7 @@ const IntakeForm: React.FC = () => {
         formData.q2.forEach(ans => { if (ans === 'Yes') total_score += 10; });
 
         try {
-            await axios.post(`http://localhost:5000/api/customers`, {
+            await axios.post(`/api/customers`, {
                 form_data: {
                     email: formData.email.trim().toLowerCase(),
                     first_name: formData.first_name,
@@ -232,7 +220,7 @@ const IntakeForm: React.FC = () => {
                                 </div>
                                 <div className="form-group" style={{ flex: 1 }}>
                                     <label>Phone Number <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone" inputMode="numeric" maxLength={10} pattern="\d{10}" required />
+                                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone" inputMode="numeric" minLength={10} maxLength={10} pattern="\\d{10}" title="Enter exactly 10 digits" required />
                                 </div>
                             </div>
 

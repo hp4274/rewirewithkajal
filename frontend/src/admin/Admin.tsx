@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './Admin.css';
 import axios from 'axios';
 import {
     LayoutDashboard, Users, UserPlus, FileText, LogOut,
-    TrendingUp, Activity, DollarSign, Calendar as CalendarIcon,
-    ChevronLeft, ChevronRight, CheckCircle, Clock, AlertCircle,
+    DollarSign, Calendar as CalendarIcon,
+    ChevronLeft, ChevronRight, Clock, AlertCircle,
     Check, X, LayoutGrid, List, Phone, Mail, CalendarDays,
-    ArrowLeft, ShieldAlert, Award, Settings, User, CreditCard, ChevronDown, ClipboardList, BarChart2,
+    ArrowLeft, ShieldAlert, User, CreditCard, ClipboardList, BarChart2,
     BookOpen, Sun, Moon
 } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
@@ -181,7 +181,6 @@ const CustomerAppointmentInput = ({ customer, checkDoubleBooking, onSave, isLock
 
 const Admin: React.FC = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
         try {
             const storedTheme = localStorage.getItem('adminThemeMode');
@@ -300,10 +299,10 @@ const Admin: React.FC = () => {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
 
-            const leadsRes = await axios.get('http://localhost:5000/api/leads', { headers });
-            const customersRes = await axios.get('http://localhost:5000/api/customers', { headers });
-            const turnoverRes = await axios.get('http://localhost:5000/api/admin/turnover', { headers });
-            const blogsRes = await axios.get('http://localhost:5000/api/blogs', { headers });
+            const leadsRes = await axios.get('/api/leads', { headers });
+            const customersRes = await axios.get('/api/customers', { headers });
+            const turnoverRes = await axios.get('/api/admin/turnover', { headers });
+            const blogsRes = await axios.get('/api/blogs', { headers });
 
             const turnover = turnoverRes.data.turnover || 0;
             const activeCustomersCount = customersRes.data.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
@@ -343,7 +342,7 @@ const Admin: React.FC = () => {
     const fetchBlogs = async () => {
         try {
             const token = localStorage.getItem('adminToken');
-            const res = await axios.get('http://localhost:5000/api/blogs', {
+            const res = await axios.get('/api/blogs', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setBlogs(res.data);
@@ -358,7 +357,7 @@ const Admin: React.FC = () => {
             const formData = new FormData();
             formData.append('image', file);
 
-            const res = await axios.post('http://localhost:5000/api/blogs/upload', formData, {
+            const res = await axios.post('/api/blogs/upload', formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -394,11 +393,11 @@ const Admin: React.FC = () => {
             };
 
             if (formBlog.id) {
-                await axios.put(`http://localhost:5000/api/blogs/${formBlog.id}`, payload, {
+                await axios.put(`/api/blogs/${formBlog.id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                await axios.post('http://localhost:5000/api/blogs', payload, {
+                await axios.post('/api/blogs', payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
@@ -434,7 +433,7 @@ const Admin: React.FC = () => {
         if (!window.confirm('Delete this blog? This action cannot be undone.')) return;
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.delete(`http://localhost:5000/api/blogs/${id}`, {
+            await axios.delete(`/api/blogs/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchBlogs();
@@ -446,7 +445,7 @@ const Admin: React.FC = () => {
     const toggleBlogStatus = async (blog: any) => {
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/blogs/${blog.id}`,
+            await axios.put(`/api/blogs/${blog.id}`,
                 { ...blog, is_active: !blog.is_active },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -574,7 +573,7 @@ const Admin: React.FC = () => {
             const headers = { Authorization: `Bearer ${token}` };
             const payloadDate = `${bookingDate}T${bookingSlot}`;
 
-            await axios.put(`http://localhost:5000/api/customers/${bookingCustomerId}/appointment`, {
+            await axios.put(`/api/customers/${bookingCustomerId}/appointment`, {
                 appointment_date: payloadDate,
                 slot: bookingSlot
             }, { headers });
@@ -643,7 +642,7 @@ const Admin: React.FC = () => {
     const handleUpdateLeadStatus = async (id: number, action: 'accept' | 'reject') => {
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/leads/${id}/${action}`, {}, {
+            await axios.put(`/api/leads/${id}/${action}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             await fetchDashboardData();
@@ -757,7 +756,7 @@ const Admin: React.FC = () => {
             const nextActive = !customer.is_active;
             const nextStatus = nextActive ? 'confirmed' : 'deactivated';
 
-            await axios.put(`http://localhost:5000/api/admin/customers/${customer.id}/settings`, {
+            await axios.put(`/api/admin/customers/${customer.id}/settings`, {
                 is_active: nextActive,
                 status: nextStatus,
                 per_session_price: customer.per_session_price || 0,
@@ -793,7 +792,7 @@ const Admin: React.FC = () => {
         }
 
         try {
-            await axios.put(`http://localhost:5000/api/customers/${id}/appointment`, {
+            await axios.put(`/api/customers/${id}/appointment`, {
                 appointment_date: dateSlotString,
                 slot: slotVal
             }, { headers: { Authorization: `Bearer ${token}` } });
@@ -811,7 +810,7 @@ const Admin: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            const sessionsRes = await axios.get(`http://localhost:5000/api/admin/customers/${customerId}/sessions`, { headers });
+            const sessionsRes = await axios.get(`/api/admin/customers/${customerId}/sessions`, { headers });
             const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
 
             setProfileSessions(sessions);
@@ -831,7 +830,7 @@ const Admin: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            const customersRes = await axios.get('http://localhost:5000/api/customers', { headers });
+            const customersRes = await axios.get('/api/customers', { headers });
             const updatedCustomer = customersRes.data.find((c: any) => c.id === customerId);
             if (updatedCustomer) {
                 setProfileData(updatedCustomer);
@@ -849,7 +848,7 @@ const Admin: React.FC = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             const response = await axios.put(
-                `http://localhost:5000/api/admin/customers/${customerId}/sessions/${sessionId}/presence`,
+                `/api/admin/customers/${customerId}/sessions/${sessionId}/presence`,
                 { presence_status: nextStatus },
                 { headers }
             );
@@ -876,10 +875,10 @@ const Admin: React.FC = () => {
         const token = localStorage.getItem('adminToken');
         try {
             const [notesRes, paymentsRes, formsRes, sessionsRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/admin/customers/${customer.id}/notes`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`http://localhost:5000/api/admin/customers/${customer.id}/payments`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`http://localhost:5000/api/customers/${customer.id}/forms`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`http://localhost:5000/api/admin/customers/${customer.id}/sessions`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`/api/admin/customers/${customer.id}/notes`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`/api/admin/customers/${customer.id}/payments`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`/api/customers/${customer.id}/forms`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`/api/admin/customers/${customer.id}/sessions`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
             setProfileNotes(notesRes.data);
             setProfilePayments(paymentsRes.data);
@@ -911,9 +910,9 @@ const Admin: React.FC = () => {
         setIsSavingNote(true);
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.post(`http://localhost:5000/api/admin/customers/${profileData.id}/notes`, { note_text: newNote }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`/api/admin/customers/${profileData.id}/notes`, { note_text: newNote }, { headers: { Authorization: `Bearer ${token}` } });
             setNewNote('');
-            const notesRes = await axios.get(`http://localhost:5000/api/admin/customers/${profileData.id}/notes`, { headers: { Authorization: `Bearer ${token}` } });
+            const notesRes = await axios.get(`/api/admin/customers/${profileData.id}/notes`, { headers: { Authorization: `Bearer ${token}` } });
             setProfileNotes(notesRes.data);
         } catch (err) {
             console.error(err);
@@ -929,7 +928,7 @@ const Admin: React.FC = () => {
             const token = localStorage.getItem('adminToken');
             const newSessionCount = profilePayments.length + 1;
 
-            await axios.post(`http://localhost:5000/api/admin/customers/${profileData.id}/payments`, {
+            await axios.post(`/api/admin/customers/${profileData.id}/payments`, {
                 session_number: newSessionCount,
                 amount: Number(paymentAmount),
                 payment_type: paymentType
@@ -937,7 +936,7 @@ const Admin: React.FC = () => {
 
             setPaymentAmount('');
 
-            const paymentsRes = await axios.get(`http://localhost:5000/api/admin/customers/${profileData.id}/payments`, { headers: { Authorization: `Bearer ${token}` } });
+            const paymentsRes = await axios.get(`/api/admin/customers/${profileData.id}/payments`, { headers: { Authorization: `Bearer ${token}` } });
             setProfilePayments(paymentsRes.data);
             await fetchDashboardData();
         } catch (err) {
@@ -952,7 +951,7 @@ const Admin: React.FC = () => {
         setIsSavingSettings(true);
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/admin/customers/${profileData.id}/settings`, {
+            await axios.put(`/api/admin/customers/${profileData.id}/settings`, {
                 total_sessions: Number(editSessions),
                 per_session_price: Number(editPrice),
                 is_active: profileData.is_active,
@@ -1123,9 +1122,6 @@ const Admin: React.FC = () => {
         } catch (e) {
             console.error("Failed to parse form_data", e);
         }
-
-        const score = calculateIntakeScore(fd);
-        let scoreColor = score < 30 ? '#10b981' : score < 70 ? '#f59e0b' : '#ef4444';
 
         const totalPaid = profilePayments.reduce((sum: any, p: any) => sum + Number(p.amount), 0);
         const price = Number(profileData.per_session_price) || 0;
@@ -1519,7 +1515,7 @@ const Admin: React.FC = () => {
                                 <div key={blog.id} className="a2-lead-card" style={{ display: 'flex', flexDirection: 'column' }}>
                                     {blog.image_url && (
                                         <div style={{ height: '140px', width: '100%', overflow: 'hidden', borderRadius: '8px 8px 0 0', margin: '-20px -20px 16px -20px', backgroundColor: '#f1f5f9' }}>
-                                            <img src={`http://localhost:5000${blog.image_url}`} alt={blog.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <img src={`${blog.image_url}`} alt={blog.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
                                     )}
                                     <div className="a2-lead-card-header">
@@ -1608,7 +1604,7 @@ const Admin: React.FC = () => {
                                         {(selectedBlogImage || formBlog.image_url) ? (
                                             <div className="a2-image-preview">
                                                 <img
-                                                    src={selectedBlogImage ? URL.createObjectURL(selectedBlogImage) : `http://localhost:5000${formBlog.image_url}`}
+                                                    src={selectedBlogImage ? URL.createObjectURL(selectedBlogImage) : `${formBlog.image_url}`}
                                                     alt="Cover Preview"
                                                     style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover' }}
                                                 />

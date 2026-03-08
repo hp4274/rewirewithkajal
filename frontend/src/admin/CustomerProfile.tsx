@@ -92,7 +92,7 @@ const CustomerProfile: React.FC = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             // Fetch basic info (needs an endpoint or we filter from all for now)
-            const allRes = await axios.get('http://localhost:5000/api/customers', { headers });
+            const allRes = await axios.get('/api/customers', { headers });
             const cst = allRes.data.find((c: any) => c.id === parseInt(id || '0'));
 
             if (cst) {
@@ -101,11 +101,11 @@ const CustomerProfile: React.FC = () => {
                 setEditSessions(cst.total_sessions || 4);
 
                 // Fetch Payments
-                const payRes = await axios.get(`http://localhost:5000/api/admin/customers/${id}/payments`, { headers });
+                const payRes = await axios.get(`/api/admin/customers/${id}/payments`, { headers });
                 setPayments(payRes.data);
 
                 // Fetch Notes
-                const notesRes = await axios.get(`http://localhost:5000/api/admin/customers/${id}/notes`, { headers });
+                const notesRes = await axios.get(`/api/admin/customers/${id}/notes`, { headers });
                 setNotes(notesRes.data);
 
                 // Fetch Historical Forms matching phone number AND dob! Fallback to form_data if root isn't present
@@ -113,7 +113,7 @@ const CustomerProfile: React.FC = () => {
                 const fetchDob = cst.dob || cst.form_data?.dob;
 
                 if (fetchPhone && fetchDob) {
-                    const histRes = await axios.get(`http://localhost:5000/api/admin/historical-forms?phone=${fetchPhone}&dob=${fetchDob}`, { headers });
+                    const histRes = await axios.get(`/api/admin/historical-forms?phone=${fetchPhone}&dob=${fetchDob}`, { headers });
                     setHistoricalForms(histRes.data);
                 }
             }
@@ -136,7 +136,7 @@ const CustomerProfile: React.FC = () => {
             const nextActive = !customer.is_active;
             const nextStatus = nextActive ? 'confirmed' : 'deactivated';
 
-            await axios.put(`http://localhost:5000/api/admin/customers/${id}/settings`, {
+            await axios.put(`/api/admin/customers/${id}/settings`, {
                 is_active: nextActive,
                 status: nextStatus,
                 per_session_price: customer.per_session_price,
@@ -162,7 +162,7 @@ const CustomerProfile: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            await axios.put(`http://localhost:5000/api/admin/customers/${id}/settings`, {
+            await axios.put(`/api/admin/customers/${id}/settings`, {
                 is_active: customer.is_active,
                 per_session_price: priceNum,
                 total_sessions: sessionsNum,
@@ -191,7 +191,7 @@ const CustomerProfile: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            await axios.post(`http://localhost:5000/api/admin/customers/${id}/payments`, {
+            await axios.post(`/api/admin/customers/${id}/payments`, {
                 amount: amountNum,
                 payment_type: payType,
                 session_number: sessionNum
@@ -211,7 +211,7 @@ const CustomerProfile: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            await axios.post(`http://localhost:5000/api/admin/customers/${id}/notes`, {
+            await axios.post(`/api/admin/customers/${id}/notes`, {
                 note_text: newNote
             }, { headers });
             setNewNote('');

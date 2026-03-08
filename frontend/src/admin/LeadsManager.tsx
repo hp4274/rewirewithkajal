@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Check, X, LayoutGrid, List, Calendar, User, Phone, Mail, MapPin } from 'lucide-react';
+import { Check, X, LayoutGrid, List, Phone, Mail, MapPin } from 'lucide-react';
 import './LeadsManager.css';
 import { isFutureOrCurrentSlot, isTodayOrFutureDate, toDateInputString } from '../utils/validation';
 
@@ -142,8 +142,8 @@ const LeadsManager: React.FC = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [leadsRes, customersRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/leads', { headers }),
-                axios.get('http://localhost:5000/api/customers', { headers })
+                axios.get('/api/leads', { headers }),
+                axios.get('/api/customers', { headers })
             ]);
 
             setLeads(leadsRes.data);
@@ -177,7 +177,7 @@ const LeadsManager: React.FC = () => {
     const updateLeadStatus = async (id: number, action: 'accept' | 'reject') => {
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/leads/${id}/${action}`, {}, {
+            await axios.put(`/api/leads/${id}/${action}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();
@@ -190,7 +190,7 @@ const LeadsManager: React.FC = () => {
     const updateCustomerStatus = async (id: number, status: string) => {
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/customers/${id}/status`, { status }, {
+            await axios.put(`/api/customers/${id}/status`, { status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();
@@ -203,7 +203,7 @@ const LeadsManager: React.FC = () => {
     const updateAppointment = async (id: number, date: string | null, slotValue: string | null) => {
         try {
             const token = localStorage.getItem('adminToken');
-            await axios.put(`http://localhost:5000/api/customers/${id}/appointment`, {
+            await axios.put(`/api/customers/${id}/appointment`, {
                 appointment_date: date,
                 slot: slotValue
             }, {

@@ -59,9 +59,9 @@ const Footer: React.FC = () => {
                 <div className="container footer-bottom-inner">
                     <p>&copy; {new Date().getFullYear()} Rewire With Kajal. All rights reserved.</p>
                     <div className="social-links">
-                        <a href="#" aria-label="Instagram"><Instagram size={18} /></a>
-                        <a href="#" aria-label="LinkedIn"><Linkedin size={18} /></a>
-                        <a href="#" aria-label="Twitter"><Twitter size={18} /></a>
+                        <a href="https://instagram.com" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><Instagram size={18} /></a>
+                        <a href="https://linkedin.com" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><Linkedin size={18} /></a>
+                        <a href="https://twitter.com" aria-label="Twitter" target="_blank" rel="noopener noreferrer"><Twitter size={18} /></a>
                     </div>
                 </div>
             </div>

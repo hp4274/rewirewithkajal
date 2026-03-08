@@ -20,7 +20,7 @@ const HomeBlogs: React.FC = () => {
         const fetchBlogs = async () => {
             try {
                 // Fetch the latest blogs
-                const response = await axios.get('http://localhost:5000/api/blogs/public');
+                const response = await axios.get('/api/blogs/public');
                 // We only need the top 2 recent ones
                 if (response.data && response.data.length > 0) {
                     setBlogs(response.data.slice(0, 2));
@@ -53,7 +53,7 @@ const HomeBlogs: React.FC = () => {
                 {latestBlog && (
                     <div className="home-blog-card latest">
                         <div className="home-blog-image-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', overflow: 'hidden' }}>
-                            <img src={latestBlog.image_url ? `http://localhost:5000${latestBlog.image_url}` : logo} alt={latestBlog.title} className="home-blog-logo" style={latestBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : {}} />
+                            <img src={latestBlog.image_url ? `${latestBlog.image_url}` : logo} alt={latestBlog.title} className="home-blog-logo" style={latestBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : {}} />
                         </div>
                         <div className="home-blog-content">
                             <span className="blog-date">{new Date(latestBlog.created_at).toLocaleDateString()}</span>
@@ -68,7 +68,7 @@ const HomeBlogs: React.FC = () => {
                 {secondLatestBlog && (
                     <div className="home-blog-card second-latest">
                         <div className="home-blog-image-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', overflow: 'hidden' }}>
-                            <img src={secondLatestBlog.image_url ? `http://localhost:5000${secondLatestBlog.image_url}` : logo} alt={secondLatestBlog.title} className="home-blog-logo" style={secondLatestBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : {}} />
+                            <img src={secondLatestBlog.image_url ? `${secondLatestBlog.image_url}` : logo} alt={secondLatestBlog.title} className="home-blog-logo" style={secondLatestBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : {}} />
                         </div>
                         <div className="home-blog-content">
                             <span className="blog-date">{new Date(secondLatestBlog.created_at).toLocaleDateString()}</span>
