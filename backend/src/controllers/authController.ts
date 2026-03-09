@@ -9,10 +9,6 @@ const generateToken = (id: number) => {
     });
 };
 
-const getConfiguredAdminEmail = (): string => {
-    return (process.env.ADMIN_EMAIL || process.env.EMAIL_USER || '').trim().toLowerCase();
-};
-
 const normalizeEmail = (email: unknown): string => {
     return String(email || '').trim().toLowerCase();
 };
@@ -45,44 +41,27 @@ const ensureAdminAuthSchema = async (): Promise<void> => {
     return authSchemaInitPromise;
 };
 
-const ensureConfiguredAdminRecord = async (adminEmail: string) => {
-    await ensureAdminAuthSchema();
-
-    const existing = await pool.query('SELECT id FROM admins WHERE email = $1', [adminEmail]);
-    if (existing.rows[0]) {
-        return existing.rows[0].id as number;
-    }
-
-    const created = await pool.query(
-        'INSERT INTO admins (email) VALUES ($1) RETURNING id',
-        [adminEmail]
-    );
-    return created.rows[0].id as number;
-};
-
 export const sendOtp = async (req: Request, res: Response) => {
     try {
         await ensureAdminAuthSchema();
 
-        const configuredAdminEmail = getConfiguredAdminEmail();
-        if (!configuredAdminEmail) {
-            return res.status(500).json({ message: 'ADMIN_EMAIL is not configured' });
-        }
-
         const requestedEmail = normalizeEmail(req.body?.email);
-        if (requestedEmail && requestedEmail !== configuredAdminEmail) {
-            return res.status(403).json({ message: 'Unauthorized admin email' });
+        if (!requestedEmail) {
+            return res.status(400).json({ message: 'Admin email is required' });
         }
 
-        await ensureConfiguredAdminRecord(configuredAdminEmail);
+        const adminResult = await pool.query('SELECT id FROM admins WHERE email = $1', [requestedEmail]);
+        if (!adminResult.rows[0]) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
-        await pool.query('UPDATE admins SET otp = $1, otp_expires_at = $2 WHERE email = $3', [otp, otpExpiresAt, configuredAdminEmail]);
+        await pool.query('UPDATE admins SET otp = $1, otp_expires_at = $2 WHERE email = $3', [otp, otpExpiresAt, requestedEmail]);
 
         await sendEmail({
-            to: configuredAdminEmail,
+            to: requestedEmail,
             subject: 'Admin Login OTP',
             html: `<h3>Your Admin Portal Login OTP is: <strong>${otp}</strong></h3><p>This OTP is valid for 10 minutes.</p>`,
         });
@@ -99,26 +78,26 @@ export const loginAdmin = async (req: Request, res: Response) => {
         await ensureAdminAuthSchema();
 
         const { email, otp } = req.body;
-        const configuredAdminEmail = getConfiguredAdminEmail();
-        if (!configuredAdminEmail) {
-            return res.status(500).json({ message: 'ADMIN_EMAIL is not configured' });
-        }
-
         const requestedEmail = normalizeEmail(email);
-        if (requestedEmail !== configuredAdminEmail) {
-            return res.status(403).json({ message: 'Unauthorized admin email' });
+        const requestedOtp = String(otp || '').trim();
+        if (!requestedEmail || !requestedOtp) {
+            return res.status(400).json({ message: 'Email and OTP are required' });
         }
 
-        const result = await pool.query('SELECT * FROM admins WHERE email = $1', [configuredAdminEmail]);
+        const result = await pool.query('SELECT * FROM admins WHERE email = $1', [requestedEmail]);
         const admin = result.rows[0];
 
-        if (admin && admin.otp === otp && new Date() < new Date(admin.otp_expires_at)) {
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+
+        if (admin.otp === requestedOtp && admin.otp_expires_at && new Date() < new Date(admin.otp_expires_at)) {
             // Clear OTP
-            await pool.query('UPDATE admins SET otp = NULL, otp_expires_at = NULL WHERE email = $1', [configuredAdminEmail]);
+            await pool.query('UPDATE admins SET otp = NULL, otp_expires_at = NULL WHERE email = $1', [requestedEmail]);
 
             res.json({
                 id: admin.id,
-                email: configuredAdminEmail,
+                email: requestedEmail,
                 token: generateToken(admin.id),
             });
         } else {
@@ -135,17 +114,12 @@ export const registerAdmin = async (req: Request, res: Response) => {
         await ensureAdminAuthSchema();
 
         const { email } = req.body;
-        const configuredAdminEmail = getConfiguredAdminEmail();
-        if (!configuredAdminEmail) {
-            return res.status(500).json({ message: 'ADMIN_EMAIL is not configured' });
-        }
-
         const requestedEmail = normalizeEmail(email);
-        if (requestedEmail !== configuredAdminEmail) {
-            return res.status(403).json({ message: 'Email must match configured ADMIN_EMAIL' });
+        if (!requestedEmail) {
+            return res.status(400).json({ message: 'Admin email is required' });
         }
 
-        const adminExists = await pool.query('SELECT * FROM admins WHERE email = $1', [configuredAdminEmail]);
+        const adminExists = await pool.query('SELECT * FROM admins WHERE email = $1', [requestedEmail]);
 
         if (adminExists.rows.length > 0) {
             return res.status(400).json({ message: 'Admin already exists' });
@@ -153,7 +127,7 @@ export const registerAdmin = async (req: Request, res: Response) => {
 
         const result = await pool.query(
             'INSERT INTO admins (email) VALUES ($1) RETURNING id, email',
-            [configuredAdminEmail]
+            [requestedEmail]
         );
 
         const admin = result.rows[0];

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -215,11 +215,13 @@ const Admin: React.FC = () => {
     // Leads UI state
     const [activeLeadTab, setActiveLeadTab] = useState<'new' | 'accepted' | 'rejected'>('new');
     const [leadsViewMode, setLeadsViewMode] = useState<'grid' | 'list'>('grid');
+    const [updatingLeadId, setUpdatingLeadId] = useState<number | null>(null);
 
     // Customers UI state
     const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
     const [customerViewMode, setCustomerViewMode] = useState<'grid' | 'list'>('grid');
     const [activeCustomerTab, setActiveCustomerTab] = useState<'active' | 'inactive'>('active');
+    const [updatingCustomerId, setUpdatingCustomerId] = useState<number | null>(null);
 
     // Customer Profile state
     const [profileData, setProfileData] = useState<any>(null);
@@ -257,6 +259,7 @@ const Admin: React.FC = () => {
     const [bookingSlot, setBookingSlot] = useState<string>('');
     const [bookingSaving, setBookingSaving] = useState(false);
     const [bookingError, setBookingError] = useState<string | null>(null);
+    const dashboardFetchRef = useRef<Promise<void> | null>(null);
 
     const APPOINTMENT_SLOTS: Array<{ label: string; value: string }> = [
         { label: '09:00 AM', value: '09:00' },
@@ -314,50 +317,61 @@ const Admin: React.FC = () => {
     const todayDateInput = toDateInputString(new Date());
 
     const fetchDashboardData = async () => {
-        try {
-            const token = localStorage.getItem('adminToken');
-            const headers = { Authorization: `Bearer ${token}` };
-
-            const [leadsRes, customersRes, turnoverRes, blogsRes] = await Promise.all([
-                axios.get('/api/leads', { headers }),
-                axios.get('/api/customers', { headers }),
-                axios.get('/api/admin/turnover', { headers }),
-                axios.get('/api/blogs', { headers }),
-            ]);
-
-            const turnover = turnoverRes.data.turnover || 0;
-            const activeCustomersCount = customersRes.data.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
-
-            setStats({
-                leads: leadsRes.data.length,
-                leadsGrowth: 15,
-                customers: customersRes.data.length,
-                customersGrowth: 8,
-                activeCustomers: activeCustomersCount,
-                turnover: turnover
-            });
-
-            setAllLeads(leadsRes.data);
-            setBlogs(blogsRes.data);
-
-            const filteredCustomers = customersRes.data.filter((c: any) => {
-                if (c.lead_id && (!c.form_data || Object.keys(c.form_data).length === 0)) {
-                    return false;
-                }
-                return true;
-            });
-            setAllCustomers(filteredCustomers);
-
-            // Show every booked slot on the calendar, even if status labels vary.
-            const allAppointments = customersRes.data.filter((c: any) => !!c.appointment_date);
-            setAppointments(allAppointments);
-
-            const bookable = customersRes.data.filter((c: any) => c.is_active === true);
-            setBookingCustomers(bookable);
-
-        } catch (error) {
-            console.error("Dashboard Fetch Error", error);
+        if (dashboardFetchRef.current) {
+            return dashboardFetchRef.current;
         }
+
+        const task = (async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const headers = { Authorization: `Bearer ${token}` };
+
+                const [leadsRes, customersRes, turnoverRes, blogsRes] = await Promise.all([
+                    axios.get('/api/leads', { headers }),
+                    axios.get('/api/customers', { headers }),
+                    axios.get('/api/admin/turnover', { headers }),
+                    axios.get('/api/blogs', { headers }),
+                ]);
+
+                const turnover = turnoverRes.data.turnover || 0;
+                const activeCustomersCount = customersRes.data.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
+
+                setStats({
+                    leads: leadsRes.data.length,
+                    leadsGrowth: 15,
+                    customers: customersRes.data.length,
+                    customersGrowth: 8,
+                    activeCustomers: activeCustomersCount,
+                    turnover: turnover
+                });
+
+                setAllLeads(leadsRes.data);
+                setBlogs(blogsRes.data);
+
+                const filteredCustomers = customersRes.data.filter((c: any) => {
+                    if (c.lead_id && (!c.form_data || Object.keys(c.form_data).length === 0)) {
+                        return false;
+                    }
+                    return true;
+                });
+                setAllCustomers(filteredCustomers);
+
+                // Show every booked slot on the calendar, even if status labels vary.
+                const allAppointments = customersRes.data.filter((c: any) => !!c.appointment_date);
+                setAppointments(allAppointments);
+
+                const bookable = customersRes.data.filter((c: any) => c.is_active === true);
+                setBookingCustomers(bookable);
+
+            } catch (error) {
+                console.error("Dashboard Fetch Error", error);
+            }
+        })().finally(() => {
+            dashboardFetchRef.current = null;
+        });
+
+        dashboardFetchRef.current = task;
+        return task;
     };
 
     const fetchBlogs = async () => {
@@ -601,7 +615,7 @@ const Admin: React.FC = () => {
 
             setBookingCustomerId('');
             setBookingSlot('');
-            await fetchDashboardData();
+            void fetchDashboardData();
 
             const booked = parseDateTimeSmart(payloadDate);
             if (!isNaN(booked.getTime())) {
@@ -661,16 +675,26 @@ const Admin: React.FC = () => {
         .slice()
         .sort((a, b) => parseDateTimeSmart(a.appointment_date, a.slot).getTime() - parseDateTimeSmart(b.appointment_date, b.slot).getTime());
     const handleUpdateLeadStatus = async (id: number, action: 'accept' | 'reject') => {
+        if (updatingLeadId === id) return;
+
+        const previousLeads = allLeads;
+        const nextStatus = action === 'accept' ? 'accepted' : 'rejected';
+        setUpdatingLeadId(id);
+        setAllLeads((prev: any[]) => prev.map((lead: any) => lead.id === id ? { ...lead, status: nextStatus } : lead));
+
         try {
             const token = localStorage.getItem('adminToken');
             await axios.put(`/api/leads/${id}/${action}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            await fetchDashboardData();
+            void fetchDashboardData();
         } catch (err: any) {
             console.error(err);
+            setAllLeads(previousLeads);
             const serverMessage = err?.response?.data?.message || err?.response?.data?.detail || err?.message;
             alert(`Error ${action}ing lead: ${serverMessage || 'Unknown error'}`);
+        } finally {
+            setUpdatingLeadId(null);
         }
     };
 
@@ -737,8 +761,8 @@ const Admin: React.FC = () => {
                                     </div>
                                     {activeLeadTab === 'new' && (
                                         <div className="a2-lead-card-footer">
-                                            <button className="a2-btn-accept" onClick={() => handleUpdateLeadStatus(lead.id, 'accept')}><Check size={18} /> Accept</button>
-                                            <button className="a2-btn-reject" onClick={() => handleUpdateLeadStatus(lead.id, 'reject')}><X size={18} /> Reject</button>
+                                            <button className="a2-btn-accept" onClick={() => handleUpdateLeadStatus(lead.id, 'accept')} disabled={updatingLeadId === lead.id}><Check size={18} /> Accept</button>
+                                            <button className="a2-btn-reject" onClick={() => handleUpdateLeadStatus(lead.id, 'reject')} disabled={updatingLeadId === lead.id}><X size={18} /> Reject</button>
                                         </div>
                                     )}
                                 </div>
@@ -772,8 +796,8 @@ const Admin: React.FC = () => {
                                             {activeLeadTab === 'new' && (
                                                 <td className="text-right">
                                                     <div className="a2-action-group">
-                                                        <button className="a2-icon-action accept" onClick={() => handleUpdateLeadStatus(lead.id, 'accept')} title="Accept"><Check size={18} /></button>
-                                                        <button className="a2-icon-action reject" onClick={() => handleUpdateLeadStatus(lead.id, 'reject')} title="Reject"><X size={18} /></button>
+                                                        <button className="a2-icon-action accept" onClick={() => handleUpdateLeadStatus(lead.id, 'accept')} title="Accept" disabled={updatingLeadId === lead.id}><Check size={18} /></button>
+                                                        <button className="a2-icon-action reject" onClick={() => handleUpdateLeadStatus(lead.id, 'reject')} title="Reject" disabled={updatingLeadId === lead.id}><X size={18} /></button>
                                                     </div>
                                                 </td>
                                             )}
@@ -789,6 +813,9 @@ const Admin: React.FC = () => {
     };
 
     const handleUpdateCustomerStatus = async (customer: any) => {
+        if (updatingCustomerId === customer.id) return;
+
+        setUpdatingCustomerId(customer.id);
         const previousIsActive = !!customer.is_active;
         const previousStatus = customer.status || 'confirmed';
         try {
@@ -814,6 +841,8 @@ const Admin: React.FC = () => {
             setAllCustomers((prev: any[]) => prev.map((c: any) => c.id === customer.id ? { ...c, is_active: previousIsActive, status: previousStatus } : c));
             setProfileData((prev: any) => prev && prev.id === customer.id ? { ...prev, is_active: previousIsActive, status: previousStatus } : prev);
             alert("Error updating status");
+        } finally {
+            setUpdatingCustomerId(null);
         }
     };
 
@@ -844,14 +873,26 @@ const Admin: React.FC = () => {
                 appointment_date: dateSlotString,
                 slot: slotVal
             }, { headers: { Authorization: `Bearer ${token}` } });
+
+            const nextAppointmentDate = `${dateVal}T${slotVal}`;
+            setAllCustomers((prev: any[]) => prev.map((c: any) => c.id === id ? { ...c, appointment_date: nextAppointmentDate, slot: slotVal } : c));
+            setAppointments((prev: any[]) => {
+                const base = allCustomers.find((c: any) => c.id === id) || profileData || { id };
+                const updated = { ...base, appointment_date: nextAppointmentDate, slot: slotVal };
+                const withoutCurrent = prev.filter((app: any) => app.id !== id);
+                return [...withoutCurrent, updated];
+            });
+            setProfileData((prev: any) => prev && prev.id === id ? { ...prev, appointment_date: nextAppointmentDate, slot: slotVal } : prev);
         } catch (error: any) {
             const message = error?.response?.data?.message || 'Failed to update appointment.';
             throw new Error(message);
         }
 
-        await fetchDashboardData();
-        await fetchCustomerSessions(id);
-        await refreshCustomerRecord(id);
+        void fetchDashboardData();
+        if (selectedCustomerId === id) {
+            void fetchCustomerSessions(id);
+            void refreshCustomerRecord(id);
+        }
     };
 
     const fetchCustomerSessions = async (customerId: number) => {
@@ -906,8 +947,8 @@ const Admin: React.FC = () => {
             }
 
             await fetchCustomerSessions(customerId);
-            await fetchDashboardData();
-            await refreshCustomerRecord(customerId);
+            void fetchDashboardData();
+            void refreshCustomerRecord(customerId);
         } catch (error: any) {
             console.error('Failed to update session presence', error);
             alert(error?.response?.data?.message || 'Failed to update session presence.');
@@ -1031,7 +1072,7 @@ const Admin: React.FC = () => {
 
             const paymentsRes = await axios.get(`/api/admin/customers/${profileData.id}/payments`, { headers: { Authorization: `Bearer ${token}` } });
             setProfilePayments(paymentsRes.data);
-            await fetchDashboardData();
+            void fetchDashboardData();
         } catch (err) {
             console.error(err);
             alert("Error adding payment / session");
@@ -1052,7 +1093,7 @@ const Admin: React.FC = () => {
             }, { headers: { Authorization: `Bearer ${token}` } });
 
             setProfileData({ ...profileData, total_sessions: Number(editSessions), per_session_price: Number(editPrice) });
-            await fetchDashboardData();
+            void fetchDashboardData();
         } catch (err) {
             console.error(err);
             alert("Error saving settings");
@@ -1160,8 +1201,12 @@ const Admin: React.FC = () => {
                                     </div>
                                     <div className="a2-lead-card-footer a2-split-footer">
                                         <button className="a2-btn-secondary" onClick={() => loadCustomerProfile(customer)}>View Profile</button>
-                                        <button className={`a2-btn-toggle ${customer.is_active ? 'btn-red' : 'btn-green'}`} onClick={() => handleUpdateCustomerStatus(customer)}>
-                                            {customer.is_active ? 'Deactivate' : 'Activate'}
+                                        <button
+                                            className={`a2-btn-toggle ${customer.is_active ? 'btn-red' : 'btn-green'}`}
+                                            onClick={() => handleUpdateCustomerStatus(customer)}
+                                            disabled={updatingCustomerId === customer.id}
+                                        >
+                                            {updatingCustomerId === customer.id ? 'Updating...' : (customer.is_active ? 'Deactivate' : 'Activate')}
                                         </button>
                                     </div>
                                 </div>
@@ -1206,8 +1251,12 @@ const Admin: React.FC = () => {
                                             <td className="text-right">
                                                 <div className="a2-action-group">
                                                     <button className="a2-btn-secondary" onClick={() => loadCustomerProfile(customer)}>Profile</button>
-                                                    <button className={`a2-btn-toggle ${customer.is_active ? 'btn-red' : 'btn-green'}`} onClick={() => handleUpdateCustomerStatus(customer)}>
-                                                        {customer.is_active ? 'Deactivate' : 'Activate'}
+                                                    <button
+                                                        className={`a2-btn-toggle ${customer.is_active ? 'btn-red' : 'btn-green'}`}
+                                                        onClick={() => handleUpdateCustomerStatus(customer)}
+                                                        disabled={updatingCustomerId === customer.id}
+                                                    >
+                                                        {updatingCustomerId === customer.id ? 'Updating...' : (customer.is_active ? 'Deactivate' : 'Activate')}
                                                     </button>
                                                 </div>
                                             </td>

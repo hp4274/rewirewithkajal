@@ -91,7 +91,7 @@ rewirewithkajal/
 ## API Overview
 
 ### Auth
-- `POST /api/auth/send-otp` - send login OTP to admin email
+- `POST /api/auth/send-otp` - send login OTP to the entered admin email (must exist in DB)
 - `POST /api/auth/login` - verify OTP and return JWT token
 - `POST /api/auth/register` - create admin account
 
@@ -150,7 +150,6 @@ DB_PORT=5432
 
 JWT_SECRET=replace_with_strong_secret
 
-ADMIN_EMAIL=admin@example.com
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
 ```
@@ -230,15 +229,16 @@ How it works:
 
 ## Admin Access Bootstrap
 
-Admin OTP login now uses `ADMIN_EMAIL` (or falls back to `EMAIL_USER`) as the source of truth.
+Admin OTP login uses the entered email and validates it against the `admins` table.
 
-Use this email in the admin login screen to receive OTP.
-
-Optional: create/update admin password record using the same configured email:
+Create one or more admin accounts first:
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"admin@example.com\",\"password\":\"StrongPassword123\"}"
+curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"admin1@example.com\"}"
+curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"admin2@example.com\"}"
 ```
+
+Then enter any registered admin email at `/admin/login` and OTP will be sent only to that email.
 
 Then login at:
 - `http://localhost:3000/admin/login`
