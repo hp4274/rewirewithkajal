@@ -5,18 +5,29 @@ import path from 'path';
 import { UPLOAD_DIR } from '../middleware/upload';
 
 let blogImagesInitPromise: Promise<void> | null = null;
+const shouldAutoDbSchemaSync =
+    process.env.AUTO_DB_SCHEMA_SYNC === 'true' ||
+    (!process.env.VERCEL && process.env.AUTO_DB_SCHEMA_SYNC !== 'false');
 
 const ensureBlogImagesTable = async (): Promise<void> => {
     if (!blogImagesInitPromise) {
         blogImagesInitPromise = (async () => {
-            await pool.query(`
-                CREATE TABLE IF NOT EXISTS blog_images (
-                    filename VARCHAR(255) PRIMARY KEY,
-                    mime_type VARCHAR(100) NOT NULL,
-                    content BYTEA NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
+            if (shouldAutoDbSchemaSync) {
+                await pool.query(`
+                    CREATE TABLE IF NOT EXISTS blog_images (
+                        filename VARCHAR(255) PRIMARY KEY,
+                        mime_type VARCHAR(100) NOT NULL,
+                        content BYTEA NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                `);
+                return;
+            }
+
+            const existsResult = await pool.query("SELECT to_regclass('public.blog_images') AS table_name");
+            if (!existsResult.rows[0]?.table_name) {
+                throw new Error('Table public.blog_images is missing. Run migrations or set AUTO_DB_SCHEMA_SYNC=true for one-time bootstrap.');
+            }
         })().catch((error) => {
             blogImagesInitPromise = null;
             throw error;

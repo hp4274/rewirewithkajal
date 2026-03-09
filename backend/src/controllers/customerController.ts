@@ -23,6 +23,9 @@ let customerSettingsTableInitPromise: Promise<void> | null = null;
 
 const DEFAULT_PER_SESSION_PRICE = 1500;
 const DEFAULT_TOTAL_SESSIONS = 4;
+const shouldAutoDbSchemaSync =
+    process.env.AUTO_DB_SCHEMA_SYNC === 'true' ||
+    (!process.env.VERCEL && process.env.AUTO_DB_SCHEMA_SYNC !== 'false');
 
 const parseStoredFormData = (raw: any): Record<string, any> => {
     if (!raw) return {};
@@ -145,18 +148,26 @@ const ensureCustomerSettingsTable = async (): Promise<void> => {
     }
 
     customerSettingsTableInitPromise = (async () => {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS customer_settings (
-                customer_id INTEGER PRIMARY KEY REFERENCES customers(id) ON DELETE CASCADE,
-                per_session_price INTEGER NOT NULL DEFAULT ${DEFAULT_PER_SESSION_PRICE},
-                total_sessions INTEGER NOT NULL DEFAULT ${DEFAULT_TOTAL_SESSIONS},
-                is_active BOOLEAN NOT NULL DEFAULT true,
-                status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-        await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true");
-        await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'confirmed'");
+        if (shouldAutoDbSchemaSync) {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS customer_settings (
+                    customer_id INTEGER PRIMARY KEY REFERENCES customers(id) ON DELETE CASCADE,
+                    per_session_price INTEGER NOT NULL DEFAULT ${DEFAULT_PER_SESSION_PRICE},
+                    total_sessions INTEGER NOT NULL DEFAULT ${DEFAULT_TOTAL_SESSIONS},
+                    is_active BOOLEAN NOT NULL DEFAULT true,
+                    status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true");
+            await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'confirmed'");
+            return;
+        }
+
+        const existsResult = await pool.query("SELECT to_regclass('public.customer_settings') AS table_name");
+        if (!existsResult.rows[0]?.table_name) {
+            throw new Error('Table public.customer_settings is missing. Run migrations or set AUTO_DB_SCHEMA_SYNC=true for one-time bootstrap.');
+        }
     })().catch((error) => {
         customerSettingsTableInitPromise = null;
         throw error;

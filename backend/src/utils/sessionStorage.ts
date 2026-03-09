@@ -4,24 +4,49 @@ export interface QueryExecutor {
     query: (text: string, params?: any[]) => Promise<{ rows: any[] }>;
 }
 
-export const ensureCustomerSessionsTable = async (executor: QueryExecutor) => {
-    await executor.query(`
-        CREATE TABLE IF NOT EXISTS customer_sessions (
-            id SERIAL PRIMARY KEY,
-            customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
-            session_date DATE NOT NULL,
-            slot VARCHAR(5) NOT NULL,
-            presence_status VARCHAR(20) NOT NULL DEFAULT 'not_marked',
-            locked BOOLEAN NOT NULL DEFAULT false,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            CONSTRAINT customer_sessions_presence_status_check
-                CHECK (presence_status IN ('present', 'absent', 'not_marked'))
-        )
-    `);
+let customerSessionsSchemaInitPromise: Promise<void> | null = null;
 
-    await executor.query('CREATE INDEX IF NOT EXISTS idx_customer_sessions_customer_date ON customer_sessions(customer_id, session_date)');
-    await executor.query('CREATE INDEX IF NOT EXISTS idx_customer_sessions_date_slot ON customer_sessions(session_date, slot)');
+const shouldAutoDbSchemaSync =
+    process.env.AUTO_DB_SCHEMA_SYNC === 'true' ||
+    (!process.env.VERCEL && process.env.AUTO_DB_SCHEMA_SYNC !== 'false');
+
+export const ensureCustomerSessionsTable = async (executor: QueryExecutor) => {
+    if (customerSessionsSchemaInitPromise) {
+        return customerSessionsSchemaInitPromise;
+    }
+
+    customerSessionsSchemaInitPromise = (async () => {
+        if (shouldAutoDbSchemaSync) {
+            await executor.query(`
+                CREATE TABLE IF NOT EXISTS customer_sessions (
+                    id SERIAL PRIMARY KEY,
+                    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+                    session_date DATE NOT NULL,
+                    slot VARCHAR(5) NOT NULL,
+                    presence_status VARCHAR(20) NOT NULL DEFAULT 'not_marked',
+                    locked BOOLEAN NOT NULL DEFAULT false,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT customer_sessions_presence_status_check
+                        CHECK (presence_status IN ('present', 'absent', 'not_marked'))
+                )
+            `);
+
+            await executor.query('CREATE INDEX IF NOT EXISTS idx_customer_sessions_customer_date ON customer_sessions(customer_id, session_date)');
+            await executor.query('CREATE INDEX IF NOT EXISTS idx_customer_sessions_date_slot ON customer_sessions(session_date, slot)');
+            return;
+        }
+
+        const existsResult = await executor.query("SELECT to_regclass('public.customer_sessions') AS table_name");
+        if (!existsResult.rows[0]?.table_name) {
+            throw new Error('Table public.customer_sessions is missing. Run migrations or set AUTO_DB_SCHEMA_SYNC=true for one-time bootstrap.');
+        }
+    })().catch((error) => {
+        customerSessionsSchemaInitPromise = null;
+        throw error;
+    });
+
+    return customerSessionsSchemaInitPromise;
 };
 
 export const normalizeSlotForSession = (slotValue: unknown): string | null => {

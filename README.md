@@ -152,6 +152,9 @@ JWT_SECRET=replace_with_strong_secret
 
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
+
+# Optional: keep false on Vercel to avoid runtime DDL in request handlers
+AUTO_DB_SCHEMA_SYNC=false
 ```
 
 ## Local Setup

@@ -1499,7 +1499,7 @@ const Admin: React.FC = () => {
 
                     {/* Right Column (Sidebar/Forms) */}
                     <div className="a2-profile-col">
-                        <div className="a2-panel a2-attendance-panel a2-fixed-history-panel">
+                        <div className="a2-panel a2-attendance-panel a2-fixed-history-panel" style={{ display: 'flex', flexDirection: 'column' }}>
                             <h3><ClipboardList size={18} /> Session Attendance History</h3>
                             <div className="a2-attendance-list">
                                 {visibleProfileSessions.length === 0 ? (
