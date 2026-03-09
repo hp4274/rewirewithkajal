@@ -9,9 +9,8 @@ interface CustomerData {
     email: string;
     phone?: string;
     dob?: string;
-    work?: string;
-    address?: string;
-    age?: number;
+    occupation?: string;
+    city?: string;
     form_data: any;
     status: string;
     is_active: boolean;
@@ -230,9 +229,9 @@ const CustomerProfile: React.FC = () => {
     const profileName = customer.name || customer.form_data?.name || 'Customer';
     const detailEmail = customer.email || customer.form_data?.email || 'N/A';
     const detailPhone = customer.phone || customer.form_data?.phone || 'N/A';
-    const detailAgeDob = customer.dob || customer.form_data?.dob || customer.age || 'N/A';
-    const detailCity = customer.form_data?.city || customer.address || 'N/A';
-    const detailOccupation = customer.form_data?.occupation || customer.work || 'N/A';
+    const detailAgeDob = customer.dob || customer.form_data?.dob || 'N/A';
+    const detailCity = customer.city || customer.form_data?.city || 'N/A';
+    const detailOccupation = customer.occupation || customer.form_data?.occupation || customer.form_data?.work || 'N/A';
     const detailScore = customer.form_data?.total_score ?? 'N/A';
     const detailStatus = (customer.status || 'pending').toUpperCase();
 

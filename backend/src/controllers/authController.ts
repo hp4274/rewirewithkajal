@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../db';
 import { sendEmail } from '../utils/mailer';
@@ -30,7 +29,6 @@ const ensureAdminAuthSchema = async (): Promise<void> => {
             CREATE TABLE IF NOT EXISTS admins (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
                 otp VARCHAR(10),
                 otp_expires_at TIMESTAMP
             )
@@ -38,6 +36,7 @@ const ensureAdminAuthSchema = async (): Promise<void> => {
 
         await pool.query('ALTER TABLE admins ADD COLUMN IF NOT EXISTS otp VARCHAR(10)');
         await pool.query('ALTER TABLE admins ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP');
+        await pool.query('ALTER TABLE admins DROP COLUMN IF EXISTS password');
     })().catch((error) => {
         authSchemaInitPromise = null;
         throw error;
@@ -54,11 +53,9 @@ const ensureConfiguredAdminRecord = async (adminEmail: string) => {
         return existing.rows[0].id as number;
     }
 
-    // Placeholder password is only to satisfy NOT NULL schema in OTP-first login flow.
-    const placeholderHash = await bcrypt.hash(process.env.JWT_SECRET || 'secret', 10);
     const created = await pool.query(
-        'INSERT INTO admins (email, password) VALUES ($1, $2) RETURNING id',
-        [adminEmail, placeholderHash]
+        'INSERT INTO admins (email) VALUES ($1) RETURNING id',
+        [adminEmail]
     );
     return created.rows[0].id as number;
 };
@@ -137,7 +134,7 @@ export const registerAdmin = async (req: Request, res: Response) => {
     try {
         await ensureAdminAuthSchema();
 
-        const { email, password } = req.body;
+        const { email } = req.body;
         const configuredAdminEmail = getConfiguredAdminEmail();
         if (!configuredAdminEmail) {
             return res.status(500).json({ message: 'ADMIN_EMAIL is not configured' });
@@ -154,12 +151,9 @@ export const registerAdmin = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Admin already exists' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
         const result = await pool.query(
-            'INSERT INTO admins (email, password) VALUES ($1, $2) RETURNING id, email',
-            [configuredAdminEmail, hashedPassword]
+            'INSERT INTO admins (email) VALUES ($1) RETURNING id, email',
+            [configuredAdminEmail]
         );
 
         const admin = result.rows[0];

@@ -33,8 +33,8 @@ export const normalizeSlotForSession = (slotValue: unknown): string | null => {
 export const ensureCurrentCustomerSessionRecord = async (executor: QueryExecutor, customerId: number) => {
     const currentResult = await executor.query(
         `SELECT
-            appointment_date,
-            COALESCE(NULLIF(slot, ''), TO_CHAR(appointment_date, 'HH24:MI')) AS effective_slot
+            preferred_date,
+            preferred_slot AS effective_slot
          FROM customers
          WHERE id = $1`,
         [customerId]
@@ -43,9 +43,9 @@ export const ensureCurrentCustomerSessionRecord = async (executor: QueryExecutor
     if (currentResult.rows.length === 0) return;
 
     const current = currentResult.rows[0];
-    if (!current.appointment_date) return;
+    if (!current.preferred_date) return;
 
-    const sessionDate = normalizeDateInput(current.appointment_date);
+    const sessionDate = normalizeDateInput(current.preferred_date);
     const slot = normalizeSlotForSession(current.effective_slot);
 
     if (!sessionDate || !slot) return;

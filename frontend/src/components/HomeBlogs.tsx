@@ -3,6 +3,7 @@ import axios from 'axios';
 import './HomeBlogs.css';
 import { NavLink } from 'react-router-dom';
 import logo from '../assets/logo3.png';
+import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 
 interface Blog {
     id: number;
@@ -19,14 +20,12 @@ const HomeBlogs: React.FC = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                // Fetch the latest blogs
-                const response = await axios.get('/api/blogs/public');
-                // We only need the top 2 recent ones
-                if (response.data && response.data.length > 0) {
-                    setBlogs(response.data.slice(0, 2));
-                }
+                const response = await requestWithApiFallback<Blog[]>(() => axios.get(apiUrl('/api/blogs/public')));
+                const incomingBlogs = Array.isArray(response.data) ? response.data : [];
+                setBlogs(incomingBlogs.slice(0, 2));
             } catch (error) {
                 console.error('Error fetching blogs:', error);
+                setBlogs([]);
             } finally {
                 setLoading(false);
             }
@@ -40,6 +39,8 @@ const HomeBlogs: React.FC = () => {
 
     const latestBlog = blogs[0];
     const secondLatestBlog = blogs.length > 1 ? blogs[1] : null;
+    const latestImageUrl = latestBlog ? resolveMediaUrl(latestBlog.image_url) : '';
+    const secondLatestImageUrl = secondLatestBlog ? resolveMediaUrl(secondLatestBlog.image_url) : '';
 
     return (
         <section className="home-blogs-section container">
@@ -53,7 +54,13 @@ const HomeBlogs: React.FC = () => {
                 {latestBlog && (
                     <div className="home-blog-card latest">
                         <div className="home-blog-image-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', overflow: 'hidden' }}>
-                            <img src={latestBlog.image_url ? `${latestBlog.image_url}` : logo} alt={latestBlog.title} className="home-blog-logo" style={latestBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : {}} />
+                            <img
+                                src={latestImageUrl || logo}
+                                alt={latestBlog.title}
+                                className="home-blog-logo"
+                                style={latestImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
+                                onError={(e) => { e.currentTarget.src = logo; }}
+                            />
                         </div>
                         <div className="home-blog-content">
                             <span className="blog-date">{new Date(latestBlog.created_at).toLocaleDateString()}</span>
@@ -68,7 +75,13 @@ const HomeBlogs: React.FC = () => {
                 {secondLatestBlog && (
                     <div className="home-blog-card second-latest">
                         <div className="home-blog-image-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', overflow: 'hidden' }}>
-                            <img src={secondLatestBlog.image_url ? `${secondLatestBlog.image_url}` : logo} alt={secondLatestBlog.title} className="home-blog-logo" style={secondLatestBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : {}} />
+                            <img
+                                src={secondLatestImageUrl || logo}
+                                alt={secondLatestBlog.title}
+                                className="home-blog-logo"
+                                style={secondLatestImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
+                                onError={(e) => { e.currentTarget.src = logo; }}
+                            />
                         </div>
                         <div className="home-blog-content">
                             <span className="blog-date">{new Date(secondLatestBlog.created_at).toLocaleDateString()}</span>

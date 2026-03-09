@@ -1,9 +1,41 @@
 import { Request, Response } from 'express';
 import pool from '../db';
-import { buildAppointmentTimestamp, isValidMobile10, isoDateToDdMmYyyy, normalizeDateInput } from '../utils/validation';
+import { isValidMobile10, normalizeDateInput } from '../utils/validation';
 import { ensureCurrentCustomerSessionRecord, ensureCustomerSessionsTable, normalizeSlotForSession } from '../utils/sessionStorage';
 
 const VALID_PRESENCE_STATUSES = new Set(['present', 'absent', 'not_marked']);
+
+const buildCompatFormData = (row: any) => ({
+    email: row.email,
+    first_name: row.first_name,
+    last_name: row.last_name,
+    city: row.city,
+    phone: row.phone_number,
+    occupation: row.occupation,
+    dob: row.dob,
+    primary_concern: row.primary_concern,
+    consultation_preference: row.preference_visit,
+    days_preference: row.preferred_date ? [row.preferred_date] : [],
+    timings_preference: row.preferred_slot ? [row.preferred_slot] : [],
+    q1: [],
+    q2: []
+});
+
+const withCustomerCompat = (row: any, overrideSettings?: {
+    is_active?: boolean;
+    status?: string;
+    per_session_price?: number;
+    total_sessions?: number;
+}) => ({
+    ...row,
+    appointment_date: row.preferred_date,
+    slot: row.preferred_slot,
+    status: overrideSettings?.status ?? 'confirmed',
+    is_active: overrideSettings?.is_active ?? true,
+    per_session_price: Number(overrideSettings?.per_session_price ?? 0),
+    total_sessions: Number(overrideSettings?.total_sessions ?? 0),
+    form_data: buildCompatFormData(row)
+});
 
 export const getCustomerPayments = async (req: Request, res: Response) => {
     try {
@@ -66,13 +98,35 @@ export const addPayment = async (req: Request, res: Response) => {
 export const updateCustomerSettings = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { is_active, per_session_price, total_sessions, status } = req.body;
+        const isActive = typeof req.body?.is_active === 'boolean' ? req.body.is_active : true;
+        const status = typeof req.body?.status === 'string' && req.body.status.trim()
+            ? req.body.status.trim().toLowerCase()
+            : 'confirmed';
+        const perSessionPrice = Number.isFinite(Number(req.body?.per_session_price))
+            ? Number(req.body.per_session_price)
+            : 0;
+        const totalSessions = Number.isFinite(Number(req.body?.total_sessions))
+            ? Number(req.body.total_sessions)
+            : 0;
 
         const result = await pool.query(
-            'UPDATE customers SET is_active = $1, per_session_price = $2, total_sessions = $3, status = $4 WHERE id = $5 RETURNING *',
-            [is_active, per_session_price, total_sessions, status || 'confirmed', id]
+            `SELECT *
+             FROM customers
+             WHERE id = $1`,
+            [id]
         );
-        res.json(result.rows[0]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        // schema_v4 intentionally does not persist pricing/account-status columns.
+        res.json(withCustomerCompat(result.rows[0], {
+            is_active: isActive,
+            status,
+            per_session_price: perSessionPrice,
+            total_sessions: totalSessions
+        }));
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -176,15 +230,6 @@ export const updateSessionPresence = async (req: Request, res: Response) => {
 
         const currentSession = sessionResult.rows[0];
 
-        const customerSettingsResult = await client.query(
-            `SELECT COALESCE(total_sessions, 0)::int AS total_sessions
-             FROM customers
-             WHERE id = $1
-             FOR UPDATE`,
-            [customerId]
-        );
-        const configuredTotalSessions = Number(customerSettingsResult.rows[0]?.total_sessions || 0);
-
         if ((currentSession.locked || currentSession.presence_status === 'present') && rawStatus !== 'present') {
             await client.query('ROLLBACK');
             return res.status(409).json({ message: 'Present sessions are locked and cannot be changed.' });
@@ -217,45 +262,6 @@ export const updateSessionPresence = async (req: Request, res: Response) => {
                 });
             }
 
-            if (configuredTotalSessions > 0) {
-                const totalSessionCountResult = await client.query(
-                    `SELECT COUNT(*)::int AS session_count
-                     FROM customer_sessions
-                     WHERE customer_id = $1`,
-                    [customerId]
-                );
-                const existingSessionCount = Number(totalSessionCountResult.rows[0]?.session_count || 0);
-
-                if (existingSessionCount >= configuredTotalSessions) {
-                    await client.query(
-                        `UPDATE customers
-                         SET appointment_date = CASE
-                                WHEN DATE(appointment_date) = $1::date
-                                     AND COALESCE(NULLIF(slot, '')::text, TO_CHAR(appointment_date, 'HH24:MI')) = $2::text
-                                THEN NULL
-                                ELSE appointment_date
-                            END,
-                            slot = CASE
-                                WHEN DATE(appointment_date) = $1::date
-                                     AND COALESCE(NULLIF(slot, '')::text, TO_CHAR(appointment_date, 'HH24:MI')) = $2::text
-                                THEN NULL
-                                ELSE slot
-                            END
-                         WHERE id = $3`,
-                        [normalizedCurrentDate, normalizedCurrentSlot, customerId]
-                    );
-
-                    await client.query('COMMIT');
-                    return res.status(200).json({
-                        message: `Session marked present. Total session limit (${configuredTotalSessions}) reached, so no new session was scheduled.`,
-                        session: updatedSession,
-                        nextSessionCreated: false,
-                        conflict: false,
-                        limitReached: true
-                    });
-                }
-            }
-
             const nextDateResult = await client.query(
                 `SELECT TO_CHAR(($1::date + INTERVAL '7 day')::date, 'YYYY-MM-DD') AS next_date`,
                 [normalizedCurrentDate]
@@ -265,27 +271,25 @@ export const updateSessionPresence = async (req: Request, res: Response) => {
             const conflictResult = await client.query(
                 `SELECT cs.id,
                         cs.customer_id,
-                        TRIM(CONCAT(COALESCE(l.first_name, c.form_data->>'first_name', 'Another'), ' ', COALESCE(l.last_name, c.form_data->>'last_name', 'Customer'))) AS customer_name
+                    TRIM(CONCAT(COALESCE(c.first_name, 'Another'), ' ', COALESCE(c.last_name, 'Customer'))) AS customer_name
                  FROM customer_sessions cs
                  LEFT JOIN customers c ON cs.customer_id = c.id
-                 LEFT JOIN leads l ON c.lead_id = l.id
                  WHERE cs.session_date = $1::date
                    AND cs.slot = $2
                    AND cs.customer_id != $3
                  LIMIT 1`,
-                                [nextDate, normalizedCurrentSlot, customerId]
+                [nextDate, normalizedCurrentSlot, customerId]
             );
 
             const conflictAppointmentResult = await client.query(
                 `SELECT c.id,
-                        TRIM(CONCAT(COALESCE(l.first_name, c.form_data->>'first_name', 'Another'), ' ', COALESCE(l.last_name, c.form_data->>'last_name', 'Customer'))) AS customer_name
+                    TRIM(CONCAT(COALESCE(c.first_name, 'Another'), ' ', COALESCE(c.last_name, 'Customer'))) AS customer_name
                  FROM customers c
-                 LEFT JOIN leads l ON c.lead_id = l.id
-                                 WHERE c.id != $3
-                   AND DATE(c.appointment_date) = $1::date
-                                     AND COALESCE(NULLIF(c.slot, '')::text, TO_CHAR(c.appointment_date, 'HH24:MI')) = $2::text
+                 WHERE c.id != $3
+                   AND c.preferred_date = $1::date
+                   AND c.preferred_slot = $2::text
                  LIMIT 1`,
-                                                                [nextDate, normalizedCurrentSlot, customerId]
+                [nextDate, normalizedCurrentSlot, customerId]
             );
 
             if (conflictResult.rows.length > 0 || conflictAppointmentResult.rows.length > 0) {
@@ -319,10 +323,9 @@ export const updateSessionPresence = async (req: Request, res: Response) => {
                 [customerId, nextDate, normalizedCurrentSlot]
             );
 
-            const nextAppointmentTimestamp = buildAppointmentTimestamp(nextDate, normalizedCurrentSlot);
             await client.query(
-                'UPDATE customers SET appointment_date = $1, slot = $2 WHERE id = $3',
-                [nextAppointmentTimestamp, normalizedCurrentSlot, customerId]
+                'UPDATE customers SET preferred_date = $1::date, preferred_slot = $2::text WHERE id = $3',
+                [nextDate, normalizedCurrentSlot, customerId]
             );
 
             await client.query('COMMIT');
@@ -370,28 +373,16 @@ export const getHistoricalForms = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'DOB must be in DD-MM-YYYY format.' });
         }
 
-        const dobCandidates = [String(dob).trim(), normalizedDob, isoDateToDdMmYyyy(normalizedDob)].filter(
-            (value, index, arr) => value && arr.indexOf(value) === index
-        );
-
-        // Using jsonb extraction operator ->> to match phone and dob inside form_data
         const query = `
             SELECT * FROM customers 
-            WHERE form_data->>'phone' = $1
-              AND (form_data->>'dob') = ANY($2::text[])
+            WHERE phone_number = $1
+              AND dob = $2::date
             ORDER BY created_at DESC
         `;
-        const result = await pool.query(query, [normalizedPhone, dobCandidates]);
+        const result = await pool.query(query, [normalizedPhone, normalizedDob]);
 
-        const validForms = result.rows.filter(form =>
-            form.form_data && Array.isArray(form.form_data.q1) && Array.isArray(form.form_data.q2)
-        );
-
-        const uniqueForms = validForms.filter((form, index, self) =>
-            index === self.findIndex((t) => JSON.stringify(t.form_data) === JSON.stringify(form.form_data))
-        );
-
-        res.json(uniqueForms);
+        const formattedRows = result.rows.map((row) => withCustomerCompat(row));
+        res.json(formattedRows);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -405,7 +396,7 @@ export const getHistoricalFormById = async (req: Request, res: Response) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Form not found' });
         }
-        res.json(result.rows[0]);
+        res.json(withCustomerCompat(result.rows[0]));
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }

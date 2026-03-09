@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Blogs.css';
 import logo from '../assets/logo3.png';
+import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 
 interface Blog {
     id: number;
@@ -25,10 +26,11 @@ const Blogs: React.FC = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const response = await axios.get('/api/blogs/public');
-                setBlogs(response.data);
+                const response = await requestWithApiFallback<Blog[]>(() => axios.get(apiUrl('/api/blogs/public')));
+                setBlogs(Array.isArray(response.data) ? response.data : []);
             } catch (error) {
                 console.error('Error fetching blogs:', error);
+                setBlogs([]);
             } finally {
                 setLoading(false);
             }
@@ -41,6 +43,7 @@ const Blogs: React.FC = () => {
 
     const featuredBlog = blogs.length > 0 ? blogs[0] : null;
     const remainingBlogs = blogs.length > 1 ? blogs.slice(1) : [];
+    const featuredImageUrl = featuredBlog ? resolveMediaUrl(featuredBlog.image_url) : '';
 
     return (
         <main className="blogs-page container fade-in" style={{ paddingTop: '100px' }}>
@@ -57,7 +60,12 @@ const Blogs: React.FC = () => {
                     {featuredBlog && (
                         <div className="featured-blog reveal active">
                             <div className="featured-image" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center', width: '100%', height: '300px', overflow: 'hidden', borderRadius: '8px' }}>
-                                <img src={featuredBlog.image_url ? `${featuredBlog.image_url}` : logo} alt={featuredBlog.title} style={featuredBlog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '120px', width: 'auto', objectFit: 'contain' }} />
+                                <img
+                                    src={featuredImageUrl || logo}
+                                    alt={featuredBlog.title}
+                                    style={featuredImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '120px', width: 'auto', objectFit: 'contain' }}
+                                    onError={(e) => { e.currentTarget.src = logo; }}
+                                />
                             </div>
                             <div className="featured-content">
                                 <span className="blog-date">{new Date(featuredBlog.created_at).toLocaleDateString()}</span>
@@ -78,26 +86,34 @@ const Blogs: React.FC = () => {
                     {/* Remaining Blogs - Masonry Grid */}
                     {remainingBlogs.length > 0 && (
                         <div className="blogs-masonry reveal active">
-                            {remainingBlogs.map(blog => (
-                                <article key={blog.id} className="blog-card masonry-item">
-                                    <div className="blog-image" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', width: '100%', height: '200px', overflow: 'hidden', borderRadius: '8px', paddingTop: blog.image_url ? '0' : '20px' }}>
-                                        <img src={blog.image_url ? `${blog.image_url}` : logo} alt={blog.title} style={blog.image_url ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '80px', width: 'auto', objectFit: 'contain' }} />
-                                    </div>
-                                    <div className="blog-content">
-                                        <span className="blog-date">{new Date(blog.created_at).toLocaleDateString()}</span>
-                                        <h3>{blog.title}</h3>
-                                        <p className={expandedBlogIds.includes(blog.id) ? "" : "line-clamp-3"}>
-                                            {blog.content}
-                                        </p>
-                                        <button
-                                            className="btn-secondary read-more-btn"
-                                            onClick={() => toggleReadMore(blog.id)}
-                                        >
-                                            {expandedBlogIds.includes(blog.id) ? "Show Less" : "Read Article"}
-                                        </button>
-                                    </div>
-                                </article>
-                            ))}
+                            {remainingBlogs.map(blog => {
+                                const blogImageUrl = resolveMediaUrl(blog.image_url);
+                                return (
+                                    <article key={blog.id} className="blog-card masonry-item">
+                                        <div className="blog-image" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', width: '100%', height: '200px', overflow: 'hidden', borderRadius: '8px', paddingTop: blogImageUrl ? '0' : '20px' }}>
+                                            <img
+                                                src={blogImageUrl || logo}
+                                                alt={blog.title}
+                                                style={blogImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '80px', width: 'auto', objectFit: 'contain' }}
+                                                onError={(e) => { e.currentTarget.src = logo; }}
+                                            />
+                                        </div>
+                                        <div className="blog-content">
+                                            <span className="blog-date">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            <h3>{blog.title}</h3>
+                                            <p className={expandedBlogIds.includes(blog.id) ? "" : "line-clamp-3"}>
+                                                {blog.content}
+                                            </p>
+                                            <button
+                                                className="btn-secondary read-more-btn"
+                                                onClick={() => toggleReadMore(blog.id)}
+                                            >
+                                                {expandedBlogIds.includes(blog.id) ? "Show Less" : "Read Article"}
+                                            </button>
+                                        </div>
+                                    </article>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import pool from '../db';
-import crypto from 'crypto';
 import { sendEmail } from '../utils/mailer';
 import {
     isDobNotFuture,
@@ -103,11 +102,40 @@ export const acceptLead = async (req: Request, res: Response) => {
 
         const lead = leadResult.rows[0];
 
-        // Create a customer without any hidden tokens
-        const customerResult = await pool.query(
-            'INSERT INTO customers (lead_id, status, is_active) VALUES ($1, $2, $3) RETURNING *',
-            [lead.id, 'confirmed', true]
+        const normalizedEmail = typeof lead.email === 'string' ? lead.email.trim().toLowerCase() : '';
+        const normalizedPhone = typeof lead.phone === 'string' ? lead.phone.trim() : '';
+        const normalizedDob = lead.dob ? String(lead.dob).slice(0, 10) : null;
+        const normalizedPreferredDate = lead.preferred_date ? String(lead.preferred_date).slice(0, 10) : null;
+
+        const existingCustomerResult = await pool.query(
+            `SELECT *
+             FROM customers
+             WHERE LOWER(email) = LOWER($1)
+               AND phone_number = $2
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [normalizedEmail, normalizedPhone]
         );
+
+        let customerRow = existingCustomerResult.rows[0] || null;
+        if (!customerRow) {
+            const customerResult = await pool.query(
+                `INSERT INTO customers
+                    (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
+                 VALUES ($1, $2, $3, NULL, $4, NULL, $5::date, $6, NULL, $7::date, NULL)
+                 RETURNING *`,
+                [
+                    normalizedEmail,
+                    lead.first_name || 'Client',
+                    lead.last_name || null,
+                    normalizedPhone,
+                    normalizedDob,
+                    lead.concern || null,
+                    normalizedPreferredDate
+                ]
+            );
+            customerRow = customerResult.rows[0];
+        }
 
         // Send Confirmation Link Email (Directing to Public Intake Page)
         try {
@@ -138,7 +166,7 @@ export const acceptLead = async (req: Request, res: Response) => {
         res.json({
             message: 'Lead accepted and moved to customers',
             lead,
-            customer: customerResult.rows[0]
+            customer: customerRow
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });

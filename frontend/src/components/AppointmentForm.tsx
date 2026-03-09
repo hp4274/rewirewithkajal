@@ -8,6 +8,7 @@ import {
     isValidMobile10,
     toDateInputString
 } from '../utils/validation';
+import { apiUrl, requestWithApiFallback } from '../utils/api';
 
 const AppointmentForm: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -73,12 +74,11 @@ const AppointmentForm: React.FC = () => {
         setStatus('loading');
 
         try {
-            // Assuming backend is running on 5000 or proxied
-            await axios.post('/api/leads', {
+            await requestWithApiFallback(() => axios.post(apiUrl('/api/leads'), {
                 ...formData,
                 email: formData.email.trim().toLowerCase(),
                 phone: formData.phone.trim()
-            });
+            }));
             setStatus('success');
             setErrorMessage('');
             setFormData({ first_name: '', last_name: '', dob: '', email: '', phone: '', concern: '', preferred_date: '', message: '' });

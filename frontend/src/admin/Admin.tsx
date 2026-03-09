@@ -1196,7 +1196,7 @@ const Admin: React.FC = () => {
                                         <div className="a2-info-item a2-info-item-wide"><small>Email</small><p>{profileData.email || 'N/A'}</p></div>
                                         <div className="a2-info-item"><small>Phone</small><p>{fd.phone || profileData.phone || 'N/A'}</p></div>
                                         <div className="a2-info-item"><small>DOB</small><p>{fd.dob || profileData.dob || 'N/A'}</p></div>
-                                        <div className="a2-info-item"><small>Occupation</small><p>{fd.work || fd.occupation || 'N/A'}</p></div>
+                                        <div className="a2-info-item"><small>Occupation</small><p>{fd.occupation || fd.work || 'N/A'}</p></div>
                                         <div className="a2-info-item"><small>Address</small><p>{fd.city || 'N/A'}</p></div>
                                     </div>
                                 </div>

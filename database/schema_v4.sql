@@ -1,3 +1,7 @@
+-- schema_v4.sql
+-- Requested minimal schema: customer data stored directly in customers table,
+-- with payments/session_notes/customer_sessions/blogs kept in current shape.
+
 CREATE TABLE admins (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -21,17 +25,20 @@ CREATE TABLE leads (
 
 CREATE TABLE customers (
     id SERIAL PRIMARY KEY,
-    lead_id INTEGER REFERENCES leads(id) ON DELETE CASCADE,
-    status VARCHAR(50) DEFAULT 'pending', -- pending, confirmed, deactivated, declined
-    is_active BOOLEAN DEFAULT true,
-    occupation VARCHAR(255),
+    email VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255),
     city VARCHAR(255),
-    per_session_price INTEGER DEFAULT 1500,
-    total_sessions INTEGER DEFAULT 4,
-    appointment_date TIMESTAMP,
-    slot VARCHAR(5), -- HH:mm, e.g. '10:00'
-    form_data JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    phone_number VARCHAR(50) NOT NULL,
+    occupation VARCHAR(255),
+    dob DATE,
+    primary_concern TEXT,
+    preference_visit VARCHAR(20), -- online/offline
+    preferred_date DATE,
+    preferred_slot VARCHAR(5), -- HH:mm
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT customers_preference_visit_check
+        CHECK (preference_visit IN ('online', 'offline') OR preference_visit IS NULL)
 );
 
 CREATE TABLE payments (
@@ -74,13 +81,12 @@ CREATE TABLE blogs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Performance indexes used by admin dashboards and form matching APIs.
+-- Basic indexes for the requested schema.
 CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
 CREATE INDEX idx_customers_created_at ON customers(created_at DESC);
-CREATE INDEX idx_customers_appointment_slot ON customers(appointment_date, slot);
-CREATE INDEX idx_customers_form_data_gin ON customers USING GIN (form_data);
-CREATE INDEX idx_customers_form_phone ON customers((form_data->>'phone'));
-CREATE INDEX idx_customers_form_dob ON customers((form_data->>'dob'));
+CREATE INDEX idx_customers_email ON customers(email);
+CREATE INDEX idx_customers_phone_number ON customers(phone_number);
+CREATE INDEX idx_customers_preferred_date_slot ON customers(preferred_date, preferred_slot);
 CREATE INDEX idx_payments_customer_date ON payments(customer_id, payment_date DESC);
 CREATE INDEX idx_session_notes_customer_date ON session_notes(customer_id, created_at DESC);
 CREATE INDEX idx_customer_sessions_customer_date ON customer_sessions(customer_id, session_date DESC);
