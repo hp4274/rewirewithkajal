@@ -4,6 +4,35 @@ import { isValidMobile10, normalizeDateInput } from '../utils/validation';
 import { ensureCurrentCustomerSessionRecord, ensureCustomerSessionsTable, normalizeSlotForSession } from '../utils/sessionStorage';
 
 const VALID_PRESENCE_STATUSES = new Set(['present', 'absent', 'not_marked']);
+const DEFAULT_PER_SESSION_PRICE = 1500;
+const DEFAULT_TOTAL_SESSIONS = 4;
+let customerSettingsTableInitPromise: Promise<void> | null = null;
+
+const ensureCustomerSettingsTable = async (): Promise<void> => {
+    if (customerSettingsTableInitPromise) {
+        return customerSettingsTableInitPromise;
+    }
+
+    customerSettingsTableInitPromise = (async () => {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS customer_settings (
+                customer_id INTEGER PRIMARY KEY REFERENCES customers(id) ON DELETE CASCADE,
+                per_session_price INTEGER NOT NULL DEFAULT ${DEFAULT_PER_SESSION_PRICE},
+                total_sessions INTEGER NOT NULL DEFAULT ${DEFAULT_TOTAL_SESSIONS},
+                is_active BOOLEAN NOT NULL DEFAULT true,
+                status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true");
+        await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'confirmed'");
+    })().catch((error) => {
+        customerSettingsTableInitPromise = null;
+        throw error;
+    });
+
+    return customerSettingsTableInitPromise;
+};
 
 const parseStoredFormData = (raw: any): Record<string, any> => {
     if (!raw) return {};
@@ -65,10 +94,10 @@ const withCustomerCompat = (row: any, overrideSettings?: {
     ...row,
     appointment_date: row.preferred_date,
     slot: row.preferred_slot,
-    status: overrideSettings?.status ?? 'confirmed',
-    is_active: overrideSettings?.is_active ?? true,
-    per_session_price: Number(overrideSettings?.per_session_price ?? 0),
-    total_sessions: Number(overrideSettings?.total_sessions ?? 0),
+    status: overrideSettings?.status ?? row.settings_status ?? row.status ?? 'confirmed',
+    is_active: overrideSettings?.is_active ?? row.settings_is_active ?? row.is_active ?? true,
+    per_session_price: Number(overrideSettings?.per_session_price ?? row.settings_per_session_price ?? row.per_session_price ?? DEFAULT_PER_SESSION_PRICE),
+    total_sessions: Number(overrideSettings?.total_sessions ?? row.settings_total_sessions ?? row.total_sessions ?? DEFAULT_TOTAL_SESSIONS),
     form_data: buildCompatFormData(row)
 });
 
@@ -132,30 +161,59 @@ export const addPayment = async (req: Request, res: Response) => {
 
 export const updateCustomerSettings = async (req: Request, res: Response) => {
     try {
+        await ensureCustomerSettingsTable();
+
         const { id } = req.params;
+        const customerId = Number(id);
+        if (!Number.isInteger(customerId) || customerId <= 0) {
+            return res.status(400).json({ message: 'Invalid customer id.' });
+        }
+
         const isActive = typeof req.body?.is_active === 'boolean' ? req.body.is_active : true;
         const status = typeof req.body?.status === 'string' && req.body.status.trim()
             ? req.body.status.trim().toLowerCase()
             : 'confirmed';
         const perSessionPrice = Number.isFinite(Number(req.body?.per_session_price))
             ? Number(req.body.per_session_price)
-            : 0;
+            : DEFAULT_PER_SESSION_PRICE;
         const totalSessions = Number.isFinite(Number(req.body?.total_sessions))
             ? Number(req.body.total_sessions)
-            : 0;
+            : DEFAULT_TOTAL_SESSIONS;
+
+        if (perSessionPrice < 0 || totalSessions < 0) {
+            return res.status(400).json({ message: 'Price and sessions must be zero or greater.' });
+        }
+
+        await pool.query(
+            `INSERT INTO customer_settings (customer_id, per_session_price, total_sessions, is_active, status, updated_at)
+             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+             ON CONFLICT (customer_id)
+             DO UPDATE SET
+                per_session_price = EXCLUDED.per_session_price,
+                total_sessions = EXCLUDED.total_sessions,
+                is_active = EXCLUDED.is_active,
+                status = EXCLUDED.status,
+                updated_at = CURRENT_TIMESTAMP`,
+            [customerId, perSessionPrice, totalSessions, isActive, status]
+        );
 
         const result = await pool.query(
-            `SELECT *
-             FROM customers
-             WHERE id = $1`,
-            [id]
+            `SELECT
+                c.*,
+                COALESCE(cs.per_session_price, $2) AS settings_per_session_price,
+                COALESCE(cs.total_sessions, $3) AS settings_total_sessions,
+                COALESCE(cs.is_active, true) AS settings_is_active,
+                COALESCE(NULLIF(TRIM(cs.status), ''), 'confirmed') AS settings_status
+             FROM customers c
+             LEFT JOIN customer_settings cs ON cs.customer_id = c.id
+             WHERE c.id = $1`,
+            [customerId, DEFAULT_PER_SESSION_PRICE, DEFAULT_TOTAL_SESSIONS]
         );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Customer not found' });
         }
 
-        // schema_v4 intentionally does not persist pricing/account-status columns.
         res.json(withCustomerCompat(result.rows[0], {
             is_active: isActive,
             status,

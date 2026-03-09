@@ -10,9 +10,30 @@ const createPool = (config: PoolConfig) => {
   const nextPool = new Pool(config);
   nextPool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
-    process.exit(-1);
   });
   return nextPool;
+};
+
+const commonPoolOptions: PoolConfig = {
+  max: parseInt(process.env.DB_POOL_MAX || (process.env.VERCEL ? '5' : '20'), 10),
+  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS || '10000', 10),
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '5000', 10),
+  keepAlive: true,
+};
+
+const slowQueryThresholdMs = parseInt(process.env.DB_SLOW_QUERY_MS || '0', 10);
+
+const formatQueryPreview = (text: unknown): string => {
+  const normalized = String(text || '').replace(/\s+/g, ' ').trim();
+  return normalized.length > 180 ? `${normalized.slice(0, 180)}...` : normalized;
+};
+
+const logSlowQueryIfNeeded = (startedAt: number, args: any[]) => {
+  if (!Number.isFinite(slowQueryThresholdMs) || slowQueryThresholdMs <= 0) return;
+  const duration = Date.now() - startedAt;
+  if (duration < slowQueryThresholdMs) return;
+  const queryText = typeof args?.[0] === 'string' ? args[0] : args?.[0]?.text;
+  console.warn(`[db][slow-query] ${duration}ms ${formatQueryPreview(queryText)}`);
 };
 
 const basePoolConfig: PoolConfig = connectionString
@@ -20,6 +41,7 @@ const basePoolConfig: PoolConfig = connectionString
       connectionString,
       // Supabase requires SSL in hosted environments.
       ssl: sslConfig,
+      ...commonPoolOptions,
     }
   : {
       user: process.env.DB_USER || 'postgres',
@@ -27,6 +49,7 @@ const basePoolConfig: PoolConfig = connectionString
       database: process.env.DB_NAME || 'rewire_kajal',
       password: process.env.DB_PASSWORD || 'postgres',
       port: parseInt(process.env.DB_PORT || '5432', 10),
+      ...commonPoolOptions,
     };
 
 let activePool = createPool(basePoolConfig);
@@ -176,6 +199,7 @@ const trySupabaseFallback = async (err: unknown): Promise<boolean> => {
     switchToPoolConfig({
       connectionString: fallbackConnectionString,
       ssl: sslConfig,
+      ...commonPoolOptions,
     });
     return true;
   })();
@@ -188,14 +212,19 @@ const trySupabaseFallback = async (err: unknown): Promise<boolean> => {
 };
 
 const queryWithFallback: Pool['query'] = async (...args: any[]) => {
+  const startedAt = Date.now();
   try {
-    return await (activePool.query as any)(...args);
+    const result = await (activePool.query as any)(...args);
+    logSlowQueryIfNeeded(startedAt, args);
+    return result;
   } catch (err) {
     const switched = await trySupabaseFallback(err);
     if (!switched) {
       throw err;
     }
-    return (activePool.query as any)(...args);
+    const result = await (activePool.query as any)(...args);
+    logSlowQueryIfNeeded(startedAt, args);
+    return result;
   }
 };
 

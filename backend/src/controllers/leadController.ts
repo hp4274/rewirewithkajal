@@ -9,34 +9,41 @@ import {
     normalizeDateInput
 } from '../utils/validation';
 
-let leadAcceptSchemaInitPromise: Promise<void> | null = null;
+let leadCustomerColumnsPromise: Promise<Set<string>> | null = null;
 
-const ensureLeadAcceptanceSchema = async (): Promise<void> => {
-    if (leadAcceptSchemaInitPromise) {
-        return leadAcceptSchemaInitPromise;
+const getCustomerColumns = async (): Promise<Set<string>> => {
+    if (!leadCustomerColumnsPromise) {
+        leadCustomerColumnsPromise = (async () => {
+            const result = await pool.query(
+                `SELECT column_name
+                 FROM information_schema.columns
+                 WHERE table_name = 'customers'
+                   AND table_schema = ANY(current_schemas(false))`
+            );
+            return new Set(result.rows.map((row: any) => String(row.column_name)));
+        })().catch((error) => {
+            leadCustomerColumnsPromise = null;
+            throw error;
+        });
     }
 
-    leadAcceptSchemaInitPromise = (async () => {
-        // Best-effort schema compatibility for mixed historical deployments.
-        // If DB role cannot ALTER, acceptance still proceeds with runtime fallback inserts.
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS email VARCHAR(255)').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS first_name VARCHAR(255)').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS last_name VARCHAR(255)').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50)').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS dob DATE').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS primary_concern TEXT').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS preference_visit VARCHAR(20)').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferred_date DATE').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferred_slot VARCHAR(5)').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP').catch(() => undefined);
+    return leadCustomerColumnsPromise;
+};
 
-        await pool.query('ALTER TABLE customers ALTER COLUMN lead_id DROP NOT NULL').catch(() => undefined);
-        await pool.query('ALTER TABLE customers ALTER COLUMN hidden_form_token DROP NOT NULL').catch(() => undefined);
-    })().catch(() => {
-        leadAcceptSchemaInitPromise = null;
-    });
+const buildEmailExpr = (alias: string, hasEmail: boolean, hasFormData: boolean): string => {
+    const sources: string[] = [];
+    if (hasEmail) sources.push(`${alias}.email`);
+    if (hasFormData) sources.push(`${alias}.form_data->>'email'`);
+    if (sources.length === 0) return 'NULL';
+    return `LOWER(NULLIF(TRIM(COALESCE(${sources.join(', ')}, '')), ''))`;
+};
 
-    return leadAcceptSchemaInitPromise;
+const buildPhoneExpr = (alias: string, hasPhone: boolean, hasFormData: boolean): string => {
+    const sources: string[] = [];
+    if (hasPhone) sources.push(`${alias}.phone_number`);
+    if (hasFormData) sources.push(`${alias}.form_data->>'phone'`);
+    if (sources.length === 0) return 'NULL';
+    return `NULLIF(regexp_replace(COALESCE(${sources.join(', ')}, ''), '[^0-9]', '', 'g'), '')`;
 };
 
 export const createLead = async (req: Request, res: Response) => {
@@ -119,7 +126,10 @@ export const getLeads = async (req: Request, res: Response) => {
 
 export const acceptLead = async (req: Request, res: Response) => {
     try {
-        await ensureLeadAcceptanceSchema();
+        const columns = await getCustomerColumns();
+        const hasEmail = columns.has('email');
+        const hasPhone = columns.has('phone_number');
+        const hasFormData = columns.has('form_data');
 
         const { id } = req.params;
 
@@ -139,26 +149,21 @@ export const acceptLead = async (req: Request, res: Response) => {
         const normalizedDob = lead.dob ? String(lead.dob).slice(0, 10) : null;
         const normalizedPreferredDate = lead.preferred_date ? String(lead.preferred_date).slice(0, 10) : null;
 
-        let existingCustomerResult;
-        try {
+        const emailExpr = buildEmailExpr('c', hasEmail, hasFormData);
+        const phoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
+        let existingCustomerResult = { rows: [] as any[] };
+
+        if (emailExpr !== 'NULL' || phoneExpr !== 'NULL') {
+            const emailClause = emailExpr === 'NULL' ? 'FALSE' : `(${emailExpr} = $1 AND $1 IS NOT NULL)`;
+            const phoneClause = phoneExpr === 'NULL' ? 'FALSE' : `(${phoneExpr} = $2 AND $2 IS NOT NULL)`;
             existingCustomerResult = await pool.query(
                 `SELECT *
-                 FROM customers
-                 WHERE LOWER(email) = LOWER($1)
-                   AND phone_number = $2
-                 ORDER BY created_at DESC
+                 FROM customers c
+                 WHERE ${emailClause}
+                    OR ${phoneClause}
+                 ORDER BY c.id DESC
                  LIMIT 1`,
-                [normalizedEmail, normalizedPhone]
-            );
-        } catch {
-            existingCustomerResult = await pool.query(
-                `SELECT *
-                 FROM customers
-                 WHERE LOWER(COALESCE(form_data->>'email', '')) = LOWER($1)
-                   AND COALESCE(form_data->>'phone', '') = $2
-                 ORDER BY created_at DESC
-                 LIMIT 1`,
-                [normalizedEmail, normalizedPhone]
+                [normalizedEmail || null, normalizedPhone || null]
             );
         }
 

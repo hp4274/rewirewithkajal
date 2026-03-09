@@ -32,6 +32,9 @@ const formatDateForInput = (dateString?: string) => {
     return isoString.slice(0, 10);
 };
 
+const DEFAULT_PER_SESSION_PRICE = 1500;
+const DEFAULT_TOTAL_SESSIONS = 4;
+
 const formatTimeForInput = (dateString?: string) => {
     if (!dateString) return '';
     const s = String(dateString).replace(' ', 'T');
@@ -272,7 +275,6 @@ const Admin: React.FC = () => {
             navigate('/admin/login');
             return;
         }
-        fetchDashboardData();
     }, [navigate]);
 
     useEffect(() => {
@@ -283,13 +285,28 @@ const Admin: React.FC = () => {
         }
     }, [themeMode]);
 
-    useEffect(() => {
-        if (activeMenu !== 'dashboard') return;
+    const ADMIN_DATA_TICK_MS = 10000;
+    const PROFILE_DATA_TICK_MS = 15000;
 
-        fetchDashboardData();
+    useEffect(() => {
+        const shouldAutoRefresh = activeMenu === 'dashboard' || activeMenu === 'leads' || activeMenu === 'customers' || activeMenu === 'blogs';
+        if (!shouldAutoRefresh) return;
+
+        let isRefreshing = false;
+        const tick = async () => {
+            if (document.visibilityState !== 'visible' || isRefreshing) return;
+            isRefreshing = true;
+            try {
+                await fetchDashboardData();
+            } finally {
+                isRefreshing = false;
+            }
+        };
+
+        void tick();
         const refreshId = window.setInterval(() => {
-            fetchDashboardData();
-        }, 30000);
+            void tick();
+        }, ADMIN_DATA_TICK_MS);
 
         return () => window.clearInterval(refreshId);
     }, [activeMenu]);
@@ -301,10 +318,12 @@ const Admin: React.FC = () => {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
 
-            const leadsRes = await axios.get('/api/leads', { headers });
-            const customersRes = await axios.get('/api/customers', { headers });
-            const turnoverRes = await axios.get('/api/admin/turnover', { headers });
-            const blogsRes = await axios.get('/api/blogs', { headers });
+            const [leadsRes, customersRes, turnoverRes, blogsRes] = await Promise.all([
+                axios.get('/api/leads', { headers }),
+                axios.get('/api/customers', { headers }),
+                axios.get('/api/admin/turnover', { headers }),
+                axios.get('/api/blogs', { headers }),
+            ]);
 
             const turnover = turnoverRes.data.turnover || 0;
             const activeCustomersCount = customersRes.data.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
@@ -672,8 +691,24 @@ const Admin: React.FC = () => {
                             <button className={`a2-pill ${activeLeadTab === 'rejected' ? 'active' : ''}`} onClick={() => setActiveLeadTab('rejected')}>Rejected</button>
                         </div>
                         <div className="a2-view-toggle">
-                            <button className={`a2-icon-btn ${leadsViewMode === 'grid' ? 'active' : ''}`} onClick={() => setLeadsViewMode('grid')}><LayoutGrid size={20} /></button>
-                            <button className={`a2-icon-btn ${leadsViewMode === 'list' ? 'active' : ''}`} onClick={() => setLeadsViewMode('list')}><List size={20} /></button>
+                            <button
+                                className={`a2-icon-btn ${leadsViewMode === 'grid' ? 'active' : ''}`}
+                                onClick={() => setLeadsViewMode('grid')}
+                                aria-label="Leads grid view"
+                                title="Leads grid view"
+                                aria-pressed={leadsViewMode === 'grid'}
+                            >
+                                <LayoutGrid size={20} />
+                            </button>
+                            <button
+                                className={`a2-icon-btn ${leadsViewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setLeadsViewMode('list')}
+                                aria-label="Leads list view"
+                                title="Leads list view"
+                                aria-pressed={leadsViewMode === 'list'}
+                            >
+                                <List size={20} />
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -754,20 +789,30 @@ const Admin: React.FC = () => {
     };
 
     const handleUpdateCustomerStatus = async (customer: any) => {
+        const previousIsActive = !!customer.is_active;
+        const previousStatus = customer.status || 'confirmed';
         try {
             const token = localStorage.getItem('adminToken');
             const nextActive = !customer.is_active;
             const nextStatus = nextActive ? 'confirmed' : 'deactivated';
 
+            // Optimistic update for instant button feedback.
+            setAllCustomers((prev: any[]) => prev.map((c: any) => c.id === customer.id ? { ...c, is_active: nextActive, status: nextStatus } : c));
+            setProfileData((prev: any) => prev && prev.id === customer.id ? { ...prev, is_active: nextActive, status: nextStatus } : prev);
+
             await axios.put(`/api/admin/customers/${customer.id}/settings`, {
                 is_active: nextActive,
                 status: nextStatus,
-                per_session_price: customer.per_session_price || 0,
-                total_sessions: customer.total_sessions || 0
+                per_session_price: Number(customer.per_session_price ?? DEFAULT_PER_SESSION_PRICE),
+                total_sessions: Number(customer.total_sessions ?? DEFAULT_TOTAL_SESSIONS)
             }, { headers: { Authorization: `Bearer ${token}` } });
-            await fetchDashboardData();
+
+            // Non-blocking sync to keep UI snappy.
+            void fetchDashboardData();
         } catch (err) {
             console.error(err);
+            setAllCustomers((prev: any[]) => prev.map((c: any) => c.id === customer.id ? { ...c, is_active: previousIsActive, status: previousStatus } : c));
+            setProfileData((prev: any) => prev && prev.id === customer.id ? { ...prev, is_active: previousIsActive, status: previousStatus } : prev);
             alert("Error updating status");
         }
     };
@@ -873,8 +918,8 @@ const Admin: React.FC = () => {
     const loadCustomerProfile = async (customer: any) => {
         setSelectedCustomerId(customer.id);
         setProfileData(customer);
-        setEditPrice(customer.per_session_price || 0);
-        setEditSessions(customer.total_sessions || 0);
+        setEditPrice(Number(customer.per_session_price ?? DEFAULT_PER_SESSION_PRICE));
+        setEditSessions(Number(customer.total_sessions ?? DEFAULT_TOTAL_SESSIONS));
         const token = localStorage.getItem('adminToken');
         try {
             const [notesRes, paymentsRes, formsRes, sessionsRes] = await Promise.all([
@@ -898,12 +943,57 @@ const Admin: React.FC = () => {
         }
     };
 
+    const refreshSelectedCustomerLiveData = async (customerId: number) => {
+        const token = localStorage.getItem('adminToken');
+        const headers = { Authorization: `Bearer ${token}` };
+        const [notesRes, paymentsRes, formsRes, sessionsRes, customersRes] = await Promise.all([
+            axios.get(`/api/admin/customers/${customerId}/notes`, { headers }),
+            axios.get(`/api/admin/customers/${customerId}/payments`, { headers }),
+            axios.get(`/api/customers/${customerId}/forms`, { headers }),
+            axios.get(`/api/admin/customers/${customerId}/sessions`, { headers }),
+            axios.get('/api/customers', { headers })
+        ]);
+
+        setProfileNotes(Array.isArray(notesRes.data) ? notesRes.data : []);
+        setProfilePayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
+        setProfileFormsData(formsRes.data);
+
+        const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+        setProfileSessions(sessions);
+        const draftMap: Record<number, string> = {};
+        sessions.forEach((session: any) => {
+            draftMap[session.id] = session.presence_status || 'not_marked';
+        });
+        setSessionPresenceDrafts(draftMap);
+
+        const refreshedProfile = Array.isArray(customersRes.data)
+            ? customersRes.data.find((c: any) => c.id === customerId)
+            : null;
+        if (refreshedProfile) {
+            setProfileData(refreshedProfile);
+        }
+    };
+
     useEffect(() => {
         if (!selectedCustomerId) return;
 
+        let isRefreshing = false;
+        const tick = async () => {
+            if (document.visibilityState !== 'visible' || isRefreshing) return;
+            isRefreshing = true;
+            try {
+                await refreshSelectedCustomerLiveData(selectedCustomerId);
+            } catch (error) {
+                console.error('Failed to refresh selected customer data', error);
+            } finally {
+                isRefreshing = false;
+            }
+        };
+
+        void tick();
         const refreshId = window.setInterval(() => {
-            fetchCustomerSessions(selectedCustomerId);
-        }, 30000);
+            void tick();
+        }, PROFILE_DATA_TICK_MS);
 
         return () => window.clearInterval(refreshId);
     }, [selectedCustomerId]);
@@ -1015,8 +1105,24 @@ const Admin: React.FC = () => {
                             <button className={`a2-pill ${activeCustomerTab === 'inactive' ? 'active' : ''}`} onClick={() => setActiveCustomerTab('inactive')}>Inactive Customers</button>
                         </div>
                         <div className="a2-view-toggle">
-                            <button className={`a2-icon-btn ${customerViewMode === 'grid' ? 'active' : ''}`} onClick={() => setCustomerViewMode('grid')}><LayoutGrid size={20} /></button>
-                            <button className={`a2-icon-btn ${customerViewMode === 'list' ? 'active' : ''}`} onClick={() => setCustomerViewMode('list')}><List size={20} /></button>
+                            <button
+                                className={`a2-icon-btn ${customerViewMode === 'grid' ? 'active' : ''}`}
+                                onClick={() => setCustomerViewMode('grid')}
+                                aria-label="Customers grid view"
+                                title="Customers grid view"
+                                aria-pressed={customerViewMode === 'grid'}
+                            >
+                                <LayoutGrid size={20} />
+                            </button>
+                            <button
+                                className={`a2-icon-btn ${customerViewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setCustomerViewMode('list')}
+                                aria-label="Customers list view"
+                                title="Customers list view"
+                                aria-pressed={customerViewMode === 'list'}
+                            >
+                                <List size={20} />
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -1127,8 +1233,8 @@ const Admin: React.FC = () => {
         }
 
         const totalPaid = profilePayments.reduce((sum: any, p: any) => sum + Number(p.amount), 0);
-        const price = Number(profileData.per_session_price) || 0;
-        const totalSessions = profileData.total_sessions || 0;
+        const price = Number(profileData.per_session_price ?? DEFAULT_PER_SESSION_PRICE);
+        const totalSessions = Number(profileData.total_sessions ?? DEFAULT_TOTAL_SESSIONS);
         const dueAmount = (totalSessions * price) - totalPaid;
 
         const currentAppointmentDate = formatDateForInput(profileData.appointment_date);
@@ -1158,7 +1264,7 @@ const Admin: React.FC = () => {
             const bKey = `${formatDateForInput(b.session_date)} ${String(b.slot || '').slice(0, 5)}`;
             return aKey < bKey ? 1 : -1;
         });
-        const totalSessionsLimit = Number(profileData.total_sessions || 0);
+        const totalSessionsLimit = Number(profileData.total_sessions ?? DEFAULT_TOTAL_SESSIONS);
         const visibleProfileSessions = totalSessionsLimit > 0
             ? sortedProfileSessions.slice(0, totalSessionsLimit)
             : sortedProfileSessions;
@@ -1500,8 +1606,24 @@ const Admin: React.FC = () => {
                     <div className="a2-leads-actions">
                         <button className="a2-btn-primary" onClick={() => { setFormBlog({ id: null, title: '', content: '', image_url: '', is_active: true }); setSelectedBlogImage(null); setShowBlogForm(true); }}>+ Add New Blog</button>
                         <div className="a2-view-toggle">
-                            <button className={`a2-icon-btn ${blogViewMode === 'grid' ? 'active' : ''}`} onClick={() => setBlogViewMode('grid')}><LayoutGrid size={20} /></button>
-                            <button className={`a2-icon-btn ${blogViewMode === 'list' ? 'active' : ''}`} onClick={() => setBlogViewMode('list')}><List size={20} /></button>
+                            <button
+                                className={`a2-icon-btn ${blogViewMode === 'grid' ? 'active' : ''}`}
+                                onClick={() => setBlogViewMode('grid')}
+                                aria-label="Blogs grid view"
+                                title="Blogs grid view"
+                                aria-pressed={blogViewMode === 'grid'}
+                            >
+                                <LayoutGrid size={20} />
+                            </button>
+                            <button
+                                className={`a2-icon-btn ${blogViewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setBlogViewMode('list')}
+                                aria-label="Blogs list view"
+                                title="Blogs list view"
+                                aria-pressed={blogViewMode === 'list'}
+                            >
+                                <List size={20} />
+                            </button>
                         </div>
                     </div>
                 </header>

@@ -19,6 +19,10 @@ import {
 
 let customerFormStorageInitPromise: Promise<void> | null = null;
 let customerColumnsCachePromise: Promise<Set<string>> | null = null;
+let customerSettingsTableInitPromise: Promise<void> | null = null;
+
+const DEFAULT_PER_SESSION_PRICE = 1500;
+const DEFAULT_TOTAL_SESSIONS = 4;
 
 const parseStoredFormData = (raw: any): Record<string, any> => {
     if (!raw) return {};
@@ -127,15 +131,38 @@ const ensureCustomerFormStorageSchema = async (): Promise<void> => {
     }
 
     customerFormStorageInitPromise = (async () => {
-        await pool.query("ALTER TABLE customers ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb").catch(() => {
-            // Some DB roles cannot alter schema in production; writes will fallback safely.
-        });
-        customerColumnsCachePromise = null;
+        await getCustomersColumns();
     })().catch(() => {
         customerFormStorageInitPromise = null;
     });
 
     return customerFormStorageInitPromise;
+};
+
+const ensureCustomerSettingsTable = async (): Promise<void> => {
+    if (customerSettingsTableInitPromise) {
+        return customerSettingsTableInitPromise;
+    }
+
+    customerSettingsTableInitPromise = (async () => {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS customer_settings (
+                customer_id INTEGER PRIMARY KEY REFERENCES customers(id) ON DELETE CASCADE,
+                per_session_price INTEGER NOT NULL DEFAULT ${DEFAULT_PER_SESSION_PRICE},
+                total_sessions INTEGER NOT NULL DEFAULT ${DEFAULT_TOTAL_SESSIONS},
+                is_active BOOLEAN NOT NULL DEFAULT true,
+                status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true");
+        await pool.query("ALTER TABLE customer_settings ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'confirmed'");
+    })().catch((error) => {
+        customerSettingsTableInitPromise = null;
+        throw error;
+    });
+
+    return customerSettingsTableInitPromise;
 };
 
 export const getCustomerForms = async (req: Request, res: Response) => {
@@ -194,6 +221,7 @@ export const getCustomerForms = async (req: Request, res: Response) => {
 export const getCustomers = async (req: Request, res: Response) => {
     try {
         await ensureCustomerFormStorageSchema();
+        await ensureCustomerSettingsTable();
 
         const columns = await getCustomersColumns();
         const hasEmail = columns.has('email');
@@ -203,6 +231,10 @@ export const getCustomers = async (req: Request, res: Response) => {
         const hasFirstName = columns.has('first_name');
         const hasLastName = columns.has('last_name');
         const hasDob = columns.has('dob');
+        const hasPerSessionPrice = columns.has('per_session_price');
+        const hasTotalSessions = columns.has('total_sessions');
+        const hasLegacyIsActive = columns.has('is_active');
+        const hasLegacyStatus = columns.has('status');
 
         const concernExpr = hasFormData
             ? hasConcern
@@ -234,11 +266,19 @@ export const getCustomers = async (req: Request, res: Response) => {
             : hasDob
                 ? `TO_CHAR(c.dob, 'YYYY-MM-DD')`
                 : 'NULL';
+        const legacyPriceExpr = hasPerSessionPrice ? 'c.per_session_price' : 'NULL';
+        const legacySessionsExpr = hasTotalSessions ? 'c.total_sessions' : 'NULL';
+        const legacyIsActiveExpr = hasLegacyIsActive ? 'c.is_active' : 'NULL';
+        const legacyStatusExpr = hasLegacyStatus ? `NULLIF(TRIM(c.status), '')` : 'NULL';
 
         const query = `
       WITH RankedCustomers AS (
           SELECT
               c.*,
+              COALESCE(cs.per_session_price, ${legacyPriceExpr}, ${DEFAULT_PER_SESSION_PRICE}) AS settings_per_session_price,
+              COALESCE(cs.total_sessions, ${legacySessionsExpr}, ${DEFAULT_TOTAL_SESSIONS}) AS settings_total_sessions,
+              COALESCE(cs.is_active, ${legacyIsActiveExpr}, true) AS settings_is_active,
+              COALESCE(NULLIF(TRIM(cs.status), ''), ${legacyStatusExpr}, 'confirmed') AS settings_status,
               ${concernExpr} as concern,
               ${firstNameExpr} as computed_first,
               ${lastNameExpr} as computed_last,
@@ -252,6 +292,7 @@ export const getCustomers = async (req: Request, res: Response) => {
                   ORDER BY c.created_at DESC
               ) as rn
           FROM customers c
+          LEFT JOIN customer_settings cs ON cs.customer_id = c.id
       )
       SELECT * FROM RankedCustomers
       WHERE rn = 1
@@ -269,10 +310,10 @@ export const getCustomers = async (req: Request, res: Response) => {
             dob: row.computed_dob,
             appointment_date: row.preferred_date,
             slot: row.preferred_slot,
-            status: 'confirmed',
-            is_active: true,
-            per_session_price: 0,
-            total_sessions: 0,
+            status: row.settings_status ?? row.status ?? 'confirmed',
+            is_active: row.settings_is_active === false ? false : true,
+            per_session_price: Number(row.settings_per_session_price ?? row.per_session_price ?? DEFAULT_PER_SESSION_PRICE),
+            total_sessions: Number(row.settings_total_sessions ?? row.total_sessions ?? DEFAULT_TOTAL_SESSIONS),
             form_data: buildCompatFormData(row)
         }));
 
