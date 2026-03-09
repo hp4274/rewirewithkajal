@@ -17,13 +17,142 @@ import {
     normalizeSlotForSession
 } from '../utils/sessionStorage';
 
+let customerFormStorageInitPromise: Promise<void> | null = null;
+let customerColumnsCachePromise: Promise<Set<string>> | null = null;
+
+const parseStoredFormData = (raw: any): Record<string, any> => {
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            return typeof parsed === 'object' && parsed !== null ? parsed : {};
+        } catch {
+            return {};
+        }
+    }
+    return {};
+};
+
+const getYesScore = (items: any[]): number => {
+    return items.reduce((sum, item) => {
+        const answer = typeof item === 'object' && item !== null ? item.answer : item;
+        return String(answer || '').trim().toLowerCase() === 'yes' ? sum + 10 : sum;
+    }, 0);
+};
+
+const normalizeQuestionnaireItems = (items: any[]): Array<{ question: string; answer: string }> => {
+    return items.map((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+            return {
+                question: String(item.question || `Question ${index + 1}`),
+                answer: String(item.answer || '')
+            };
+        }
+        return {
+            question: `Question ${index + 1}`,
+            answer: String(item || '')
+        };
+    });
+};
+
+const buildCompatFormData = (row: any): Record<string, any> => {
+    const persisted = parseStoredFormData(row.form_data);
+    const q1 = Array.isArray(persisted.q1) ? persisted.q1 : [];
+    const q2 = Array.isArray(persisted.q2) ? persisted.q2 : [];
+    const computedScore = getYesScore(q1) + getYesScore(q2);
+    const parsedStoredScore = Number(persisted.total_score);
+
+    return {
+        ...persisted,
+        email: persisted.email ?? row.computed_email ?? row.email,
+        first_name: persisted.first_name ?? row.computed_first ?? row.first_name,
+        last_name: persisted.last_name ?? row.computed_last ?? row.last_name,
+        city: persisted.city ?? row.city,
+        phone: persisted.phone ?? row.computed_phone ?? row.phone_number,
+        occupation: persisted.occupation ?? row.occupation,
+        dob: persisted.dob ?? row.computed_dob ?? row.dob,
+        primary_concern: persisted.primary_concern ?? row.concern ?? row.primary_concern,
+        consultation_preference: persisted.consultation_preference ?? row.preference_visit,
+        days_preference: Array.isArray(persisted.days_preference)
+            ? persisted.days_preference
+            : (row.preferred_date ? [row.preferred_date] : []),
+        timings_preference: Array.isArray(persisted.timings_preference)
+            ? persisted.timings_preference
+            : (row.preferred_slot ? [row.preferred_slot] : []),
+        q1,
+        q2,
+        total_score: Number.isFinite(parsedStoredScore) ? parsedStoredScore : computedScore
+    };
+};
+
+const getCustomersColumns = async (): Promise<Set<string>> => {
+    if (!customerColumnsCachePromise) {
+        customerColumnsCachePromise = (async () => {
+            const result = await pool.query(
+                `SELECT column_name
+                 FROM information_schema.columns
+                 WHERE table_name = 'customers'
+                   AND table_schema = ANY(current_schemas(false))`
+            );
+            return new Set(result.rows.map((row: any) => String(row.column_name)));
+        })().catch((error) => {
+            customerColumnsCachePromise = null;
+            throw error;
+        });
+    }
+
+    return customerColumnsCachePromise;
+};
+
+const buildEmailExpr = (alias: string, hasEmail: boolean, hasFormData: boolean): string => {
+    const sources: string[] = [];
+    if (hasEmail) sources.push(`${alias}.email`);
+    if (hasFormData) sources.push(`${alias}.form_data->>'email'`);
+    if (sources.length === 0) return 'NULL';
+    return `LOWER(NULLIF(TRIM(COALESCE(${sources.join(', ')}, '')), ''))`;
+};
+
+const buildPhoneExpr = (alias: string, hasPhone: boolean, hasFormData: boolean): string => {
+    const sources: string[] = [];
+    if (hasPhone) sources.push(`${alias}.phone_number`);
+    if (hasFormData) sources.push(`${alias}.form_data->>'phone'`);
+    if (sources.length === 0) return 'NULL';
+    return `NULLIF(regexp_replace(COALESCE(${sources.join(', ')}, ''), '[^0-9]', '', 'g'), '')`;
+};
+
+const ensureCustomerFormStorageSchema = async (): Promise<void> => {
+    if (customerFormStorageInitPromise) {
+        return customerFormStorageInitPromise;
+    }
+
+    customerFormStorageInitPromise = (async () => {
+        await pool.query("ALTER TABLE customers ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb").catch(() => {
+            // Some DB roles cannot alter schema in production; writes will fallback safely.
+        });
+        customerColumnsCachePromise = null;
+    })().catch(() => {
+        customerFormStorageInitPromise = null;
+    });
+
+    return customerFormStorageInitPromise;
+};
+
 export const getCustomerForms = async (req: Request, res: Response) => {
     try {
+        await ensureCustomerFormStorageSchema();
         const { id } = req.params;
+        const columns = await getCustomersColumns();
+        const hasEmail = columns.has('email');
+        const hasPhone = columns.has('phone_number');
+        const hasFormData = columns.has('form_data');
+        const currentEmailExpr = buildEmailExpr('c', hasEmail, hasFormData);
+        const currentPhoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
+
         const currentCustQuery = `
-            SELECT 
-                c.email,
-                c.phone_number as phone
+            SELECT
+                ${currentEmailExpr} AS email,
+                ${currentPhoneExpr} AS phone
             FROM customers c
             WHERE c.id = $1
         `;
@@ -33,37 +162,27 @@ export const getCustomerForms = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Customer not found' });
         }
 
-        const { email, phone } = currentCust.rows[0];
+        const email = typeof currentCust.rows[0].email === 'string' ? currentCust.rows[0].email : null;
+        const phone = typeof currentCust.rows[0].phone === 'string' ? currentCust.rows[0].phone : null;
+
+        const formsEmailExpr = buildEmailExpr('c', hasEmail, hasFormData);
+        const formsPhoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
 
         const formsQuery = `
-            SELECT 
+            SELECT
                 c.*
             FROM customers c
-            WHERE 
-                (LOWER(c.email) = LOWER($1) AND $1 IS NOT NULL)
-                OR 
-                (c.phone_number = $2 AND $2 IS NOT NULL)
+            WHERE
+                c.id = $3
+                OR (${formsEmailExpr} = $1 AND $1 IS NOT NULL)
+                OR (${formsPhoneExpr} = $2 AND $2 IS NOT NULL)
             ORDER BY c.created_at DESC
         `;
-        const formsResult = await pool.query(formsQuery, [email, phone]);
+        const formsResult = await pool.query(formsQuery, [email, phone, id]);
 
         const forms = formsResult.rows.map((row) => ({
             ...row,
-            form_data: {
-                email: row.email,
-                first_name: row.first_name,
-                last_name: row.last_name,
-                city: row.city,
-                phone: row.phone_number,
-                occupation: row.occupation,
-                dob: row.dob,
-                primary_concern: row.primary_concern,
-                consultation_preference: row.preference_visit,
-                days_preference: row.preferred_date ? [row.preferred_date] : [],
-                timings_preference: row.preferred_slot ? [row.preferred_slot] : [],
-                q1: [],
-                q2: []
-            }
+            form_data: buildCompatFormData(row)
         }));
 
         res.json({ matchParams: { email, phone }, forms });
@@ -74,25 +193,67 @@ export const getCustomerForms = async (req: Request, res: Response) => {
 
 export const getCustomers = async (req: Request, res: Response) => {
     try {
+        await ensureCustomerFormStorageSchema();
+
+        const columns = await getCustomersColumns();
+        const hasEmail = columns.has('email');
+        const hasPhone = columns.has('phone_number');
+        const hasFormData = columns.has('form_data');
+        const hasConcern = columns.has('primary_concern');
+        const hasFirstName = columns.has('first_name');
+        const hasLastName = columns.has('last_name');
+        const hasDob = columns.has('dob');
+
+        const concernExpr = hasFormData
+            ? hasConcern
+                ? `COALESCE(c.primary_concern, NULLIF(TRIM(c.form_data->>'primary_concern'), ''))`
+                : `NULLIF(TRIM(c.form_data->>'primary_concern'), '')`
+            : hasConcern
+                ? 'c.primary_concern'
+                : 'NULL';
+        const firstNameExpr = hasFormData
+            ? hasFirstName
+                ? `COALESCE(NULLIF(TRIM(c.first_name), ''), NULLIF(TRIM(c.form_data->>'first_name'), ''))`
+                : `NULLIF(TRIM(c.form_data->>'first_name'), '')`
+            : hasFirstName
+                ? `NULLIF(TRIM(c.first_name), '')`
+                : 'NULL';
+        const lastNameExpr = hasFormData
+            ? hasLastName
+                ? `COALESCE(NULLIF(TRIM(c.last_name), ''), NULLIF(TRIM(c.form_data->>'last_name'), ''))`
+                : `NULLIF(TRIM(c.form_data->>'last_name'), '')`
+            : hasLastName
+                ? `NULLIF(TRIM(c.last_name), '')`
+                : 'NULL';
+        const emailExpr = buildEmailExpr('c', hasEmail, hasFormData);
+        const phoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
+        const dobExpr = hasFormData
+            ? hasDob
+                ? `COALESCE(TO_CHAR(c.dob, 'YYYY-MM-DD'), NULLIF(TRIM(c.form_data->>'dob'), ''))`
+                : `NULLIF(TRIM(c.form_data->>'dob'), '')`
+            : hasDob
+                ? `TO_CHAR(c.dob, 'YYYY-MM-DD')`
+                : 'NULL';
+
         const query = `
       WITH RankedCustomers AS (
-          SELECT 
-              c.*, 
-              c.primary_concern as concern,
-              c.first_name as computed_first,
-              c.last_name as computed_last,
-              c.phone_number as computed_phone,
-              c.email as computed_email,
-              TO_CHAR(c.dob, 'YYYY-MM-DD') as computed_dob,
+          SELECT
+              c.*,
+              ${concernExpr} as concern,
+              ${firstNameExpr} as computed_first,
+              ${lastNameExpr} as computed_last,
+              ${phoneExpr} as computed_phone,
+              ${emailExpr} as computed_email,
+              ${dobExpr} as computed_dob,
               ROW_NUMBER() OVER(
-                  PARTITION BY 
-                      COALESCE(NULLIF(LOWER(c.email), ''), CONCAT('id:', c.id::text)),
-                      COALESCE(NULLIF(c.phone_number, ''), CONCAT('id:', c.id::text))
+                  PARTITION BY
+                      COALESCE(${emailExpr}, CONCAT('id:', c.id::text)),
+                      COALESCE(${phoneExpr}, CONCAT('id:', c.id::text))
                   ORDER BY c.created_at DESC
               ) as rn
           FROM customers c
       )
-      SELECT * FROM RankedCustomers 
+      SELECT * FROM RankedCustomers
       WHERE rn = 1
       ORDER BY created_at DESC
     `;
@@ -112,19 +273,7 @@ export const getCustomers = async (req: Request, res: Response) => {
             is_active: true,
             per_session_price: 0,
             total_sessions: 0,
-            form_data: {
-                email: row.computed_email,
-                first_name: row.computed_first,
-                last_name: row.computed_last,
-                city: row.city,
-                phone: row.computed_phone,
-                occupation: row.occupation,
-                dob: row.computed_dob,
-                primary_concern: row.concern,
-                consultation_preference: row.preference_visit,
-                days_preference: row.preferred_date ? [row.preferred_date] : [],
-                timings_preference: row.preferred_slot ? [row.preferred_slot] : []
-            }
+            form_data: buildCompatFormData(row)
         }));
 
         res.json(normalizedRows);
@@ -153,6 +302,8 @@ export const submitHiddenForm = async (req: Request, res: Response) => {
 
 export const submitPublicForm = async (req: Request, res: Response) => {
     try {
+        await ensureCustomerFormStorageSchema();
+
         const form_data = req.body?.form_data || req.body || {};
 
         const email = typeof form_data?.email === 'string' ? form_data.email.trim().toLowerCase() : '';
@@ -210,24 +361,72 @@ export const submitPublicForm = async (req: Request, res: Response) => {
         const preferredSlotCandidate = timingsPreferenceRaw.length > 0 ? String(timingsPreferenceRaw[0]).trim().slice(0, 5) : null;
         const preferredSlot = preferredSlotCandidate && isValidSlotTime(preferredSlotCandidate) ? preferredSlotCandidate : null;
 
-        const result = await pool.query(
-            `INSERT INTO customers
-            (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
-            VALUES($1, $2, $3, $4, $5, $6, $7::date, $8, $9, $10::date, $11) RETURNING * `,
-            [
-                email,
-                firstName,
-                lastName || null,
-                city,
-                phone,
-                occupation,
-                dob,
-                primaryConcern,
-                preferenceVisit,
-                preferredDate,
-                preferredSlot
-            ]
-        );
+        const questionnaireOne = normalizeQuestionnaireItems(Array.isArray(form_data?.q1) ? form_data.q1 : []);
+        const questionnaireTwo = normalizeQuestionnaireItems(Array.isArray(form_data?.q2) ? form_data.q2 : []);
+        const calculatedTotalScore = getYesScore(questionnaireOne) + getYesScore(questionnaireTwo);
+
+        const persistedFormData = {
+            ...parseStoredFormData(form_data),
+            email,
+            first_name: firstName,
+            last_name: lastName || null,
+            city,
+            phone,
+            occupation,
+            dob,
+            primary_concern: primaryConcern,
+            consultation_preference: preferenceVisit,
+            days_preference: normalizedDaysPreference,
+            timings_preference: timingsPreferenceRaw,
+            q1: questionnaireOne,
+            q2: questionnaireTwo,
+            total_score: calculatedTotalScore
+        };
+
+        const columns = await getCustomersColumns();
+        const hasFormData = columns.has('form_data');
+
+        let result;
+        if (hasFormData) {
+            result = await pool.query(
+                `INSERT INTO customers
+                (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot, form_data)
+                VALUES($1, $2, $3, $4, $5, $6, $7::date, $8, $9, $10::date, $11, $12::jsonb) RETURNING * `,
+                [
+                    email,
+                    firstName,
+                    lastName || null,
+                    city,
+                    phone,
+                    occupation,
+                    dob,
+                    primaryConcern,
+                    preferenceVisit,
+                    preferredDate,
+                    preferredSlot,
+                    JSON.stringify(persistedFormData)
+                ]
+            );
+        } else {
+            result = await pool.query(
+                `INSERT INTO customers
+                (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
+                VALUES($1, $2, $3, $4, $5, $6, $7::date, $8, $9, $10::date, $11) RETURNING * `,
+                [
+                    email,
+                    firstName,
+                    lastName || null,
+                    city,
+                    phone,
+                    occupation,
+                    dob,
+                    primaryConcern,
+                    preferenceVisit,
+                    preferredDate,
+                    preferredSlot
+                ]
+            );
+        }
 
         const newCustomer = result.rows[0];
 

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LayoutGrid, List } from 'lucide-react';
 import './LeadsManager.css';
+import logo from '../assets/logo3.png';
+import { resolveMediaUrl } from '../utils/api';
+import { blogContentToPlainText } from '../utils/blogContent';
 
 interface Blog {
     id: number;
@@ -294,8 +297,16 @@ const BlogsManager: React.FC = () => {
                         {blogs.length === 0 ? (
                             <div className="no-leads-message">No blogs created yet.</div>
                         ) : (
-                            blogs.map(blog => (
+                            blogs.map(blog => {
+                                const imageUrl = resolveMediaUrl(blog.image_url);
+                                const excerpt = blogContentToPlainText(blog.content);
+                                return (
                                 <div key={blog.id} className="lead-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    {imageUrl && (
+                                        <div style={{ height: '120px', width: '100%', overflow: 'hidden', borderRadius: '8px', marginBottom: '12px', backgroundColor: '#f1f5f9' }}>
+                                            <img src={imageUrl} alt={blog.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = logo; }} />
+                                        </div>
+                                    )}
                                     <div className="lead-card-header" style={{ alignItems: 'flex-start' }}>
                                         <div>
                                             <h3 className="lead-name" style={{ fontSize: '1.1rem', marginBottom: '8px' }}>{blog.title}</h3>
@@ -308,7 +319,7 @@ const BlogsManager: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className="lead-body" style={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', color: '#4a5568', fontSize: '0.9rem' }}>
-                                        {blog.content}
+                                        {excerpt}
                                     </div>
                                     <div className="lead-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
                                         <button
@@ -321,7 +332,8 @@ const BlogsManager: React.FC = () => {
                                         <button style={{ width: '100%', padding: '8px', background: 'transparent', border: '1px solid #e53e3e', borderRadius: '6px', cursor: 'pointer', color: '#e53e3e', fontWeight: 'bold', marginTop: '4px' }} onClick={() => deleteBlog(blog.id)}>Delete</button>
                                     </div>
                                 </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}

@@ -181,9 +181,10 @@ const LeadsManager: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert(`Error ${action}ing lead.`);
+            const serverMessage = err?.response?.data?.message || err?.response?.data?.detail || err?.message;
+            alert(`Error ${action}ing lead: ${serverMessage || 'Unknown error'}`);
         }
     };
 

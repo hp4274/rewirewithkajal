@@ -50,7 +50,41 @@ export const resolveMediaUrl = (pathOrUrl?: string | null): string => {
     const raw = String(pathOrUrl || '').trim();
     if (!raw) return '';
 
-    if (isAbsoluteUrl(raw) || raw.startsWith('data:')) {
+    const legacyUploadsMatch = raw.match(/^\/uploads\/([^/?#]+)(.*)?$/i);
+    if (legacyUploadsMatch) {
+        const encodedFilename = encodeURIComponent(legacyUploadsMatch[1]);
+        const suffix = legacyUploadsMatch[2] || '';
+        const mappedPath = `/api/blogs/image/${encodedFilename}${suffix}`;
+
+        if (configuredApiBase) {
+            return `${configuredApiBase}${mappedPath}`;
+        }
+
+        if (isLocalHost()) {
+            return `${localFallbackApiBase}${mappedPath}`;
+        }
+
+        return mappedPath;
+    }
+
+    if (raw.startsWith('data:')) {
+        return raw;
+    }
+
+    if (isAbsoluteUrl(raw)) {
+        try {
+            const parsed = new URL(raw);
+            const isLocalhostUrl = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+            if (isLocalhostUrl && !isLocalHost()) {
+                const localPath = `${parsed.pathname}${parsed.search || ''}`;
+                if (configuredApiBase) {
+                    return `${configuredApiBase}${normalizeApiPath(localPath)}`;
+                }
+                return normalizeApiPath(localPath);
+            }
+        } catch {
+            // Fallback to raw absolute URL if parsing fails.
+        }
         return raw;
     }
 

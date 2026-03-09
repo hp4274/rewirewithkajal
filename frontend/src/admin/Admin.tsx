@@ -15,6 +15,8 @@ import {
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { isFutureOrCurrentSlot, isTodayOrFutureDate, toDateInputString } from '../utils/validation';
+import { resolveMediaUrl } from '../utils/api';
+import { blogContentToPlainText } from '../utils/blogContent';
 import logo from '../assets/logo3.png';
 const formatDateForInput = (dateString?: string) => {
     if (!dateString) return '';
@@ -646,9 +648,10 @@ const Admin: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             await fetchDashboardData();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert(`Error ${action}ing lead.`);
+            const serverMessage = err?.response?.data?.message || err?.response?.data?.detail || err?.message;
+            alert(`Error ${action}ing lead: ${serverMessage || 'Unknown error'}`);
         }
     };
 
@@ -1511,11 +1514,14 @@ const Admin: React.FC = () => {
                         </div>
                     ) : blogViewMode === 'grid' ? (
                         <div className="a2-leads-grid">
-                            {blogs.map((blog: any) => (
+                            {blogs.map((blog: any) => {
+                                const blogImageUrl = resolveMediaUrl(blog.image_url);
+                                const blogExcerpt = blogContentToPlainText(blog.content);
+                                return (
                                 <div key={blog.id} className="a2-lead-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                                    {blog.image_url && (
+                                    {blogImageUrl && (
                                         <div style={{ height: '140px', width: '100%', overflow: 'hidden', borderRadius: '8px 8px 0 0', margin: '-20px -20px 16px -20px', backgroundColor: '#f1f5f9' }}>
-                                            <img src={`${blog.image_url}`} alt={blog.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <img src={blogImageUrl} alt={blog.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = logo; }} />
                                         </div>
                                     )}
                                     <div className="a2-lead-card-header">
@@ -1524,7 +1530,7 @@ const Admin: React.FC = () => {
                                     </div>
                                     <div className="a2-lead-card-body" style={{ flexGrow: 1 }}>
                                         <p style={{ color: '#64748b', fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {blog.content.replace(/<[^>]+>/g, '')}
+                                            {blogExcerpt}
                                         </p>
                                         <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#94a3b8' }}>
                                             <CalendarDays size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} />
@@ -1539,7 +1545,8 @@ const Admin: React.FC = () => {
                                         <button className="a2-btn-reject a2-blog-delete-btn" style={{ padding: '8px 12px' }} onClick={() => deleteBlog(blog.id)}><X size={16} /></button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="a2-leads-list-wrapper panel-shadow">
@@ -1604,9 +1611,10 @@ const Admin: React.FC = () => {
                                         {(selectedBlogImage || formBlog.image_url) ? (
                                             <div className="a2-image-preview">
                                                 <img
-                                                    src={selectedBlogImage ? URL.createObjectURL(selectedBlogImage) : `${formBlog.image_url}`}
+                                                    src={selectedBlogImage ? URL.createObjectURL(selectedBlogImage) : resolveMediaUrl(formBlog.image_url)}
                                                     alt="Cover Preview"
                                                     style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover' }}
+                                                    onError={(e) => { e.currentTarget.src = logo; }}
                                                 />
                                                 <button className="a2-btn-secondary" style={{ marginTop: '8px' }} onClick={() => { setSelectedBlogImage(null); setFormBlog({ ...formBlog, image_url: '' }); }}>Remove Image</button>
                                             </div>

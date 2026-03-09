@@ -3,6 +3,7 @@ import axios from 'axios';
 import './Blogs.css';
 import logo from '../assets/logo3.png';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
+import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
 
 interface Blog {
     id: number;
@@ -15,13 +16,7 @@ interface Blog {
 const Blogs: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedBlogIds, setExpandedBlogIds] = useState<number[]>([]);
-
-    const toggleReadMore = (id: number) => {
-        setExpandedBlogIds(prev =>
-            prev.includes(id) ? prev.filter(blogId => blogId !== id) : [...prev, id]
-        );
-    };
+    const [activeBlog, setActiveBlog] = useState<Blog | null>(null);
 
     useEffect(() => {
         const fetchBlogs = async () => {
@@ -44,6 +39,10 @@ const Blogs: React.FC = () => {
     const featuredBlog = blogs.length > 0 ? blogs[0] : null;
     const remainingBlogs = blogs.length > 1 ? blogs.slice(1) : [];
     const featuredImageUrl = featuredBlog ? resolveMediaUrl(featuredBlog.image_url) : '';
+    const featuredPlainText = featuredBlog ? blogContentToPlainText(featuredBlog.content) : '';
+
+    const activeBlogImageUrl = activeBlog ? resolveMediaUrl(activeBlog.image_url) : '';
+    const activeBlogSafeHtml = activeBlog ? sanitizeBlogHtml(activeBlog.content) : '';
 
     return (
         <main className="blogs-page container fade-in" style={{ paddingTop: '100px' }}>
@@ -70,14 +69,12 @@ const Blogs: React.FC = () => {
                             <div className="featured-content">
                                 <span className="blog-date">{new Date(featuredBlog.created_at).toLocaleDateString()}</span>
                                 <h3>{featuredBlog.title}</h3>
-                                <p className={expandedBlogIds.includes(featuredBlog.id) ? "" : "line-clamp-3"}>
-                                    {featuredBlog.content}
-                                </p>
+                                <p className="line-clamp-3">{featuredPlainText}</p>
                                 <button
                                     className="btn-primary read-more-btn"
-                                    onClick={() => toggleReadMore(featuredBlog.id)}
+                                    onClick={() => setActiveBlog(featuredBlog)}
                                 >
-                                    {expandedBlogIds.includes(featuredBlog.id) ? "Show Less" : "Read Full Article"}
+                                    Read Full Article
                                 </button>
                             </div>
                         </div>
@@ -88,6 +85,7 @@ const Blogs: React.FC = () => {
                         <div className="blogs-masonry reveal active">
                             {remainingBlogs.map(blog => {
                                 const blogImageUrl = resolveMediaUrl(blog.image_url);
+                                const plainTextContent = blogContentToPlainText(blog.content);
                                 return (
                                     <article key={blog.id} className="blog-card masonry-item">
                                         <div className="blog-image" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', width: '100%', height: '200px', overflow: 'hidden', borderRadius: '8px', paddingTop: blogImageUrl ? '0' : '20px' }}>
@@ -101,14 +99,12 @@ const Blogs: React.FC = () => {
                                         <div className="blog-content">
                                             <span className="blog-date">{new Date(blog.created_at).toLocaleDateString()}</span>
                                             <h3>{blog.title}</h3>
-                                            <p className={expandedBlogIds.includes(blog.id) ? "" : "line-clamp-3"}>
-                                                {blog.content}
-                                            </p>
+                                            <p className="line-clamp-3">{plainTextContent}</p>
                                             <button
                                                 className="btn-secondary read-more-btn"
-                                                onClick={() => toggleReadMore(blog.id)}
+                                                onClick={() => setActiveBlog(blog)}
                                             >
-                                                {expandedBlogIds.includes(blog.id) ? "Show Less" : "Read Article"}
+                                                Read Article
                                             </button>
                                         </div>
                                     </article>
@@ -116,6 +112,37 @@ const Blogs: React.FC = () => {
                             })}
                         </div>
                     )}
+                </div>
+            )}
+
+            {activeBlog && (
+                <div className="blog-modal-overlay" onClick={() => setActiveBlog(null)}>
+                    <article className="blog-modal" onClick={(e) => e.stopPropagation()}>
+                        <header className="blog-modal-header">
+                            <div>
+                                <span className="blog-date">{new Date(activeBlog.created_at).toLocaleDateString()}</span>
+                                <h3>{activeBlog.title}</h3>
+                            </div>
+                            <button className="blog-modal-close" onClick={() => setActiveBlog(null)} aria-label="Close article">
+                                x
+                            </button>
+                        </header>
+
+                        <div className="blog-modal-body">
+                            {activeBlogImageUrl && (
+                                <div className="blog-modal-image-wrap">
+                                    <img
+                                        src={activeBlogImageUrl}
+                                        alt={activeBlog.title}
+                                        className="blog-modal-image"
+                                        onError={(e) => { e.currentTarget.src = logo; }}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="blog-modal-content blog-rich-content" dangerouslySetInnerHTML={{ __html: activeBlogSafeHtml }} />
+                        </div>
+                    </article>
                 </div>
             )}
         </main>

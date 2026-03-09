@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { getBlogs, createBlog, updateBlog, deleteBlog, uploadBlogImage } from '../controllers/blogController';
+import { getBlogs, createBlog, updateBlog, deleteBlog, uploadBlogImage, getBlogImage } from '../controllers/blogController';
 import { protect } from '../middleware/authMiddleware';
 import { upload } from '../middleware/upload';
 
@@ -10,6 +10,7 @@ router.route('/')
     .get(protect, getBlogs); // Protected for admin so they can see all blogs
 
 router.get('/public', getBlogs);
+router.get('/image/:filename', getBlogImage);
 
 router.post('/upload', protect, (req, res, next) => {
     upload.single('image')(req, res, function (err) {

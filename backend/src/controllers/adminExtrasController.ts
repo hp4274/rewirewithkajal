@@ -5,21 +5,56 @@ import { ensureCurrentCustomerSessionRecord, ensureCustomerSessionsTable, normal
 
 const VALID_PRESENCE_STATUSES = new Set(['present', 'absent', 'not_marked']);
 
-const buildCompatFormData = (row: any) => ({
-    email: row.email,
-    first_name: row.first_name,
-    last_name: row.last_name,
-    city: row.city,
-    phone: row.phone_number,
-    occupation: row.occupation,
-    dob: row.dob,
-    primary_concern: row.primary_concern,
-    consultation_preference: row.preference_visit,
-    days_preference: row.preferred_date ? [row.preferred_date] : [],
-    timings_preference: row.preferred_slot ? [row.preferred_slot] : [],
-    q1: [],
-    q2: []
-});
+const parseStoredFormData = (raw: any): Record<string, any> => {
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            return typeof parsed === 'object' && parsed !== null ? parsed : {};
+        } catch {
+            return {};
+        }
+    }
+    return {};
+};
+
+const getYesScore = (items: any[]): number => {
+    return items.reduce((sum, item) => {
+        const answer = typeof item === 'object' && item !== null ? item.answer : item;
+        return String(answer || '').trim().toLowerCase() === 'yes' ? sum + 10 : sum;
+    }, 0);
+};
+
+const buildCompatFormData = (row: any) => {
+    const persisted = parseStoredFormData(row.form_data);
+    const q1 = Array.isArray(persisted.q1) ? persisted.q1 : [];
+    const q2 = Array.isArray(persisted.q2) ? persisted.q2 : [];
+    const computedScore = getYesScore(q1) + getYesScore(q2);
+    const parsedStoredScore = Number(persisted.total_score);
+
+    return {
+        ...persisted,
+        email: persisted.email ?? row.email,
+        first_name: persisted.first_name ?? row.first_name,
+        last_name: persisted.last_name ?? row.last_name,
+        city: persisted.city ?? row.city,
+        phone: persisted.phone ?? row.phone_number,
+        occupation: persisted.occupation ?? row.occupation,
+        dob: persisted.dob ?? row.dob,
+        primary_concern: persisted.primary_concern ?? row.primary_concern,
+        consultation_preference: persisted.consultation_preference ?? row.preference_visit,
+        days_preference: Array.isArray(persisted.days_preference)
+            ? persisted.days_preference
+            : (row.preferred_date ? [row.preferred_date] : []),
+        timings_preference: Array.isArray(persisted.timings_preference)
+            ? persisted.timings_preference
+            : (row.preferred_slot ? [row.preferred_slot] : []),
+        q1,
+        q2,
+        total_score: Number.isFinite(parsedStoredScore) ? parsedStoredScore : computedScore
+    };
+};
 
 const withCustomerCompat = (row: any, overrideSettings?: {
     is_active?: boolean;

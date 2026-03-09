@@ -4,6 +4,7 @@ import './HomeBlogs.css';
 import { NavLink } from 'react-router-dom';
 import logo from '../assets/logo3.png';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
+import { blogContentToPlainText } from '../utils/blogContent';
 
 interface Blog {
     id: number;
@@ -41,6 +42,8 @@ const HomeBlogs: React.FC = () => {
     const secondLatestBlog = blogs.length > 1 ? blogs[1] : null;
     const latestImageUrl = latestBlog ? resolveMediaUrl(latestBlog.image_url) : '';
     const secondLatestImageUrl = secondLatestBlog ? resolveMediaUrl(secondLatestBlog.image_url) : '';
+    const latestExcerpt = latestBlog ? blogContentToPlainText(latestBlog.content) : '';
+    const secondExcerpt = secondLatestBlog ? blogContentToPlainText(secondLatestBlog.content) : '';
 
     return (
         <section className="home-blogs-section container">
@@ -65,7 +68,7 @@ const HomeBlogs: React.FC = () => {
                         <div className="home-blog-content">
                             <span className="blog-date">{new Date(latestBlog.created_at).toLocaleDateString()}</span>
                             <h3>{latestBlog.title}</h3>
-                            <p className="line-clamp-3">{latestBlog.content}</p>
+                            <p className="line-clamp-3">{latestExcerpt}</p>
                             <NavLink to="/blogs" className="btn-secondary read-more-btn">Read Article</NavLink>
                         </div>
                     </div>
@@ -86,7 +89,7 @@ const HomeBlogs: React.FC = () => {
                         <div className="home-blog-content">
                             <span className="blog-date">{new Date(secondLatestBlog.created_at).toLocaleDateString()}</span>
                             <h3>{secondLatestBlog.title}</h3>
-                            <p className="line-clamp-3">{secondLatestBlog.content}</p>
+                            <p className="line-clamp-3">{secondExcerpt}</p>
                             <NavLink to="/blogs" className="btn-secondary read-more-btn">Read Article</NavLink>
                         </div>
                     </div>

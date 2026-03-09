@@ -60,6 +60,30 @@ const q2Questions = [
     "If you are in a relationship, or are very close to someone, do you find it difficult or embarrassing to verbalize your love for them?"
 ];
 
+const computeTotalScore = (rawFormData: any): number | null => {
+    if (!rawFormData) return null;
+
+    const formData = typeof rawFormData === 'string'
+        ? (() => {
+            try { return JSON.parse(rawFormData); } catch { return null; }
+        })()
+        : rawFormData;
+
+    if (!formData || typeof formData !== 'object') return null;
+
+    const explicit = Number(formData.total_score);
+    if (Number.isFinite(explicit)) return explicit;
+
+    const scoreFromList = (list: any[]) => list.reduce((sum, item) => {
+        const answer = typeof item === 'object' && item !== null ? item.answer : item;
+        return String(answer || '').trim().toLowerCase() === 'yes' ? sum + 10 : sum;
+    }, 0);
+
+    const q1Score = Array.isArray(formData.q1) ? scoreFromList(formData.q1) : 0;
+    const q2Score = Array.isArray(formData.q2) ? scoreFromList(formData.q2) : 0;
+    return q1Score + q2Score;
+};
+
 const CustomerProfile: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -232,7 +256,8 @@ const CustomerProfile: React.FC = () => {
     const detailAgeDob = customer.dob || customer.form_data?.dob || 'N/A';
     const detailCity = customer.city || customer.form_data?.city || 'N/A';
     const detailOccupation = customer.occupation || customer.form_data?.occupation || customer.form_data?.work || 'N/A';
-    const detailScore = customer.form_data?.total_score ?? 'N/A';
+    const detailScoreValue = computeTotalScore(customer.form_data);
+    const detailScore = detailScoreValue ?? 'N/A';
     const detailStatus = (customer.status || 'pending').toUpperCase();
 
     return (
@@ -369,7 +394,9 @@ const CustomerProfile: React.FC = () => {
                         <p style={{ fontStyle: 'italic', color: '#999' }}>No additional historical forms found.</p>
                     ) : (
                         <div className="historical-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {historicalForms.map(form => (
+                            {historicalForms.map(form => {
+                                const historicalScore = computeTotalScore(form.form_data);
+                                return (
                                 <div key={form.id} style={{ display: 'flex', flexDirection: 'column' }}>
                                     <button
                                         className="btn-secondary"
@@ -378,7 +405,7 @@ const CustomerProfile: React.FC = () => {
                                     >
                                         <span><strong>Form Submitted on:</strong> {new Date(form.created_at).toLocaleDateString()}</span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                            <span style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>Score: {form.form_data?.total_score || 'N/A'}</span>
+                                            <span style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>Score: {historicalScore ?? 'N/A'}</span>
                                             <span style={{ fontSize: '1.2rem', color: '#718096' }}>{expandedFormId === form.id ? '▼' : '▶'}</span>
                                         </div>
                                     </button>
@@ -455,7 +482,8 @@ const CustomerProfile: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

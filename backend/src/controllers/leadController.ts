@@ -9,6 +9,36 @@ import {
     normalizeDateInput
 } from '../utils/validation';
 
+let leadAcceptSchemaInitPromise: Promise<void> | null = null;
+
+const ensureLeadAcceptanceSchema = async (): Promise<void> => {
+    if (leadAcceptSchemaInitPromise) {
+        return leadAcceptSchemaInitPromise;
+    }
+
+    leadAcceptSchemaInitPromise = (async () => {
+        // Best-effort schema compatibility for mixed historical deployments.
+        // If DB role cannot ALTER, acceptance still proceeds with runtime fallback inserts.
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS email VARCHAR(255)').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS first_name VARCHAR(255)').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS last_name VARCHAR(255)').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50)').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS dob DATE').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS primary_concern TEXT').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS preference_visit VARCHAR(20)').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferred_date DATE').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferred_slot VARCHAR(5)').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP').catch(() => undefined);
+
+        await pool.query('ALTER TABLE customers ALTER COLUMN lead_id DROP NOT NULL').catch(() => undefined);
+        await pool.query('ALTER TABLE customers ALTER COLUMN hidden_form_token DROP NOT NULL').catch(() => undefined);
+    })().catch(() => {
+        leadAcceptSchemaInitPromise = null;
+    });
+
+    return leadAcceptSchemaInitPromise;
+};
+
 export const createLead = async (req: Request, res: Response) => {
     try {
         const { first_name, last_name, dob, email, phone, concern, message, preferred_date } = req.body;
@@ -89,6 +119,8 @@ export const getLeads = async (req: Request, res: Response) => {
 
 export const acceptLead = async (req: Request, res: Response) => {
     try {
+        await ensureLeadAcceptanceSchema();
+
         const { id } = req.params;
 
         const leadResult = await pool.query(
@@ -107,34 +139,117 @@ export const acceptLead = async (req: Request, res: Response) => {
         const normalizedDob = lead.dob ? String(lead.dob).slice(0, 10) : null;
         const normalizedPreferredDate = lead.preferred_date ? String(lead.preferred_date).slice(0, 10) : null;
 
-        const existingCustomerResult = await pool.query(
-            `SELECT *
-             FROM customers
-             WHERE LOWER(email) = LOWER($1)
-               AND phone_number = $2
-             ORDER BY created_at DESC
-             LIMIT 1`,
-            [normalizedEmail, normalizedPhone]
-        );
+        let existingCustomerResult;
+        try {
+            existingCustomerResult = await pool.query(
+                `SELECT *
+                 FROM customers
+                 WHERE LOWER(email) = LOWER($1)
+                   AND phone_number = $2
+                 ORDER BY created_at DESC
+                 LIMIT 1`,
+                [normalizedEmail, normalizedPhone]
+            );
+        } catch {
+            existingCustomerResult = await pool.query(
+                `SELECT *
+                 FROM customers
+                 WHERE LOWER(COALESCE(form_data->>'email', '')) = LOWER($1)
+                   AND COALESCE(form_data->>'phone', '') = $2
+                 ORDER BY created_at DESC
+                 LIMIT 1`,
+                [normalizedEmail, normalizedPhone]
+            );
+        }
 
         let customerRow = existingCustomerResult.rows[0] || null;
         if (!customerRow) {
-            const customerResult = await pool.query(
-                `INSERT INTO customers
-                    (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
-                 VALUES ($1, $2, $3, NULL, $4, NULL, $5::date, $6, NULL, $7::date, NULL)
-                 RETURNING *`,
-                [
-                    normalizedEmail,
-                    lead.first_name || 'Client',
-                    lead.last_name || null,
-                    normalizedPhone,
-                    normalizedDob,
-                    lead.concern || null,
-                    normalizedPreferredDate
-                ]
-            );
-            customerRow = customerResult.rows[0];
+            const firstName = lead.first_name || 'Client';
+            const lastName = lead.last_name || null;
+            const concern = lead.concern || null;
+
+            try {
+                const customerResult = await pool.query(
+                    `INSERT INTO customers
+                        (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
+                     VALUES ($1, $2, $3, NULL, $4, NULL, $5::date, $6, NULL, $7::date, NULL)
+                     RETURNING *`,
+                    [
+                        normalizedEmail,
+                        firstName,
+                        lastName,
+                        normalizedPhone,
+                        normalizedDob,
+                        concern,
+                        normalizedPreferredDate
+                    ]
+                );
+                customerRow = customerResult.rows[0];
+            } catch {
+                try {
+                    const customerResult = await pool.query(
+                        `INSERT INTO customers
+                            (lead_id, email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
+                         VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6::date, $7, NULL, $8::date, NULL)
+                         RETURNING *`,
+                        [
+                            id,
+                            normalizedEmail,
+                            firstName,
+                            lastName,
+                            normalizedPhone,
+                            normalizedDob,
+                            concern,
+                            normalizedPreferredDate
+                        ]
+                    );
+                    customerRow = customerResult.rows[0];
+                } catch {
+                    const hiddenToken = `lead-${id}-${Date.now()}`;
+                    const formData = {
+                        email: normalizedEmail,
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: normalizedPhone,
+                        dob: normalizedDob,
+                        primary_concern: concern,
+                        days_preference: normalizedPreferredDate ? [normalizedPreferredDate] : [],
+                        timings_preference: []
+                    };
+
+                    try {
+                        const customerResult = await pool.query(
+                            `INSERT INTO customers
+                                (lead_id, hidden_form_token, email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot, form_data)
+                             VALUES ($1, $2, $3, $4, $5, NULL, $6, NULL, $7::date, $8, NULL, $9::date, NULL, $10::jsonb)
+                             RETURNING *`,
+                            [
+                                id,
+                                hiddenToken,
+                                normalizedEmail,
+                                firstName,
+                                lastName,
+                                normalizedPhone,
+                                normalizedDob,
+                                concern,
+                                normalizedPreferredDate,
+                                JSON.stringify(formData)
+                            ]
+                        );
+                        customerRow = customerResult.rows[0];
+                    } catch {
+                        const appointmentDate = normalizedPreferredDate ? `${normalizedPreferredDate} 09:00:00` : null;
+                        const customerResult = await pool.query(
+                            `INSERT INTO customers
+                                (lead_id, status, is_active, occupation, city, appointment_date, slot, form_data)
+                             VALUES ($1, 'confirmed', true, NULL, NULL, $2::timestamp, NULL, $3::jsonb)
+                             RETURNING *`,
+                            [id, appointmentDate, JSON.stringify(formData)]
+                        );
+                        customerRow = customerResult.rows[0];
+                    }
+                }
+            }
         }
 
         // Send Confirmation Link Email (Directing to Public Intake Page)
@@ -168,8 +283,18 @@ export const acceptLead = async (req: Request, res: Response) => {
             lead,
             customer: customerRow
         });
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error', error });
+    } catch (error: any) {
+        console.error('Lead acceptance failed:', {
+            message: error?.message,
+            code: error?.code,
+            detail: error?.detail,
+            constraint: error?.constraint,
+        });
+        res.status(500).json({
+            message: 'Failed to accept lead',
+            code: error?.code,
+            detail: error?.detail || error?.message || 'Unknown server error'
+        });
     }
 };
 
