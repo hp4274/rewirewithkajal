@@ -16,6 +16,7 @@ import {
     ensureCustomerSessionsTable,
     normalizeSlotForSession
 } from '../utils/sessionStorage';
+import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 
 let customerFormStorageInitPromise: Promise<void> | null = null;
 let customerColumnsCachePromise: Promise<Set<string>> | null = null;
@@ -180,6 +181,10 @@ export const getCustomerForms = async (req: Request, res: Response) => {
     try {
         await ensureCustomerFormStorageSchema();
         const { id } = req.params;
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
         const columns = await getCustomersColumns();
         const hasEmail = columns.has('email');
         const hasPhone = columns.has('phone_number');
@@ -206,24 +211,41 @@ export const getCustomerForms = async (req: Request, res: Response) => {
         const formsEmailExpr = buildEmailExpr('c', hasEmail, hasFormData);
         const formsPhoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
 
+        const filterClause = `
+            c.id = $3
+            OR (${formsEmailExpr} = $1 AND $1 IS NOT NULL)
+            OR (${formsPhoneExpr} = $2 AND $2 IS NOT NULL)
+        `;
+
         const formsQuery = `
             SELECT
                 c.*
             FROM customers c
-            WHERE
-                c.id = $3
-                OR (${formsEmailExpr} = $1 AND $1 IS NOT NULL)
-                OR (${formsPhoneExpr} = $2 AND $2 IS NOT NULL)
+            WHERE ${filterClause}
             ORDER BY c.created_at DESC
+            LIMIT $4 OFFSET $5
         `;
-        const formsResult = await pool.query(formsQuery, [email, phone, id]);
+        const countQuery = `
+            SELECT COUNT(*)::int AS total
+            FROM customers c
+            WHERE ${filterClause}
+        `;
+
+        const [formsResult, countResult] = await Promise.all([
+            pool.query(formsQuery, [email, phone, id, limit, offset]),
+            pool.query(countQuery, [email, phone, id]),
+        ]);
 
         const forms = formsResult.rows.map((row) => ({
             ...row,
             form_data: buildCompatFormData(row)
         }));
 
-        res.json({ matchParams: { email, phone }, forms });
+        res.json({
+            matchParams: { email, phone },
+            items: forms,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -233,6 +255,10 @@ export const getCustomers = async (req: Request, res: Response) => {
     try {
         await ensureCustomerFormStorageSchema();
         await ensureCustomerSettingsTable();
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
 
         const columns = await getCustomersColumns();
         const hasEmail = columns.has('email');
@@ -282,7 +308,7 @@ export const getCustomers = async (req: Request, res: Response) => {
         const legacyIsActiveExpr = hasLegacyIsActive ? 'c.is_active' : 'NULL';
         const legacyStatusExpr = hasLegacyStatus ? `NULLIF(TRIM(c.status), '')` : 'NULL';
 
-        const query = `
+                const rankedCte = `
       WITH RankedCustomers AS (
           SELECT
               c.*,
@@ -305,11 +331,20 @@ export const getCustomers = async (req: Request, res: Response) => {
           FROM customers c
           LEFT JOIN customer_settings cs ON cs.customer_id = c.id
       )
+        `;
+
+                const query = `
+            ${rankedCte}
       SELECT * FROM RankedCustomers
       WHERE rn = 1
       ORDER BY created_at DESC
+            LIMIT $1 OFFSET $2
     `;
-        const result = await pool.query(query);
+
+                const [result, countResult] = await Promise.all([
+                        pool.query(query, [limit, offset]),
+                        pool.query(`${rankedCte} SELECT COUNT(*)::int AS total FROM RankedCustomers WHERE rn = 1`),
+                ]);
 
         // Map computed fields back to standard expected format for frontend 'CustomerData' interface
         const normalizedRows = result.rows.map(row => ({
@@ -328,7 +363,10 @@ export const getCustomers = async (req: Request, res: Response) => {
             form_data: buildCompatFormData(row)
         }));
 
-        res.json(normalizedRows);
+        res.json({
+            items: normalizedRows,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }

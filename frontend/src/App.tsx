@@ -1,36 +1,31 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Header from './components/Header';
-import Home from './pages/Home';
-import AboutPage from './pages/AboutPage';
-import Blogs from './pages/Blogs';
-import Appointment from './pages/Appointment';
-import AdminLogin from './admin/AdminLogin';
-import Admin from './admin/Admin';
-import CustomerProfile from './admin/CustomerProfile';
-import CustomerFormDetails from './admin/CustomerFormDetails';
-import IntakeForm from './pages/IntakeForm';
-import AnimatedBackground from './components/AnimatedBackground';
-import Footer from './components/Footer';
-import Preloader from './components/Preloader';
 import './styles/global.css';
 import './styles/animations.css';
 
-const ConditionalFooter = () => {
-  const location = useLocation();
-  if (location.pathname.startsWith('/admin')) {
-    return null;
-  }
-  return <Footer />;
-};
+const Header = lazy(() => import('./components/Header'));
+const Home = lazy(() => import('./pages/Home'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const Blogs = lazy(() => import('./pages/Blogs'));
+const Appointment = lazy(() => import('./pages/Appointment'));
+const AdminLogin = lazy(() => import('./admin/AdminLogin'));
+const Admin = lazy(() => import('./admin/Admin'));
+const CustomerProfile = lazy(() => import('./admin/CustomerProfile'));
+const CustomerFormDetails = lazy(() => import('./admin/CustomerFormDetails'));
+const IntakeForm = lazy(() => import('./pages/IntakeForm'));
+const AnimatedBackground = lazy(() => import('./components/AnimatedBackground'));
+const Footer = lazy(() => import('./components/Footer'));
+const Preloader = lazy(() => import('./components/Preloader'));
 
-function App() {
+const RoutedAppShell = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
-    <Router>
-      <Preloader />
+    <>
+      {!isAdminRoute && <Preloader />}
       <div className="app-container">
-        <AnimatedBackground />
-        {/* Header will appear on all non-admin pages for now */}
+        {!isAdminRoute && <AnimatedBackground />}
         <Routes>
           <Route path="/" element={<><Header /><Home /></>} />
           <Route path="/about" element={<><Header /><AboutPage /></>} />
@@ -44,7 +39,17 @@ function App() {
           <Route path="/admin/*" element={<Admin />} />
         </Routes>
       </div>
-      <ConditionalFooter />
+      {!isAdminRoute && <Footer />}
+    </>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <Suspense fallback={<div style={{ minHeight: '100vh', background: '#FFFAF0' }} />}>
+        <RoutedAppShell />
+      </Suspense>
     </Router>
   );
 }

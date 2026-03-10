@@ -8,6 +8,23 @@ const sslConfig = process.env.DB_SSL === 'false' ? false : { rejectUnauthorized:
 
 const createPool = (config: PoolConfig) => {
   const nextPool = new Pool(config);
+  const statementTimeoutMs = parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '10000', 10);
+  const lockTimeoutMs = parseInt(process.env.DB_LOCK_TIMEOUT_MS || '3000', 10);
+  const idleInTransactionTimeoutMs = parseInt(process.env.DB_IDLE_IN_TX_TIMEOUT_MS || '10000', 10);
+
+  nextPool.on('connect', (client) => {
+    // Apply per-session safety limits so expensive/blocked queries do not degrade the API.
+    void client
+      .query(
+        `SET statement_timeout TO ${statementTimeoutMs};
+         SET lock_timeout TO ${lockTimeoutMs};
+         SET idle_in_transaction_session_timeout TO ${idleInTransactionTimeoutMs};`
+      )
+      .catch((err) => {
+        console.warn('Failed to apply DB session timeout settings:', err);
+      });
+  });
+
   nextPool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
   });

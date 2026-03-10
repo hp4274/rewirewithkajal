@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Check, X, LayoutGrid, List, Phone, Mail, MapPin } from 'lucide-react';
 import './LeadsManager.css';
 import { isFutureOrCurrentSlot, isTodayOrFutureDate, toDateInputString } from '../utils/validation';
+import { getCollectionItems } from '../utils/collections';
 
 interface LeadOrCustomer {
     id: number;
@@ -142,13 +143,16 @@ const LeadsManager: React.FC = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [leadsRes, customersRes] = await Promise.all([
-                axios.get('/api/leads', { headers }),
-                axios.get('/api/customers', { headers })
+                axios.get('/api/leads?limit=100&page=1', { headers }),
+                axios.get('/api/customers?limit=100&page=1', { headers })
             ]);
 
-            setLeads(leadsRes.data);
+            const leadsItems = getCollectionItems<LeadOrCustomer>(leadsRes.data);
+            const customersItems = getCollectionItems<LeadOrCustomer>(customersRes.data);
+
+            setLeads(leadsItems);
             // Filter customers to exclude lead placeholders
-            const filteredCustomers = customersRes.data.filter((c: any) => {
+            const filteredCustomers = customersItems.filter((c: any) => {
                 if (c.lead_id && (!c.form_data || Object.keys(c.form_data).length === 0)) {
                     return false;
                 }

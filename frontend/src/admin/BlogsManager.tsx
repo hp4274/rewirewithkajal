@@ -5,6 +5,7 @@ import './LeadsManager.css';
 import logo from '../assets/logo3.png';
 import { resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
+import { getCollectionItems } from '../utils/collections';
 
 interface Blog {
     id: number;
@@ -27,10 +28,10 @@ const BlogsManager: React.FC = () => {
     const fetchBlogs = async () => {
         try {
             const token = localStorage.getItem('adminToken');
-            const res = await axios.get('/api/blogs', {
+            const res = await axios.get('/api/blogs?limit=100&page=1', {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setBlogs(res.data);
+            setBlogs(getCollectionItems<Blog>(res.data));
         } catch (err) {
             console.error(err);
         } finally {

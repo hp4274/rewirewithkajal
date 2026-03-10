@@ -2,11 +2,32 @@ import { Request, Response } from 'express';
 import pool from '../db';
 import { isValidMobile10, normalizeDateInput } from '../utils/validation';
 import { ensureCurrentCustomerSessionRecord, ensureCustomerSessionsTable, normalizeSlotForSession } from '../utils/sessionStorage';
+import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 
 const VALID_PRESENCE_STATUSES = new Set(['present', 'absent', 'not_marked']);
 const DEFAULT_PER_SESSION_PRICE = 1500;
 const DEFAULT_TOTAL_SESSIONS = 4;
 let customerSettingsTableInitPromise: Promise<void> | null = null;
+let customerColumnsPromise: Promise<Set<string>> | null = null;
+
+const getCustomerColumns = async (): Promise<Set<string>> => {
+    if (!customerColumnsPromise) {
+        customerColumnsPromise = (async () => {
+            const result = await pool.query(
+                `SELECT column_name
+                 FROM information_schema.columns
+                 WHERE table_name = 'customers'
+                   AND table_schema = ANY(current_schemas(false))`
+            );
+            return new Set(result.rows.map((row: any) => String(row.column_name)));
+        })().catch((error) => {
+            customerColumnsPromise = null;
+            throw error;
+        });
+    }
+
+    return customerColumnsPromise;
+};
 
 const ensureCustomerSettingsTable = async (): Promise<void> => {
     if (customerSettingsTableInitPromise) {
@@ -104,8 +125,26 @@ const withCustomerCompat = (row: any, overrideSettings?: {
 export const getCustomerPayments = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM payments WHERE customer_id = $1 ORDER BY payment_date ASC', [id]);
-        res.json(result.rows);
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
+        const [result, countResult] = await Promise.all([
+            pool.query(
+                `SELECT id, customer_id, session_number, amount, payment_type, payment_date
+                 FROM payments
+                 WHERE customer_id = $1
+                 ORDER BY payment_date ASC
+                 LIMIT $2 OFFSET $3`,
+                [id, limit, offset]
+            ),
+            pool.query('SELECT COUNT(*)::int AS total FROM payments WHERE customer_id = $1', [id]),
+        ]);
+
+        res.json({
+            items: result.rows,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -228,9 +267,26 @@ export const updateCustomerSettings = async (req: Request, res: Response) => {
 export const getCustomerNotes = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        // Get notes newest first
-        const result = await pool.query('SELECT * FROM session_notes WHERE customer_id = $1 ORDER BY created_at DESC', [id]);
-        res.json(result.rows);
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
+        const [result, countResult] = await Promise.all([
+            pool.query(
+                `SELECT id, customer_id, note_text, created_at
+                 FROM session_notes
+                 WHERE customer_id = $1
+                 ORDER BY created_at DESC
+                 LIMIT $2 OFFSET $3`,
+                [id, limit, offset]
+            ),
+            pool.query('SELECT COUNT(*)::int AS total FROM session_notes WHERE customer_id = $1', [id]),
+        ]);
+
+        res.json({
+            items: result.rows,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -254,6 +310,10 @@ export const addCustomerNote = async (req: Request, res: Response) => {
 export const getCustomerSessions = async (req: Request, res: Response) => {
     try {
         const customerId = Number(req.params.id);
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
         if (!Number.isInteger(customerId) || customerId <= 0) {
             return res.status(400).json({ message: 'Invalid customer id.' });
         }
@@ -261,7 +321,8 @@ export const getCustomerSessions = async (req: Request, res: Response) => {
         await ensureCustomerSessionsTable(pool);
         await ensureCurrentCustomerSessionRecord(pool, customerId);
 
-        const result = await pool.query(
+        const [result, countResult] = await Promise.all([
+            pool.query(
             `SELECT
                 id,
                 customer_id,
@@ -277,11 +338,17 @@ export const getCustomerSessions = async (req: Request, res: Response) => {
                 END AS is_past
              FROM customer_sessions
              WHERE customer_id = $1
-             ORDER BY session_date DESC, slot DESC`,
-            [customerId]
-        );
+             ORDER BY session_date DESC, slot DESC
+             LIMIT $2 OFFSET $3`,
+                [customerId, limit, offset]
+            ),
+            pool.query('SELECT COUNT(*)::int AS total FROM customer_sessions WHERE customer_id = $1', [customerId]),
+        ]);
 
-        res.json(result.rows);
+        res.json({
+            items: result.rows,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -453,6 +520,10 @@ export const updateSessionPresence = async (req: Request, res: Response) => {
 export const getHistoricalForms = async (req: Request, res: Response) => {
     try {
         const { phone, dob } = req.query;
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
         if (!phone || !dob) return res.status(400).json({ message: 'Phone number and DOB required for secure matching' });
 
         const normalizedPhone = String(phone).trim();
@@ -466,16 +537,57 @@ export const getHistoricalForms = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'DOB must be in DD-MM-YYYY format.' });
         }
 
+        const customerColumns = await getCustomerColumns();
+        const hasPhone = customerColumns.has('phone_number');
+        const hasDob = customerColumns.has('dob');
+        const hasFormData = customerColumns.has('form_data');
+
+        const phoneExpr = hasPhone && hasFormData
+            ? "COALESCE(NULLIF(regexp_replace(c.phone_number, '[^0-9]', '', 'g'), ''), NULLIF(regexp_replace(c.form_data->>'phone', '[^0-9]', '', 'g'), ''))"
+            : hasPhone
+                ? "NULLIF(regexp_replace(c.phone_number, '[^0-9]', '', 'g'), '')"
+                : hasFormData
+                    ? "NULLIF(regexp_replace(c.form_data->>'phone', '[^0-9]', '', 'g'), '')"
+                    : 'NULL';
+
+        const dobExpr = hasDob && hasFormData
+            ? "COALESCE(TO_CHAR(c.dob, 'YYYY-MM-DD'), NULLIF(TRIM(c.form_data->>'dob'), ''))"
+            : hasDob
+                ? "TO_CHAR(c.dob, 'YYYY-MM-DD')"
+                : hasFormData
+                    ? "NULLIF(TRIM(c.form_data->>'dob'), '')"
+                    : 'NULL';
+
+        if (phoneExpr === 'NULL' || dobExpr === 'NULL') {
+            return res.json({
+                items: [],
+                meta: buildPaginationMeta(0, page, limit),
+            });
+        }
+
         const query = `
-            SELECT * FROM customers 
-            WHERE phone_number = $1
-              AND dob = $2::date
+            SELECT *
+            FROM customers c
+            WHERE ${phoneExpr} = $1
+              AND ${dobExpr} = $2
             ORDER BY created_at DESC
+            LIMIT $3 OFFSET $4
         `;
-        const result = await pool.query(query, [normalizedPhone, normalizedDob]);
+        const [result, countResult] = await Promise.all([
+            pool.query(query, [normalizedPhone, normalizedDob, limit, offset]),
+            pool.query(
+                `SELECT COUNT(*)::int AS total
+                 FROM customers c
+                 WHERE ${phoneExpr} = $1 AND ${dobExpr} = $2`,
+                [normalizedPhone, normalizedDob]
+            ),
+        ]);
 
         const formattedRows = result.rows.map((row) => withCustomerCompat(row));
-        res.json(formattedRows);
+        res.json({
+            items: formattedRows,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }

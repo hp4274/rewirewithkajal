@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 import logo from '../assets/logo3.png';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
+import { getCollectionItems } from '../utils/collections';
 
 interface Blog {
     id: number;
@@ -21,8 +22,8 @@ const HomeBlogs: React.FC = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const response = await requestWithApiFallback<Blog[]>(() => axios.get(apiUrl('/api/blogs/public')));
-                const incomingBlogs = Array.isArray(response.data) ? response.data : [];
+                const response = await requestWithApiFallback(() => axios.get(apiUrl('/api/blogs/public?limit=6&page=1')));
+                const incomingBlogs = getCollectionItems<Blog>(response.data);
                 setBlogs(incomingBlogs.slice(0, 2));
             } catch (error) {
                 console.error('Error fetching blogs:', error);
@@ -35,7 +36,17 @@ const HomeBlogs: React.FC = () => {
         fetchBlogs();
     }, []);
 
-    if (loading) return null; // Don't show anything while loading on the home page
+    if (loading) {
+        return (
+            <section className="home-blogs-section container" aria-busy="true" aria-live="polite">
+                <div className="section-header text-center">
+                    <h2>Latest Insights</h2>
+                    <p className="subtitle">Loading latest insights...</p>
+                </div>
+                <div style={{ height: '220px', borderRadius: '16px', background: 'linear-gradient(90deg, #f5e8de 25%, #fff3ec 37%, #f5e8de 63%)', backgroundSize: '400% 100%', animation: 'shimmer 1.4s ease infinite' }} />
+            </section>
+        );
+    }
     if (blogs.length === 0) return null; // Don't show section if no blogs exist
 
     const latestBlog = blogs[0];
@@ -60,6 +71,8 @@ const HomeBlogs: React.FC = () => {
                             <img
                                 src={latestImageUrl || logo}
                                 alt={latestBlog.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="home-blog-logo"
                                 style={latestImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
                                 onError={(e) => { e.currentTarget.src = logo; }}
@@ -81,6 +94,8 @@ const HomeBlogs: React.FC = () => {
                             <img
                                 src={secondLatestImageUrl || logo}
                                 alt={secondLatestBlog.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="home-blog-logo"
                                 style={secondLatestImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
                                 onError={(e) => { e.currentTarget.src = logo; }}

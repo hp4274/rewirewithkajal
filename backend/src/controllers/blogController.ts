@@ -3,8 +3,11 @@ import pool from '../db';
 import fs from 'fs/promises';
 import path from 'path';
 import { UPLOAD_DIR } from '../middleware/upload';
+import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 
 let blogImagesInitPromise: Promise<void> | null = null;
+const PUBLIC_BLOGS_CACHE_TTL_MS = 60_000;
+const publicBlogsCache = new Map<string, { expiresAt: number; payload: any }>();
 const shouldAutoDbSchemaSync =
     process.env.AUTO_DB_SCHEMA_SYNC === 'true' ||
     (!process.env.VERCEL && process.env.AUTO_DB_SCHEMA_SYNC !== 'false');
@@ -37,17 +40,67 @@ const ensureBlogImagesTable = async (): Promise<void> => {
     await blogImagesInitPromise;
 };
 
+const clearPublicBlogsCache = () => {
+    publicBlogsCache.clear();
+};
+
+const getCachedPublicBlogs = (key: string) => {
+    const hit = publicBlogsCache.get(key);
+    if (!hit) return null;
+    if (hit.expiresAt <= Date.now()) {
+        publicBlogsCache.delete(key);
+        return null;
+    }
+    return hit.payload;
+};
+
+const setCachedPublicBlogs = (key: string, payload: any) => {
+    publicBlogsCache.set(key, {
+        payload,
+        expiresAt: Date.now() + PUBLIC_BLOGS_CACHE_TTL_MS,
+    });
+};
+
 export const getBlogs = async (req: Request, res: Response) => {
     try {
         const isAdmin = (req as any).admin ? true : false;
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 12,
+            maxLimit: 100,
+        });
 
-        // If not admin, only show active blogs.
-        const query = isAdmin
-            ? 'SELECT * FROM blogs ORDER BY created_at DESC'
-            : 'SELECT * FROM blogs WHERE is_active = true ORDER BY created_at DESC';
+        if (!isAdmin) {
+            const cacheKey = `${page}:${limit}`;
+            const cachedPayload = getCachedPublicBlogs(cacheKey);
+            if (cachedPayload) {
+                res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
+                return res.json(cachedPayload);
+            }
+        }
 
-        const result = await pool.query(query);
-        res.json(result.rows);
+        const whereClause = isAdmin ? '' : 'WHERE is_active = true';
+        const countQuery = `SELECT COUNT(*)::int AS total FROM blogs ${whereClause}`;
+        const result = await pool.query(
+            `SELECT id, title, content, image_url, is_active, created_at
+             FROM blogs
+             ${whereClause}
+             ORDER BY created_at DESC
+             LIMIT $1 OFFSET $2`,
+            [limit, offset]
+        );
+        const totalResult = await pool.query(countQuery);
+        const total = Number(totalResult.rows[0]?.total || 0);
+        const payload = {
+            items: result.rows,
+            meta: buildPaginationMeta(total, page, limit),
+        };
+
+        if (!isAdmin) {
+            setCachedPublicBlogs(`${page}:${limit}`, payload);
+            res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
+        }
+
+        res.json(payload);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }
@@ -61,6 +114,8 @@ export const createBlog = async (req: Request, res: Response) => {
             'INSERT INTO blogs (title, content, image_url, is_active) VALUES ($1, $2, $3, $4) RETURNING *',
             [title, content, image_url, is_active || false]
         );
+
+        clearPublicBlogsCache();
 
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -82,6 +137,7 @@ export const updateBlog = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Blog not found' });
         }
 
+        clearPublicBlogsCache();
         res.json(result.rows[0]);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
@@ -98,6 +154,7 @@ export const deleteBlog = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Blog not found' });
         }
 
+        clearPublicBlogsCache();
         res.json({ message: 'Blog removed' });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });

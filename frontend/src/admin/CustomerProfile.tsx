@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CustomerProfile.css';
+import { getCollectionItems } from '../utils/collections';
 
 interface CustomerData {
     id: number;
@@ -115,8 +116,8 @@ const CustomerProfile: React.FC = () => {
             const headers = { Authorization: `Bearer ${token}` };
 
             // Fetch basic info (needs an endpoint or we filter from all for now)
-            const allRes = await axios.get('/api/customers', { headers });
-            const cst = allRes.data.find((c: any) => c.id === parseInt(id || '0'));
+            const allRes = await axios.get('/api/customers?limit=100&page=1', { headers });
+            const cst = getCollectionItems<any>(allRes.data).find((c: any) => c.id === parseInt(id || '0'));
 
             if (cst) {
                 setCustomer(cst);
@@ -124,20 +125,20 @@ const CustomerProfile: React.FC = () => {
                 setEditSessions(cst.total_sessions || 4);
 
                 // Fetch Payments
-                const payRes = await axios.get(`/api/admin/customers/${id}/payments`, { headers });
-                setPayments(payRes.data);
+                const payRes = await axios.get(`/api/admin/customers/${id}/payments?limit=100&page=1`, { headers });
+                setPayments(getCollectionItems<any>(payRes.data));
 
                 // Fetch Notes
-                const notesRes = await axios.get(`/api/admin/customers/${id}/notes`, { headers });
-                setNotes(notesRes.data);
+                const notesRes = await axios.get(`/api/admin/customers/${id}/notes?limit=100&page=1`, { headers });
+                setNotes(getCollectionItems<any>(notesRes.data));
 
                 // Fetch Historical Forms matching phone number AND dob! Fallback to form_data if root isn't present
                 const fetchPhone = cst.phone || cst.form_data?.phone;
                 const fetchDob = cst.dob || cst.form_data?.dob;
 
                 if (fetchPhone && fetchDob) {
-                    const histRes = await axios.get(`/api/admin/historical-forms?phone=${fetchPhone}&dob=${fetchDob}`, { headers });
-                    setHistoricalForms(histRes.data);
+                    const histRes = await axios.get(`/api/admin/historical-forms?phone=${fetchPhone}&dob=${fetchDob}&limit=100&page=1`, { headers });
+                    setHistoricalForms(getCollectionItems<any>(histRes.data));
                 }
             }
         } catch (error) {

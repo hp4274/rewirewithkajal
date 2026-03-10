@@ -19,7 +19,7 @@ const Header: React.FC = () => {
         <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
             <div className="header-container">
                 <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                    <img src={logo} alt="Rewire With Kajal Logo" style={{ height: '50px', maxHeight: '50px', width: 'auto', objectFit: 'contain' }} />
+                    <img src={logo} alt="Rewire With Kajal Logo" width={180} height={50} loading="eager" fetchPriority="high" decoding="async" style={{ height: '50px', maxHeight: '50px', width: 'auto', objectFit: 'contain' }} />
                 </Link>
 
                 <nav className="header-nav">

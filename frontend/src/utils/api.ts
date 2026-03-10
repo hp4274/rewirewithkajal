@@ -27,6 +27,14 @@ const shouldRetryWithLocalFallback = (error: any): boolean => {
     return url.includes('/api/');
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetryTransient = (error: any): boolean => {
+    const status = Number(error?.response?.status || 0);
+    const networkError = !error?.response;
+    return networkError || status === 429 || status === 502 || status === 503 || status === 504;
+};
+
 export const apiUrl = (path: string): string => {
     const normalizedPath = normalizeApiPath(path);
 
@@ -102,11 +110,28 @@ export const resolveMediaUrl = (pathOrUrl?: string | null): string => {
 export const requestWithApiFallback = async <T>(
     primaryRequest: () => Promise<AxiosResponse<T>>
 ): Promise<AxiosResponse<T>> => {
+    let firstError: any;
+
     try {
         return await primaryRequest();
     } catch (error: any) {
+        firstError = error;
+    }
+
+    if (shouldRetryTransient(firstError)) {
+        await sleep(250);
+        try {
+            return await primaryRequest();
+        } catch {
+            // Proceed to local fallback check with original error context.
+        }
+    }
+
+    try {
+        throw firstError;
+    } catch (error: any) {
         if (!shouldRetryWithLocalFallback(error)) {
-            throw error;
+            throw firstError;
         }
 
         const originalConfig = error?.config as AxiosRequestConfig | undefined;

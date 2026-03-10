@@ -4,6 +4,7 @@ import './Blogs.css';
 import logo from '../assets/logo3.png';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
+import { getCollectionItems } from '../utils/collections';
 
 interface Blog {
     id: number;
@@ -21,8 +22,8 @@ const Blogs: React.FC = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const response = await requestWithApiFallback<Blog[]>(() => axios.get(apiUrl('/api/blogs/public')));
-                setBlogs(Array.isArray(response.data) ? response.data : []);
+                const response = await requestWithApiFallback(() => axios.get(apiUrl('/api/blogs/public?limit=24&page=1')));
+                setBlogs(getCollectionItems<Blog>(response.data));
             } catch (error) {
                 console.error('Error fetching blogs:', error);
                 setBlogs([]);
@@ -62,6 +63,9 @@ const Blogs: React.FC = () => {
                                 <img
                                     src={featuredImageUrl || logo}
                                     alt={featuredBlog.title}
+                                    loading="eager"
+                                    fetchPriority="high"
+                                    decoding="async"
                                     style={featuredImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '120px', width: 'auto', objectFit: 'contain' }}
                                     onError={(e) => { e.currentTarget.src = logo; }}
                                 />
@@ -92,6 +96,8 @@ const Blogs: React.FC = () => {
                                             <img
                                                 src={blogImageUrl || logo}
                                                 alt={blog.title}
+                                                loading="lazy"
+                                                decoding="async"
                                                 style={blogImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : { height: '80px', width: 'auto', objectFit: 'contain' }}
                                                 onError={(e) => { e.currentTarget.src = logo; }}
                                             />
@@ -134,6 +140,8 @@ const Blogs: React.FC = () => {
                                     <img
                                         src={activeBlogImageUrl}
                                         alt={activeBlog.title}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="blog-modal-image"
                                         onError={(e) => { e.currentTarget.src = logo; }}
                                     />

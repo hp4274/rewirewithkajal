@@ -17,6 +17,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { isFutureOrCurrentSlot, isTodayOrFutureDate, toDateInputString } from '../utils/validation';
 import { resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
+import { getCollectionItems, getCollectionTotal } from '../utils/collections';
 import logo from '../assets/logo3.png';
 const formatDateForInput = (dateString?: string) => {
     if (!dateString) return '';
@@ -327,28 +328,34 @@ const Admin: React.FC = () => {
                 const headers = { Authorization: `Bearer ${token}` };
 
                 const [leadsRes, customersRes, turnoverRes, blogsRes] = await Promise.all([
-                    axios.get('/api/leads', { headers }),
-                    axios.get('/api/customers', { headers }),
+                    axios.get('/api/leads?limit=100&page=1', { headers }),
+                    axios.get('/api/customers?limit=100&page=1', { headers }),
                     axios.get('/api/admin/turnover', { headers }),
-                    axios.get('/api/blogs', { headers }),
+                    axios.get('/api/blogs?limit=100&page=1', { headers }),
                 ]);
 
+                const leads = getCollectionItems<any>(leadsRes.data);
+                const customers = getCollectionItems<any>(customersRes.data);
+                const blogs = getCollectionItems<any>(blogsRes.data);
+                const leadsTotal = getCollectionTotal<any>(leadsRes.data) ?? leads.length;
+                const customersTotal = getCollectionTotal<any>(customersRes.data) ?? customers.length;
+
                 const turnover = turnoverRes.data.turnover || 0;
-                const activeCustomersCount = customersRes.data.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
+                const activeCustomersCount = customers.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
 
                 setStats({
-                    leads: leadsRes.data.length,
+                    leads: leadsTotal,
                     leadsGrowth: 15,
-                    customers: customersRes.data.length,
+                    customers: customersTotal,
                     customersGrowth: 8,
                     activeCustomers: activeCustomersCount,
                     turnover: turnover
                 });
 
-                setAllLeads(leadsRes.data);
-                setBlogs(blogsRes.data);
+                setAllLeads(leads);
+                setBlogs(blogs);
 
-                const filteredCustomers = customersRes.data.filter((c: any) => {
+                const filteredCustomers = customers.filter((c: any) => {
                     if (c.lead_id && (!c.form_data || Object.keys(c.form_data).length === 0)) {
                         return false;
                     }
@@ -357,10 +364,10 @@ const Admin: React.FC = () => {
                 setAllCustomers(filteredCustomers);
 
                 // Show every booked slot on the calendar, even if status labels vary.
-                const allAppointments = customersRes.data.filter((c: any) => !!c.appointment_date);
+                const allAppointments = customers.filter((c: any) => !!c.appointment_date);
                 setAppointments(allAppointments);
 
-                const bookable = customersRes.data.filter((c: any) => c.is_active === true);
+                const bookable = customers.filter((c: any) => c.is_active === true);
                 setBookingCustomers(bookable);
 
             } catch (error) {
@@ -377,10 +384,10 @@ const Admin: React.FC = () => {
     const fetchBlogs = async () => {
         try {
             const token = localStorage.getItem('adminToken');
-            const res = await axios.get('/api/blogs', {
+            const res = await axios.get('/api/blogs?limit=100&page=1', {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setBlogs(res.data);
+            setBlogs(getCollectionItems<any>(res.data));
         } catch (err) {
             console.error(err);
         }
@@ -899,8 +906,8 @@ const Admin: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            const sessionsRes = await axios.get(`/api/admin/customers/${customerId}/sessions`, { headers });
-            const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+            const sessionsRes = await axios.get(`/api/admin/customers/${customerId}/sessions?limit=100&page=1`, { headers });
+            const sessions = getCollectionItems<any>(sessionsRes.data);
 
             setProfileSessions(sessions);
             const draftMap: Record<number, string> = {};
@@ -919,8 +926,8 @@ const Admin: React.FC = () => {
         try {
             const token = localStorage.getItem('adminToken');
             const headers = { Authorization: `Bearer ${token}` };
-            const customersRes = await axios.get('/api/customers', { headers });
-            const updatedCustomer = customersRes.data.find((c: any) => c.id === customerId);
+            const customersRes = await axios.get('/api/customers?limit=100&page=1', { headers });
+            const updatedCustomer = getCollectionItems<any>(customersRes.data).find((c: any) => c.id === customerId);
             if (updatedCustomer) {
                 setProfileData(updatedCustomer);
             }
@@ -964,15 +971,16 @@ const Admin: React.FC = () => {
         const token = localStorage.getItem('adminToken');
         try {
             const [notesRes, paymentsRes, formsRes, sessionsRes] = await Promise.all([
-                axios.get(`/api/admin/customers/${customer.id}/notes`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`/api/admin/customers/${customer.id}/payments`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`/api/customers/${customer.id}/forms`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`/api/admin/customers/${customer.id}/sessions`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`/api/admin/customers/${customer.id}/notes?limit=100&page=1`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`/api/admin/customers/${customer.id}/payments?limit=100&page=1`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`/api/customers/${customer.id}/forms?limit=100&page=1`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`/api/admin/customers/${customer.id}/sessions?limit=100&page=1`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
-            setProfileNotes(notesRes.data);
-            setProfilePayments(paymentsRes.data);
-            setProfileFormsData(formsRes.data);
-            const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+            setProfileNotes(getCollectionItems<any>(notesRes.data));
+            setProfilePayments(getCollectionItems<any>(paymentsRes.data));
+            const forms = getCollectionItems<any>(formsRes.data);
+            setProfileFormsData({ ...formsRes.data, forms });
+            const sessions = getCollectionItems<any>(sessionsRes.data);
             setProfileSessions(sessions);
             const draftMap: Record<number, string> = {};
             sessions.forEach((session: any) => {
@@ -988,18 +996,19 @@ const Admin: React.FC = () => {
         const token = localStorage.getItem('adminToken');
         const headers = { Authorization: `Bearer ${token}` };
         const [notesRes, paymentsRes, formsRes, sessionsRes, customersRes] = await Promise.all([
-            axios.get(`/api/admin/customers/${customerId}/notes`, { headers }),
-            axios.get(`/api/admin/customers/${customerId}/payments`, { headers }),
-            axios.get(`/api/customers/${customerId}/forms`, { headers }),
-            axios.get(`/api/admin/customers/${customerId}/sessions`, { headers }),
-            axios.get('/api/customers', { headers })
+            axios.get(`/api/admin/customers/${customerId}/notes?limit=100&page=1`, { headers }),
+            axios.get(`/api/admin/customers/${customerId}/payments?limit=100&page=1`, { headers }),
+            axios.get(`/api/customers/${customerId}/forms?limit=100&page=1`, { headers }),
+            axios.get(`/api/admin/customers/${customerId}/sessions?limit=100&page=1`, { headers }),
+            axios.get('/api/customers?limit=100&page=1', { headers })
         ]);
 
-        setProfileNotes(Array.isArray(notesRes.data) ? notesRes.data : []);
-        setProfilePayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
-        setProfileFormsData(formsRes.data);
+        setProfileNotes(getCollectionItems<any>(notesRes.data));
+        setProfilePayments(getCollectionItems<any>(paymentsRes.data));
+        const forms = getCollectionItems<any>(formsRes.data);
+        setProfileFormsData({ ...formsRes.data, forms });
 
-        const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+        const sessions = getCollectionItems<any>(sessionsRes.data);
         setProfileSessions(sessions);
         const draftMap: Record<number, string> = {};
         sessions.forEach((session: any) => {
@@ -1007,9 +1016,8 @@ const Admin: React.FC = () => {
         });
         setSessionPresenceDrafts(draftMap);
 
-        const refreshedProfile = Array.isArray(customersRes.data)
-            ? customersRes.data.find((c: any) => c.id === customerId)
-            : null;
+        const refreshedProfile = getCollectionItems<any>(customersRes.data)
+            .find((c: any) => c.id === customerId) || null;
         if (refreshedProfile) {
             setProfileData(refreshedProfile);
         }
@@ -1046,8 +1054,8 @@ const Admin: React.FC = () => {
             const token = localStorage.getItem('adminToken');
             await axios.post(`/api/admin/customers/${profileData.id}/notes`, { note_text: newNote }, { headers: { Authorization: `Bearer ${token}` } });
             setNewNote('');
-            const notesRes = await axios.get(`/api/admin/customers/${profileData.id}/notes`, { headers: { Authorization: `Bearer ${token}` } });
-            setProfileNotes(notesRes.data);
+            const notesRes = await axios.get(`/api/admin/customers/${profileData.id}/notes?limit=100&page=1`, { headers: { Authorization: `Bearer ${token}` } });
+            setProfileNotes(getCollectionItems<any>(notesRes.data));
         } catch (err) {
             console.error(err);
             alert("Error adding note");
@@ -1070,8 +1078,8 @@ const Admin: React.FC = () => {
 
             setPaymentAmount('');
 
-            const paymentsRes = await axios.get(`/api/admin/customers/${profileData.id}/payments`, { headers: { Authorization: `Bearer ${token}` } });
-            setProfilePayments(paymentsRes.data);
+            const paymentsRes = await axios.get(`/api/admin/customers/${profileData.id}/payments?limit=100&page=1`, { headers: { Authorization: `Bearer ${token}` } });
+            setProfilePayments(getCollectionItems<any>(paymentsRes.data));
             void fetchDashboardData();
         } catch (err) {
             console.error(err);

@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
             <div className="container footer-container">
                 {/* Brand Column */}
                 <div className="footer-col brand-col">
-                    <img src={logo} alt="Rewire With Kajal" className="footer-logo" />
+                    <img src={logo} alt="Rewire With Kajal" className="footer-logo" loading="lazy" decoding="async" />
                     <p className="footer-description">
                         Dedicated to helping you navigate life's complexities with compassion and professional guidance.
                     </p>

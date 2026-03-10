@@ -51,8 +51,10 @@ const run = async () => {
         'preferred_slot',
         'created_at',
     ]);
-    const leads = await hasColumns('leads', ['created_at']);
-    const blogs = await hasColumns('blogs', ['created_at']);
+    const leads = await hasColumns('leads', ['created_at', 'status']);
+    const blogs = await hasColumns('blogs', ['created_at', 'is_active']);
+    const payments = await hasColumns('payments', ['customer_id', 'payment_date']);
+    const sessions = await hasColumns('customer_sessions', ['customer_id', 'session_date', 'slot']);
 
     if (leads.created_at) {
         await createIndexSafely(
@@ -61,10 +63,24 @@ const run = async () => {
         );
     }
 
+    if (leads.created_at && leads.status) {
+        await createIndexSafely(
+            'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_leads_status_created_at ON leads(status, created_at DESC)',
+            'CREATE INDEX IF NOT EXISTS idx_leads_status_created_at ON leads(status, created_at DESC)'
+        );
+    }
+
     if (blogs.created_at) {
         await createIndexSafely(
             'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_blogs_created_at ON blogs(created_at DESC)',
             'CREATE INDEX IF NOT EXISTS idx_blogs_created_at ON blogs(created_at DESC)'
+        );
+    }
+
+    if (blogs.created_at && blogs.is_active) {
+        await createIndexSafely(
+            'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_blogs_active_created_at ON blogs(is_active, created_at DESC)',
+            'CREATE INDEX IF NOT EXISTS idx_blogs_active_created_at ON blogs(is_active, created_at DESC)'
         );
     }
 
@@ -110,6 +126,20 @@ const run = async () => {
         await createIndexSafely(
             'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_customers_preferred_date_slot ON customers(preferred_date, preferred_slot)',
             'CREATE INDEX IF NOT EXISTS idx_customers_preferred_date_slot ON customers(preferred_date, preferred_slot)'
+        );
+    }
+
+    if (payments.customer_id && payments.payment_date) {
+        await createIndexSafely(
+            'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_payments_customer_date ON payments(customer_id, payment_date DESC)',
+            'CREATE INDEX IF NOT EXISTS idx_payments_customer_date ON payments(customer_id, payment_date DESC)'
+        );
+    }
+
+    if (sessions.customer_id && sessions.session_date && sessions.slot) {
+        await createIndexSafely(
+            'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_customer_sessions_customer_date_slot ON customer_sessions(customer_id, session_date DESC, slot DESC)',
+            'CREATE INDEX IF NOT EXISTS idx_customer_sessions_customer_date_slot ON customer_sessions(customer_id, session_date DESC, slot DESC)'
         );
     }
 

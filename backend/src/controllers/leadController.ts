@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import pool from '../db';
 import { sendEmail } from '../utils/mailer';
+import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 import {
     isDobNotFuture,
     isTodayOrFutureDate,
@@ -113,12 +114,31 @@ export const createLead = async (req: Request, res: Response) => {
 
 export const getLeads = async (req: Request, res: Response) => {
     try {
-        const result = await pool.query('SELECT * FROM leads ORDER BY created_at DESC');
+        const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
+            defaultLimit: 50,
+            maxLimit: 200,
+        });
+
+        const [result, countResult] = await Promise.all([
+            pool.query(
+                `SELECT id, first_name, last_name, dob, email, phone, concern, message, preferred_date, status, created_at
+                 FROM leads
+                 ORDER BY created_at DESC
+                 LIMIT $1 OFFSET $2`,
+                [limit, offset]
+            ),
+            pool.query('SELECT COUNT(*)::int AS total FROM leads'),
+        ]);
+
         const leads = result.rows.map(row => ({
             ...row,
             name: `${row.first_name || ''} ${row.last_name || ''}`.trim()
         }));
-        res.json(leads);
+
+        res.json({
+            items: leads,
+            meta: buildPaginationMeta(Number(countResult.rows[0]?.total || 0), page, limit),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
     }

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './HeroSlider.css';
 
 const images = [
-    "https://media.istockphoto.com/id/583809524/photo/alberta-wilderness-near-banff.jpg?s=612x612&w=0&k=20&c=hiI3ib9ibDxAgqEZEH09EO3JOw94v5xh6hzcuXGhO-M=",
-    "https://media.istockphoto.com/id/1381637603/photo/mountain-landscape.jpg?s=612x612&w=0&k=20&c=w64j3fW8C96CfYo3kbi386rs_sHH_6BGe8lAAAFS-y4=",
-    "https://media.istockphoto.com/id/517188688/photo/mountain-landscape.jpg?s=612x612&w=0&k=20&c=A63koPKaCyIwQWOTFBRWXj_PwCrR4cEoOw2S9Q7yVl8=",
-    "https://thumbs.dreamstime.com/b/copy-space-stock-photo-view-wild-crocus-flowers-alps-sunrise-early-morning-light-beautiful-alpine-landscape-419530088.jpg"
+    'radial-gradient(circle at 20% 20%, #ffd7c1 0%, #f59e66 36%, #b5512f 100%)',
+    'radial-gradient(circle at 80% 10%, #ffe5d2 0%, #f7b57f 34%, #c96439 100%)',
+    'radial-gradient(circle at 50% 15%, #ffe8da 0%, #f3a56d 38%, #9f4628 100%)',
+    'radial-gradient(circle at 30% 80%, #ffdbc7 0%, #ed9460 40%, #8c3c22 100%)'
 ];
 
 const HeroSlider: React.FC = () => {
@@ -25,7 +25,12 @@ const HeroSlider: React.FC = () => {
                     <div
                         key={index}
                         className={`slide ${index === currentSlide ? 'active' : ''}`}
-                        style={{ backgroundImage: `url(${img})` }}
+                        style={{
+                            backgroundImage:
+                                index === currentSlide || index === ((currentSlide + 1) % images.length)
+                                    ? img
+                                    : 'none'
+                        }}
                     >
                         <div className="slide-overlay">
                             <div className="slide-content">
