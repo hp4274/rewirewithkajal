@@ -43,7 +43,7 @@ const FAQSection: React.FC = () => {
                         {faqs.map((faq, index) => (
                             <div
                                 key={faq.id}
-                                className={`faq-item ${activeIndex === index ? 'active' : ''}`}
+                                className={`faq-item stagger-item ${activeIndex === index ? 'active' : ''}`}
                                 onClick={() => setActiveIndex(index)}
                             >
                                 <span className="faq-question-text">{faq.question}</span>
