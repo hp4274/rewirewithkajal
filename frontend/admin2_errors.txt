@@ -1,2 +1,0 @@
-﻿src/admin/Admin2.tsx(1580,41): error TS2339: Property 'charAt' does not exist on type 'never'.
-src/admin/Admin2.tsx(1580,78): error TS2339: Property 'slice' does not exist on type 'never'.

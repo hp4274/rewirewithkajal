@@ -103,7 +103,9 @@ const DeferredSection: React.FC<DeferredSectionProps> = ({ children, eager = fal
             queueUpdate();
         };
 
-        queueUpdate();
+        // Always set initial state for the roller animation
+        updateRollerStyle();
+
         window.addEventListener('scroll', queueUpdate, { passive: true });
         window.addEventListener('resize', queueUpdate);
 
