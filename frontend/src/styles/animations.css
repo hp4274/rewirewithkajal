@@ -94,6 +94,48 @@
     transform: translateY(0);
 }
 
+.home-roller {
+    perspective: 1400px;
+    perspective-origin: center center;
+}
+
+.reveal.roller-section {
+    --roller-scale: 0.86;
+    --roller-opacity: 0.52;
+    --roller-tilt: 0deg;
+    --roller-blur: 0px;
+    opacity: var(--roller-opacity);
+    transform: translateY(30px) scale(var(--roller-scale)) rotateX(var(--roller-tilt));
+    filter: blur(var(--roller-blur));
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    will-change: transform, opacity, filter;
+    transition:
+        transform 0.46s cubic-bezier(0.2, 0.85, 0.25, 1),
+        opacity 0.32s ease,
+        filter 0.42s ease;
+}
+
+.reveal.roller-section.active {
+    opacity: var(--roller-opacity);
+    transform: translateY(0) scale(var(--roller-scale)) rotateX(var(--roller-tilt));
+    filter: blur(var(--roller-blur));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-roller {
+        perspective: none;
+    }
+
+    .reveal.roller-section,
+    .reveal.roller-section.active {
+        opacity: 1;
+        filter: none;
+        transform: none;
+        transition: opacity 0.2s ease;
+    }
+}
+
 /* Page Transition Animation */
 .page-transition-enter {
     opacity: 0;

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './HeroSlider.css';
 
-const images = [
-    'radial-gradient(circle at 20% 20%, #ffd7c1 0%, #f59e66 36%, #b5512f 100%)',
-    'radial-gradient(circle at 80% 10%, #ffe5d2 0%, #f7b57f 34%, #c96439 100%)',
-    'radial-gradient(circle at 50% 15%, #ffe8da 0%, #f3a56d 38%, #9f4628 100%)',
-    'radial-gradient(circle at 30% 80%, #ffdbc7 0%, #ed9460 40%, #8c3c22 100%)'
-];
+import image1 from '../assets/image1.png';
+import image2 from '../assets/image2.png';
+import image3 from '../assets/image3.png';
+import image4 from '../assets/image4.png';
+
+const images = [image1, image2, image3, image4];
 
 const HeroSlider: React.FC = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -34,7 +34,7 @@ const HeroSlider: React.FC = () => {
                                     ? 'prev'
                                     : ''
                         }`}
-                        style={{ backgroundImage: img }}
+                        style={{ backgroundImage: `url(${img})` }}
                     >
                         <div className="slide-overlay">
                             <div className="slide-content">
