@@ -64,6 +64,14 @@ const DeferredSection: React.FC<DeferredSectionProps> = ({ children, eager = fal
 const Home: React.FC = () => {
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'auto' });
+
+        void import('../components/HomeBlogs')
+            .then((module) => {
+                module.primeHomeBlogsRequest?.();
+            })
+            .catch(() => {
+                // Non-blocking prefetch; section will still load on demand.
+            });
     }, []);
 
     return (

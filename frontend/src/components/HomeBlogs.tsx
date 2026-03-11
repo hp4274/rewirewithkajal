@@ -15,25 +15,64 @@ interface Blog {
     created_at: string;
 }
 
+const HOME_BLOGS_ENDPOINT = '/api/blogs/public?limit=2&page=1&summary=true&includeMeta=false';
+let homeBlogsCache: Blog[] | null = null;
+let homeBlogsInFlight: Promise<Blog[]> | null = null;
+
+const fetchHomeBlogs = async (): Promise<Blog[]> => {
+    const response = await requestWithApiFallback(() => axios.get(apiUrl(HOME_BLOGS_ENDPOINT)));
+    return getCollectionItems<Blog>(response.data).slice(0, 2);
+};
+
+const loadHomeBlogs = async (): Promise<Blog[]> => {
+    if (homeBlogsCache) return homeBlogsCache;
+    if (homeBlogsInFlight) return homeBlogsInFlight;
+
+    homeBlogsInFlight = fetchHomeBlogs()
+        .then((items) => {
+            homeBlogsCache = items;
+            return items;
+        })
+        .finally(() => {
+            homeBlogsInFlight = null;
+        });
+
+    return homeBlogsInFlight;
+};
+
+export const primeHomeBlogsRequest = (): void => {
+    void loadHomeBlogs().catch(() => {
+        // Ignore prefetch failures and let component-level fetch retry.
+    });
+};
+
 const HomeBlogs: React.FC = () => {
-    const [blogs, setBlogs] = useState<Blog[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [blogs, setBlogs] = useState<Blog[]>(homeBlogsCache || []);
+    const [loading, setLoading] = useState(homeBlogsCache === null);
 
     useEffect(() => {
+        let mounted = true;
+
         const fetchBlogs = async () => {
             try {
-                const response = await requestWithApiFallback(() => axios.get(apiUrl('/api/blogs/public?limit=6&page=1')));
-                const incomingBlogs = getCollectionItems<Blog>(response.data);
-                setBlogs(incomingBlogs.slice(0, 2));
+                const incomingBlogs = await loadHomeBlogs();
+                if (!mounted) return;
+                setBlogs(incomingBlogs);
             } catch (error) {
                 console.error('Error fetching blogs:', error);
+                if (!mounted) return;
                 setBlogs([]);
             } finally {
+                if (!mounted) return;
                 setLoading(false);
             }
         };
 
         fetchBlogs();
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     if (loading) {

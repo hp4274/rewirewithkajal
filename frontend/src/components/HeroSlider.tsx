@@ -10,6 +10,7 @@ const images = [
 
 const HeroSlider: React.FC = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const totalSlides = images.length;
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -24,13 +25,16 @@ const HeroSlider: React.FC = () => {
                 {images.map((img, index) => (
                     <div
                         key={index}
-                        className={`slide ${index === currentSlide ? 'active' : ''}`}
-                        style={{
-                            backgroundImage:
-                                index === currentSlide || index === ((currentSlide + 1) % images.length)
-                                    ? img
-                                    : 'none'
-                        }}
+                        className={`slide ${
+                            index === currentSlide
+                                ? 'active'
+                                : index === (currentSlide + 1) % totalSlides
+                                  ? 'next'
+                                  : index === (currentSlide - 1 + totalSlides) % totalSlides
+                                    ? 'prev'
+                                    : ''
+                        }`}
+                        style={{ backgroundImage: img }}
                     >
                         <div className="slide-overlay">
                             <div className="slide-content">

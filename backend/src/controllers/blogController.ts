@@ -61,16 +61,31 @@ const setCachedPublicBlogs = (key: string, payload: any) => {
     });
 };
 
+const parseBooleanQuery = (value: unknown, defaultValue: boolean): boolean => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+        if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+    }
+
+    return defaultValue;
+};
+
 export const getBlogs = async (req: Request, res: Response) => {
     try {
         const isAdmin = (req as any).admin ? true : false;
+        const summaryMode = parseBooleanQuery(req.query.summary, false);
+        const includeMeta = parseBooleanQuery(req.query.includeMeta, true);
         const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
             defaultLimit: 12,
             maxLimit: 100,
         });
 
         if (!isAdmin) {
-            const cacheKey = `${page}:${limit}`;
+            const cacheKey = `${page}:${limit}:${summaryMode ? 'summary' : 'full'}:${includeMeta ? 'meta' : 'nometa'}`;
             const cachedPayload = getCachedPublicBlogs(cacheKey);
             if (cachedPayload) {
                 res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
@@ -79,24 +94,29 @@ export const getBlogs = async (req: Request, res: Response) => {
         }
 
         const whereClause = isAdmin ? '' : 'WHERE is_active = true';
-        const countQuery = `SELECT COUNT(*)::int AS total FROM blogs ${whereClause}`;
+        const selectContent = summaryMode ? 'LEFT(content, 450) AS content' : 'content';
         const result = await pool.query(
-            `SELECT id, title, content, image_url, is_active, created_at
+            `SELECT id, title, ${selectContent}, image_url, is_active, created_at
              FROM blogs
              ${whereClause}
              ORDER BY created_at DESC
              LIMIT $1 OFFSET $2`,
             [limit, offset]
         );
-        const totalResult = await pool.query(countQuery);
-        const total = Number(totalResult.rows[0]?.total || 0);
-        const payload = {
+        const payload: { items: any[]; meta?: ReturnType<typeof buildPaginationMeta> } = {
             items: result.rows,
-            meta: buildPaginationMeta(total, page, limit),
         };
 
+        if (includeMeta) {
+            const countQuery = `SELECT COUNT(*)::int AS total FROM blogs ${whereClause}`;
+            const totalResult = await pool.query(countQuery);
+            const total = Number(totalResult.rows[0]?.total || 0);
+            payload.meta = buildPaginationMeta(total, page, limit);
+        }
+
         if (!isAdmin) {
-            setCachedPublicBlogs(`${page}:${limit}`, payload);
+            const cacheKey = `${page}:${limit}:${summaryMode ? 'summary' : 'full'}:${includeMeta ? 'meta' : 'nometa'}`;
+            setCachedPublicBlogs(cacheKey, payload);
             res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
         }
 
