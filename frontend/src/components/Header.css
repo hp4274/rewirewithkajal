@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&display=swap');
+
 .header {
     position: fixed;
     top: 20px;
@@ -149,6 +151,22 @@
 
 .mobile-sidebar.open {
     transform: translateX(0);
+}
+
+.mobile-sidebar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.mobile-sidebar-brand {
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-family: 'Alex Brush', cursive;
+    font-size: 2.35rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.2px;
 }
 
 .mobile-sidebar-nav {

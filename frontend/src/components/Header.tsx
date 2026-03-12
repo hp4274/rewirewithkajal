@@ -86,12 +86,16 @@ const Header: React.FC = () => {
             />
 
             <aside className={`mobile-sidebar ${mobileMenuOpen ? 'open' : ''}`} aria-hidden={!mobileMenuOpen}>
-                <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
-                    <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
-                    <NavLink to="/about" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
-                    <NavLink to="/blogs" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
-                    <NavLink to="/appointment" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
-                </nav>
+                <div className="mobile-sidebar-top">
+                    <h2 className="mobile-sidebar-brand">Rewirewithkajal</h2>
+
+                    <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
+                        <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
+                        <NavLink to="/about" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
+                        <NavLink to="/blogs" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
+                        <NavLink to="/appointment" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
+                    </nav>
+                </div>
 
                 <div className="mobile-sidebar-contact">
                     <p>Contact</p>
