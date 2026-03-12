@@ -1,5 +1,4 @@
 import React from 'react';
-import './OffersSection.css';
 import AnimatedLine from './AnimatedLine';
 
 const offers = [

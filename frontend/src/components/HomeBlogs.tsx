@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './HomeBlogs.css';
 import { NavLink } from 'react-router-dom';
 import logo from '../assets/logo3.png';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';

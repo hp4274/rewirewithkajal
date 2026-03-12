@@ -1,5 +1,4 @@
 import React from 'react';
-import './AnimatedLine.css';
 
 const AnimatedLine: React.FC = () => {
     return (

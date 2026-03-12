@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import './AnimatedBackground.css';
 
 const AnimatedBackground: React.FC = () => {
     const [stars, setStars] = useState<number[]>([]);

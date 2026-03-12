@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { MapPin, Phone, Mail, Instagram, Linkedin, Twitter } from 'lucide-react';
-import './Footer.css';
 import logo from '../assets/logo3.png'; // Reusing the logo
 
 const Footer: React.FC = () => {

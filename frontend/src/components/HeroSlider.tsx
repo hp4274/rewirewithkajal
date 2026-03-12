@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './HeroSlider.css';
 
 const images = [
     'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=80',

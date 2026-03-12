@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './CustomerProfile.css'; // reusing some styles
 
 const q1Questions = [
     "Have you ever walked in your sleep during your adult life?",

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Check, X, LayoutGrid, List, Phone, Mail, MapPin } from 'lucide-react';
-import './LeadsManager.css';
 import { isFutureOrCurrentSlot, isTodayOrFutureDate, toDateInputString } from '../utils/validation';
 import { getCollectionItems } from '../utils/collections';
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LayoutGrid, List } from 'lucide-react';
-import './LeadsManager.css';
 import logo from '../assets/logo3.png';
 import { resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';

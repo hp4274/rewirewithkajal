@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Blogs.css';
 import logo from '../assets/logo3.png';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';

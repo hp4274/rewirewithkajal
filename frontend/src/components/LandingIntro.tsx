@@ -1,5 +1,4 @@
 import React from 'react';
-import './LandingIntro.css';
 import ladyImg from '../assets/lady.png';
 
 const LandingIntro: React.FC = () => {

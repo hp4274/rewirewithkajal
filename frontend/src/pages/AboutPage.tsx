@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import '../components/AboutSection.css'; // Reusing the same CSS to maintain the design
 import { Link } from 'react-router-dom';
 
 const AboutPage: React.FC = () => {

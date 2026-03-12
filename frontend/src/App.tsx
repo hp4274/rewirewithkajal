@@ -1,7 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './styles/global.css';
-import './styles/animations.css';
 
 const Header = lazy(() => import('./components/Header'));
 const Home = lazy(() => import('./pages/Home'));
