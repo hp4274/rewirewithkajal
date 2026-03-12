@@ -220,6 +220,20 @@
     animation: slideAndFade 0.6s ease forwards;
 }
 
+.home-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 120px;
+    padding-bottom: 120px;
+}
+
+@media (max-width: 768px) {
+    .home-sections {
+        gap: 72px;
+        padding-bottom: 84px;
+    }
+}
+
 /* Card Hover Effects */
 .card-hover {
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 

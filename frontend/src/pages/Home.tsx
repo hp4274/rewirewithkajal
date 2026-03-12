@@ -76,7 +76,7 @@ const Home: React.FC = () => {
     }, []);
 
     return (
-        <main style={{ display: 'flex', flexDirection: 'column', gap: '120px', paddingBottom: '120px' }}>
+        <main className="home-sections">
             <DeferredSection eager sectionName="hero-slider">
                 <HeroSlider />
             </DeferredSection>
