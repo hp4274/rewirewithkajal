@@ -11,6 +11,7 @@ import {
 } from '../utils/validation';
 
 let leadCustomerColumnsPromise: Promise<Set<string>> | null = null;
+let leadColumnsPromise: Promise<Set<string>> | null = null;
 
 const getCustomerColumns = async (): Promise<Set<string>> => {
     if (!leadCustomerColumnsPromise) {
@@ -29,6 +30,25 @@ const getCustomerColumns = async (): Promise<Set<string>> => {
     }
 
     return leadCustomerColumnsPromise;
+};
+
+const getLeadColumns = async (): Promise<Set<string>> => {
+    if (!leadColumnsPromise) {
+        leadColumnsPromise = (async () => {
+            const result = await pool.query(
+                `SELECT column_name
+                 FROM information_schema.columns
+                 WHERE table_name = 'leads'
+                   AND table_schema = ANY(current_schemas(false))`
+            );
+            return new Set(result.rows.map((row: any) => String(row.column_name)));
+        })().catch((error) => {
+            leadColumnsPromise = null;
+            throw error;
+        });
+    }
+
+    return leadColumnsPromise;
 };
 
 const buildEmailExpr = (alias: string, hasEmail: boolean, hasFormData: boolean): string => {
@@ -114,16 +134,42 @@ export const createLead = async (req: Request, res: Response) => {
 
 export const getLeads = async (req: Request, res: Response) => {
     try {
+        const leadColumns = await getLeadColumns();
         const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
             defaultLimit: 50,
             maxLimit: 200,
         });
 
+        const selectColumns: string[] = [];
+        const optionalTextColumns = ['id', 'first_name', 'last_name', 'dob', 'email', 'phone', 'concern', 'message'];
+
+        for (const column of optionalTextColumns) {
+            if (leadColumns.has(column)) {
+                selectColumns.push(`l.${column}`);
+            }
+        }
+
+        selectColumns.push(
+            leadColumns.has('preferred_date') ? 'l.preferred_date' : 'NULL::date AS preferred_date',
+            leadColumns.has('status') ? 'l.status' : "'new'::text AS status",
+            leadColumns.has('created_at') ? 'l.created_at' : 'NULL::timestamp AS created_at'
+        );
+
+        if (selectColumns.length === 0) {
+            return res.status(500).json({ message: 'Leads schema is missing required columns.' });
+        }
+
+        const orderByClause = leadColumns.has('created_at')
+            ? 'l.created_at DESC'
+            : leadColumns.has('id')
+                ? 'l.id DESC'
+                : '1';
+
         const [result, countResult] = await Promise.all([
             pool.query(
-                `SELECT id, first_name, last_name, dob, email, phone, concern, message, preferred_date, status, created_at
-                 FROM leads
-                 ORDER BY created_at DESC
+                `SELECT ${selectColumns.join(', ')}
+                 FROM leads l
+                 ORDER BY ${orderByClause}
                  LIMIT $1 OFFSET $2`,
                 [limit, offset]
             ),
@@ -147,139 +193,145 @@ export const getLeads = async (req: Request, res: Response) => {
 export const acceptLead = async (req: Request, res: Response) => {
     try {
         const columns = await getCustomerColumns();
+        const leadColumns = await getLeadColumns();
         const hasEmail = columns.has('email');
         const hasPhone = columns.has('phone_number');
         const hasFormData = columns.has('form_data');
+        const hasLeadStatus = leadColumns.has('status');
 
         const { id } = req.params;
+        const client = await pool.connect();
+        let lead: any = null;
+        let customerRow: any = null;
 
-        const leadResult = await pool.query(
-            'UPDATE leads SET status = $1 WHERE id = $2 RETURNING *',
-            ['accepted', id]
-        );
+        try {
+            await client.query('BEGIN');
 
-        if (leadResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Lead not found' });
-        }
+            const leadResult = hasLeadStatus
+                ? await client.query(
+                    'UPDATE leads SET status = $1 WHERE id = $2 RETURNING *',
+                    ['accepted', id]
+                )
+                : await client.query(
+                    'SELECT * FROM leads WHERE id = $1 LIMIT 1',
+                    [id]
+                );
 
-        const lead = leadResult.rows[0];
+            if (leadResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ message: 'Lead not found' });
+            }
 
-        const normalizedEmail = typeof lead.email === 'string' ? lead.email.trim().toLowerCase() : '';
-        const normalizedPhone = typeof lead.phone === 'string' ? lead.phone.trim() : '';
-        const normalizedDob = lead.dob ? String(lead.dob).slice(0, 10) : null;
-        const normalizedPreferredDate = lead.preferred_date ? String(lead.preferred_date).slice(0, 10) : null;
+            lead = leadResult.rows[0];
 
-        const emailExpr = buildEmailExpr('c', hasEmail, hasFormData);
-        const phoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
-        let existingCustomerResult = { rows: [] as any[] };
+            const normalizedEmail = typeof lead.email === 'string' ? lead.email.trim().toLowerCase() : '';
+            const normalizedPhone = typeof lead.phone === 'string' ? lead.phone.trim() : '';
+            const normalizedDob = lead.dob ? String(lead.dob).slice(0, 10) : null;
+            const normalizedPreferredDate = lead.preferred_date ? String(lead.preferred_date).slice(0, 10) : null;
 
-        if (emailExpr !== 'NULL' || phoneExpr !== 'NULL') {
-            const emailClause = emailExpr === 'NULL' ? 'FALSE' : `(${emailExpr} = $1 AND $1 IS NOT NULL)`;
-            const phoneClause = phoneExpr === 'NULL' ? 'FALSE' : `(${phoneExpr} = $2 AND $2 IS NOT NULL)`;
-            existingCustomerResult = await pool.query(
-                `SELECT *
-                 FROM customers c
-                 WHERE ${emailClause}
-                    OR ${phoneClause}
-                 ORDER BY c.id DESC
-                 LIMIT 1`,
-                [normalizedEmail || null, normalizedPhone || null]
-            );
-        }
+            const emailExpr = buildEmailExpr('c', hasEmail, hasFormData);
+            const phoneExpr = buildPhoneExpr('c', hasPhone, hasFormData);
+            let existingCustomerResult = { rows: [] as any[] };
 
-        let customerRow = existingCustomerResult.rows[0] || null;
-        if (!customerRow) {
-            const firstName = lead.first_name || 'Client';
-            const lastName = lead.last_name || null;
-            const concern = lead.concern || null;
+            if (emailExpr !== 'NULL' || phoneExpr !== 'NULL') {
+                const emailClause = emailExpr === 'NULL' ? 'FALSE' : `(${emailExpr} = $1 AND $1 IS NOT NULL)`;
+                const phoneClause = phoneExpr === 'NULL' ? 'FALSE' : `(${phoneExpr} = $2 AND $2 IS NOT NULL)`;
+                existingCustomerResult = await client.query(
+                    `SELECT *
+                     FROM customers c
+                     WHERE ${emailClause}
+                        OR ${phoneClause}
+                     ORDER BY c.id DESC
+                     LIMIT 1`,
+                    [normalizedEmail || null, normalizedPhone || null]
+                );
+            }
 
-            try {
-                const customerResult = await pool.query(
-                    `INSERT INTO customers
-                        (email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
-                     VALUES ($1, $2, $3, NULL, $4, NULL, $5::date, $6, NULL, $7::date, NULL)
+            customerRow = existingCustomerResult.rows[0] || null;
+            if (!customerRow) {
+                const firstName = lead.first_name || 'Client';
+                const lastName = lead.last_name || null;
+                const concern = lead.concern || null;
+                const hiddenToken = `lead-${id}-${Date.now()}`;
+                const appointmentDate = normalizedPreferredDate ? `${normalizedPreferredDate} 09:00:00` : null;
+                const formData = {
+                    email: normalizedEmail,
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: normalizedPhone,
+                    dob: normalizedDob,
+                    primary_concern: concern,
+                    days_preference: normalizedPreferredDate ? [normalizedPreferredDate] : [],
+                    timings_preference: []
+                };
+
+                const insertColumns: string[] = [];
+                const insertValues: any[] = [];
+
+                const addInsertField = (column: string, value: any) => {
+                    if (!columns.has(column)) return;
+                    insertColumns.push(column);
+                    insertValues.push(value);
+                };
+
+                addInsertField('lead_id', id);
+                addInsertField('hidden_form_token', hiddenToken);
+                addInsertField('email', normalizedEmail || null);
+                addInsertField('first_name', firstName);
+                addInsertField('last_name', lastName);
+                addInsertField('city', null);
+                addInsertField('phone_number', normalizedPhone || null);
+                addInsertField('occupation', null);
+                addInsertField('dob', normalizedDob);
+                addInsertField('primary_concern', concern);
+                addInsertField('concern', concern);
+                addInsertField('preference_visit', null);
+                addInsertField('preferred_date', normalizedPreferredDate);
+                addInsertField('preferred_slot', null);
+                addInsertField('appointment_date', appointmentDate);
+                addInsertField('slot', null);
+                addInsertField('status', 'confirmed');
+                addInsertField('is_active', true);
+                addInsertField('form_data', JSON.stringify(formData));
+
+                if (insertColumns.length === 0) {
+                    throw new Error('No compatible columns found in customers table for lead acceptance insert.');
+                }
+
+                const placeholders = insertColumns.map((_, index) => {
+                    const column = insertColumns[index];
+                    if (column === 'dob') return `$${index + 1}::date`;
+                    if (column === 'preferred_date') return `$${index + 1}::date`;
+                    if (column === 'appointment_date') return `$${index + 1}::timestamp`;
+                    if (column === 'form_data') return `$${index + 1}::jsonb`;
+                    return `$${index + 1}`;
+                });
+
+                const customerResult = await client.query(
+                    `INSERT INTO customers (${insertColumns.join(', ')})
+                     VALUES (${placeholders.join(', ')})
                      RETURNING *`,
-                    [
-                        normalizedEmail,
-                        firstName,
-                        lastName,
-                        normalizedPhone,
-                        normalizedDob,
-                        concern,
-                        normalizedPreferredDate
-                    ]
+                    insertValues
                 );
                 customerRow = customerResult.rows[0];
-            } catch {
-                try {
-                    const customerResult = await pool.query(
-                        `INSERT INTO customers
-                            (lead_id, email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot)
-                         VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6::date, $7, NULL, $8::date, NULL)
-                         RETURNING *`,
-                        [
-                            id,
-                            normalizedEmail,
-                            firstName,
-                            lastName,
-                            normalizedPhone,
-                            normalizedDob,
-                            concern,
-                            normalizedPreferredDate
-                        ]
-                    );
-                    customerRow = customerResult.rows[0];
-                } catch {
-                    const hiddenToken = `lead-${id}-${Date.now()}`;
-                    const formData = {
-                        email: normalizedEmail,
-                        first_name: firstName,
-                        last_name: lastName,
-                        phone: normalizedPhone,
-                        dob: normalizedDob,
-                        primary_concern: concern,
-                        days_preference: normalizedPreferredDate ? [normalizedPreferredDate] : [],
-                        timings_preference: []
-                    };
-
-                    try {
-                        const customerResult = await pool.query(
-                            `INSERT INTO customers
-                                (lead_id, hidden_form_token, email, first_name, last_name, city, phone_number, occupation, dob, primary_concern, preference_visit, preferred_date, preferred_slot, form_data)
-                             VALUES ($1, $2, $3, $4, $5, NULL, $6, NULL, $7::date, $8, NULL, $9::date, NULL, $10::jsonb)
-                             RETURNING *`,
-                            [
-                                id,
-                                hiddenToken,
-                                normalizedEmail,
-                                firstName,
-                                lastName,
-                                normalizedPhone,
-                                normalizedDob,
-                                concern,
-                                normalizedPreferredDate,
-                                JSON.stringify(formData)
-                            ]
-                        );
-                        customerRow = customerResult.rows[0];
-                    } catch {
-                        const appointmentDate = normalizedPreferredDate ? `${normalizedPreferredDate} 09:00:00` : null;
-                        const customerResult = await pool.query(
-                            `INSERT INTO customers
-                                (lead_id, status, is_active, occupation, city, appointment_date, slot, form_data)
-                             VALUES ($1, 'confirmed', true, NULL, NULL, $2::timestamp, NULL, $3::jsonb)
-                             RETURNING *`,
-                            [id, appointmentDate, JSON.stringify(formData)]
-                        );
-                        customerRow = customerResult.rows[0];
-                    }
-                }
             }
+
+            await client.query('COMMIT');
+        } catch (txError) {
+            await client.query('ROLLBACK');
+            throw txError;
+        } finally {
+            client.release();
         }
 
         // Send Confirmation Link Email (Directing to Public Intake Page)
         try {
-            const formURL = `http://localhost:3000/intake-form`;
+            const frontendBaseUrl = (
+                process.env.FRONTEND_URL ||
+                process.env.PUBLIC_APP_URL ||
+                'https://rewirewithkajal.vercel.app'
+            ).replace(/\/$/, '');
+            const formURL = `${frontendBaseUrl}/intake-form`;
             await sendEmail({
                 to: lead.email,
                 subject: 'Your Therapy Sessions have been Accepted! [Action Required]',
@@ -325,12 +377,15 @@ export const acceptLead = async (req: Request, res: Response) => {
 
 export const rejectLead = async (req: Request, res: Response) => {
     try {
+        const leadColumns = await getLeadColumns();
         const { id } = req.params;
 
-        const leadResult = await pool.query(
-            'UPDATE leads SET status = $1 WHERE id = $2 RETURNING *',
-            ['rejected', id]
-        );
+        const leadResult = leadColumns.has('status')
+            ? await pool.query(
+                'UPDATE leads SET status = $1 WHERE id = $2 RETURNING *',
+                ['rejected', id]
+            )
+            : await pool.query('SELECT * FROM leads WHERE id = $1 LIMIT 1', [id]);
 
         if (leadResult.rows.length === 0) {
             return res.status(404).json({ message: 'Lead not found' });

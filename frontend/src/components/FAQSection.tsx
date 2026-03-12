@@ -29,7 +29,46 @@ const faqs = [
 ];
 
 const FAQSection: React.FC = () => {
-    const [activeIndex, setActiveIndex] = useState(0);
+    const [activeIndex, setActiveIndex] = useState<number | null>(0);
+    const [isMobileView, setIsMobileView] = useState(() => window.matchMedia('(max-width: 900px)').matches);
+
+    React.useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 900px)');
+
+        const syncViewportMode = () => {
+            const mobile = mediaQuery.matches;
+            setIsMobileView(mobile);
+            setActiveIndex((previous) => {
+                if (mobile) return null;
+                return previous ?? 0;
+            });
+        };
+
+        syncViewportMode();
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', syncViewportMode);
+        } else {
+            mediaQuery.addListener(syncViewportMode);
+        }
+
+        return () => {
+            if (typeof mediaQuery.removeEventListener === 'function') {
+                mediaQuery.removeEventListener('change', syncViewportMode);
+            } else {
+                mediaQuery.removeListener(syncViewportMode);
+            }
+        };
+    }, []);
+
+    const handleFaqClick = (index: number) => {
+        if (isMobileView) {
+            setActiveIndex((previous) => previous === index ? null : index);
+            return;
+        }
+
+        setActiveIndex(index);
+    };
 
     return (
         <section className="faq-section container">
@@ -44,14 +83,23 @@ const FAQSection: React.FC = () => {
                             <div
                                 key={faq.id}
                                 className={`faq-item stagger-item ${activeIndex === index ? 'active' : ''}`}
-                                onClick={() => setActiveIndex(index)}
+                                onClick={() => handleFaqClick(index)}
                             >
-                                <span className="faq-question-text">{faq.question}</span>
-                                <div className="faq-arrow">
-                                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                    </svg>
+                                <div className="faq-item-header">
+                                    <span className="faq-question-text">{faq.question}</span>
+                                    <div className="faq-arrow">
+                                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            <polyline points="12 5 19 12 12 19"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div className={`faq-mobile-answer ${activeIndex === index ? 'active' : ''}`}>
+                                    <div className="faq-mobile-image-wrap">
+                                        <img src={faq.image} alt={faq.question} className="faq-mobile-image" loading="lazy" decoding="async" />
+                                    </div>
+                                    <p className="faq-mobile-answer-text">{faq.answer}</p>
                                 </div>
                             </div>
                         ))}
@@ -59,22 +107,24 @@ const FAQSection: React.FC = () => {
                 </div>
 
                 {/* Right Side: Answer & Image */}
-                <div className="faq-answer-container">
-                    {faqs.map((faq, index) => (
-                        <div
-                            key={`answer-${faq.id}`}
-                            className={`faq-answer-card ${activeIndex === index ? 'active' : ''}`}
-                        >
-                            <div className="faq-answer-image-wrap">
-                                <img src={faq.image} alt={faq.question} className="faq-answer-img" />
-                                <div className="faq-image-overlay"></div>
+                {!isMobileView && (
+                    <div className="faq-answer-container">
+                        {faqs.map((faq, index) => (
+                            <div
+                                key={`answer-${faq.id}`}
+                                className={`faq-answer-card ${activeIndex === index ? 'active' : ''}`}
+                            >
+                                <div className="faq-answer-image-wrap">
+                                    <img src={faq.image} alt={faq.question} className="faq-answer-img" />
+                                    <div className="faq-image-overlay"></div>
+                                </div>
+                                <div className="faq-answer-content">
+                                    <p className="faq-answer-text">{faq.answer}</p>
+                                </div>
                             </div>
-                            <div className="faq-answer-content">
-                                <p className="faq-answer-text">{faq.answer}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );

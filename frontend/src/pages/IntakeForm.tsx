@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../components/AppointmentForm.css';
@@ -58,6 +58,10 @@ const IntakeForm: React.FC = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const todayDateInput = toDateInputString(new Date());
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }, []);
 
     const [formData, setFormData] = useState({
         email: '',
