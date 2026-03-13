@@ -1852,6 +1852,24 @@ const Admin: React.FC = () => {
             <aside className="a2-sidebar">
                 <div className="a2-sidebar-header">
                     <img src={logo} alt="Rewire With Kajal" className="a2-admin-logo" />
+                    <div className="a2-mobile-top-actions">
+                        <button
+                            className="a2-mobile-icon-btn"
+                            onClick={toggleThemeMode}
+                            aria-label={themeMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                            title={themeMode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                        >
+                            {themeMode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
+                        <button
+                            className="a2-mobile-icon-btn logout"
+                            onClick={handleLogout}
+                            aria-label="Logout"
+                            title="Logout"
+                        >
+                            <LogOut size={18} />
+                        </button>
+                    </div>
                 </div>
                 <nav className="a2-sidebar-nav">
                     <button className={`a2-nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveMenu('dashboard')}>
