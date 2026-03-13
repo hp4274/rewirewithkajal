@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+    getCustomerAvailability,
     getCustomers,
     getCustomerByToken,
     submitHiddenForm,
@@ -11,6 +12,8 @@ import {
 import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
+
+router.get('/availability', getCustomerAvailability);
 
 router.route('/')
     .get(protect, getCustomers)

@@ -21,12 +21,76 @@ import { buildPaginationMeta, parsePagination } from '../utils/pagination';
 let customerFormStorageInitPromise: Promise<void> | null = null;
 let customerColumnsCachePromise: Promise<Set<string>> | null = null;
 let customerSettingsTableInitPromise: Promise<void> | null = null;
+let customerSessionsTableExistsPromise: Promise<boolean> | null = null;
 
 const DEFAULT_PER_SESSION_PRICE = 1500;
 const DEFAULT_TOTAL_SESSIONS = 4;
+const INTAKE_SLOT_OPTIONS = [
+    { label: '09:00 AM - 10:00 AM', value: '09:00' },
+    { label: '10:00 AM - 11:00 AM', value: '10:00' },
+    { label: '11:00 AM - 12:00 PM', value: '11:00' },
+    { label: '12:00 PM - 01:00 PM', value: '12:00' },
+    { label: '01:00 PM - 02:00 PM', value: '13:00' },
+    { label: '02:00 PM - 03:00 PM', value: '14:00' },
+    { label: '03:00 PM - 04:00 PM', value: '15:00' },
+    { label: '04:00 PM - 05:00 PM', value: '16:00' }
+];
+const INTAKE_SLOT_VALUES = new Set(INTAKE_SLOT_OPTIONS.map((slot) => slot.value));
 const shouldAutoDbSchemaSync =
     process.env.AUTO_DB_SCHEMA_SYNC === 'true' ||
     (!process.env.VERCEL && process.env.AUTO_DB_SCHEMA_SYNC !== 'false');
+
+const hasCustomerSessionsTable = async (): Promise<boolean> => {
+    if (!customerSessionsTableExistsPromise) {
+        customerSessionsTableExistsPromise = (async () => {
+            const result = await pool.query("SELECT to_regclass('public.customer_sessions') IS NOT NULL AS exists");
+            return Boolean(result.rows[0]?.exists);
+        })().catch((error) => {
+            customerSessionsTableExistsPromise = null;
+            throw error;
+        });
+    }
+
+    return customerSessionsTableExistsPromise;
+};
+
+const getIntakeBookedSlotsForDate = async (normalizedDate: string): Promise<Set<string>> => {
+    const bookedSlots = new Set<string>();
+
+    const customersResult = await pool.query(
+        `SELECT preferred_slot AS slot
+         FROM customers
+         WHERE preferred_date = $1::date
+           AND preferred_slot IS NOT NULL`,
+        [normalizedDate]
+    );
+
+    for (const row of customersResult.rows) {
+        const slot = String(row.slot || '').trim().slice(0, 5);
+        if (slot && isValidSlotTime(slot)) {
+            bookedSlots.add(slot);
+        }
+    }
+
+    if (await hasCustomerSessionsTable()) {
+        const sessionsResult = await pool.query(
+            `SELECT slot
+             FROM customer_sessions
+             WHERE session_date = $1::date
+               AND slot IS NOT NULL`,
+            [normalizedDate]
+        );
+
+        for (const row of sessionsResult.rows) {
+            const slot = String(row.slot || '').trim().slice(0, 5);
+            if (slot && isValidSlotTime(slot)) {
+                bookedSlots.add(slot);
+            }
+        }
+    }
+
+    return bookedSlots;
+};
 
 const parseStoredFormData = (raw: any): Record<string, any> => {
     if (!raw) return {};
@@ -390,6 +454,39 @@ export const submitHiddenForm = async (req: Request, res: Response) => {
     }
 };
 
+export const getCustomerAvailability = async (req: Request, res: Response) => {
+    try {
+        const rawDate = Array.isArray(req.query.date) ? req.query.date[0] : req.query.date;
+        const normalizedDate = normalizeDateInput(rawDate);
+
+        if (!normalizedDate) {
+            return res.status(400).json({ message: 'Date is required in DD-MM-YYYY or YYYY-MM-DD format.' });
+        }
+
+        if (!isTodayOrFutureDate(normalizedDate)) {
+            return res.status(400).json({ message: 'Availability can only be checked for today or future dates.' });
+        }
+
+        const bookedSlots = await getIntakeBookedSlotsForDate(normalizedDate);
+        const availableSlots = INTAKE_SLOT_OPTIONS.filter((slot) => {
+            if (bookedSlots.has(slot.value)) {
+                return false;
+            }
+            return !isDateTimeInPast(normalizedDate, slot.value);
+        });
+
+        res.json({
+            date: normalizedDate,
+            total_slots: INTAKE_SLOT_OPTIONS.length,
+            available_count: availableSlots.length,
+            fully_booked: availableSlots.length === 0,
+            available_slots: availableSlots
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+    }
+};
+
 export const submitPublicForm = async (req: Request, res: Response) => {
     try {
         await ensureCustomerFormStorageSchema();
@@ -449,7 +546,48 @@ export const submitPublicForm = async (req: Request, res: Response) => {
 
         const preferredDate = normalizedDaysPreference[0] || null;
         const preferredSlotCandidate = timingsPreferenceRaw.length > 0 ? String(timingsPreferenceRaw[0]).trim().slice(0, 5) : null;
-        const preferredSlot = preferredSlotCandidate && isValidSlotTime(preferredSlotCandidate) ? preferredSlotCandidate : null;
+        if (preferredSlotCandidate && !isValidSlotTime(preferredSlotCandidate)) {
+            return res.status(400).json({ message: 'Preferred time must be in HH:mm format.' });
+        }
+        if (preferredSlotCandidate && !INTAKE_SLOT_VALUES.has(preferredSlotCandidate)) {
+            return res.status(400).json({ message: 'Preferred time must be selected from available 1-hour slots.' });
+        }
+        const preferredSlot = preferredSlotCandidate;
+        const normalizedTimingsPreference = preferredSlot ? [preferredSlot] : [];
+
+        if (preferredDate && preferredSlot && isDateTimeInPast(preferredDate, preferredSlot)) {
+            return res.status(400).json({ message: 'Cannot request a past time slot.' });
+        }
+
+        if (preferredDate && preferredSlot) {
+            const conflictingCustomer = await pool.query(
+                `SELECT id
+                 FROM customers
+                 WHERE preferred_date = $1::date
+                   AND preferred_slot = $2
+                 LIMIT 1`,
+                [preferredDate, preferredSlot]
+            );
+
+            if (conflictingCustomer.rows.length > 0) {
+                return res.status(409).json({ message: 'This time slot is already selected by another customer. Please choose a different time.' });
+            }
+
+            if (await hasCustomerSessionsTable()) {
+                const conflictingSession = await pool.query(
+                    `SELECT id
+                     FROM customer_sessions
+                     WHERE session_date = $1::date
+                       AND slot = $2
+                     LIMIT 1`,
+                    [preferredDate, preferredSlot]
+                );
+
+                if (conflictingSession.rows.length > 0) {
+                    return res.status(409).json({ message: 'This time slot is already selected by another customer. Please choose a different time.' });
+                }
+            }
+        }
 
         const questionnaireOne = normalizeQuestionnaireItems(Array.isArray(form_data?.q1) ? form_data.q1 : []);
         const questionnaireTwo = normalizeQuestionnaireItems(Array.isArray(form_data?.q2) ? form_data.q2 : []);
@@ -467,7 +605,7 @@ export const submitPublicForm = async (req: Request, res: Response) => {
             primary_concern: primaryConcern,
             consultation_preference: preferenceVisit,
             days_preference: normalizedDaysPreference,
-            timings_preference: timingsPreferenceRaw,
+            timings_preference: normalizedTimingsPreference,
             q1: questionnaireOne,
             q2: questionnaireTwo,
             total_score: calculatedTotalScore

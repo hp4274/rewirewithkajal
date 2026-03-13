@@ -8,6 +8,16 @@ import {
     isValidMobile10,
     toDateInputString
 } from '../utils/validation';
+import { apiUrl, requestWithApiFallback } from '../utils/api';
+
+type SlotOption = {
+    label: string;
+    value: string;
+};
+
+type SlotAvailabilityResponse = {
+    available_slots?: SlotOption[];
+};
 
 const q1Questions = [
     "Have you ever walked in your sleep during your adult life?",
@@ -56,6 +66,9 @@ const IntakeForm: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [availableSlots, setAvailableSlots] = useState<SlotOption[]>([]);
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [slotError, setSlotError] = useState('');
     const todayDateInput = toDateInputString(new Date());
 
     useEffect(() => {
@@ -102,6 +115,55 @@ const IntakeForm: React.FC = () => {
         });
     };
 
+    useEffect(() => {
+        const selectedDate = formData.days_preference[0] || '';
+
+        if (!selectedDate) {
+            setAvailableSlots([]);
+            setSlotsLoading(false);
+            setSlotError('');
+            setFormData((prev) => (prev.timings_preference.length > 0 ? { ...prev, timings_preference: [] } : prev));
+            return;
+        }
+
+        let isCancelled = false;
+
+        const fetchAvailability = async () => {
+            setSlotsLoading(true);
+            setSlotError('');
+
+            try {
+                const response = await requestWithApiFallback(() =>
+                    axios.get<SlotAvailabilityResponse>(apiUrl('/api/customers/availability'), {
+                        params: { date: selectedDate }
+                    })
+                );
+
+                if (isCancelled) return;
+
+                const slots = Array.isArray(response.data?.available_slots)
+                    ? response.data.available_slots
+                    : [];
+
+                setAvailableSlots(slots);
+            } catch (err: any) {
+                if (isCancelled) return;
+                setAvailableSlots([]);
+                setSlotError(err.response?.data?.message || 'Unable to load available slots right now.');
+            } finally {
+                if (!isCancelled) {
+                    setSlotsLoading(false);
+                }
+            }
+        };
+
+        void fetchAvailability();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [formData.days_preference]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -135,7 +197,14 @@ const IntakeForm: React.FC = () => {
             return;
         }
         if (formData.timings_preference.length === 0) {
-            setError('Please select at least one timing preference.');
+            setError('Please select your preferred time.');
+            return;
+        }
+
+        const selectedTime = String(formData.timings_preference[0] || '').trim();
+        const isSelectedSlotAvailable = availableSlots.some((slot) => slot.value === selectedTime);
+        if (!isSelectedSlotAvailable) {
+            setError('This time slot is already selected by another customer. Please choose a different time.');
             return;
         }
 
@@ -153,7 +222,7 @@ const IntakeForm: React.FC = () => {
         formData.q2.forEach(ans => { if (ans === 'Yes') total_score += 10; });
 
         try {
-            await axios.post(`/api/customers`, {
+            await requestWithApiFallback(() => axios.post(apiUrl('/api/customers'), {
                 form_data: {
                     email: formData.email.trim().toLowerCase(),
                     first_name: formData.first_name,
@@ -170,7 +239,7 @@ const IntakeForm: React.FC = () => {
                     q2: formData.q2.map((ans, i) => ({ question: q2Questions[i], answer: ans })),
                     total_score: total_score // Hidden from user, visible to admin
                 }
-            });
+            }));
             setSuccess('Your sessions have been successfully requested! We will reach out shortly.');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to submit form.');
@@ -274,8 +343,9 @@ const IntakeForm: React.FC = () => {
                                         min={todayDateInput}
                                         style={{ marginTop: '10px', width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
                                         onChange={(e) => {
-                                            // Handle mapping single date string to string[] for backend compatibility
-                                            setFormData(prev => ({ ...prev, days_preference: [e.target.value] }));
+                                            const selectedDate = e.target.value;
+                                            setSlotError('');
+                                            setFormData(prev => ({ ...prev, days_preference: selectedDate ? [selectedDate] : [], timings_preference: [] }));
                                         }}
                                         required
                                     />
@@ -284,18 +354,38 @@ const IntakeForm: React.FC = () => {
                                 <div className="form-group" style={{ flex: 1 }}>
                                     <label>What is your preferred time? <span style={{ color: 'red' }}>*</span></label>
                                     <select
+                                        value={formData.timings_preference[0] || ''}
                                         style={{ marginTop: '10px', width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
+                                        disabled={!formData.days_preference[0] || slotsLoading || availableSlots.length === 0}
                                         onChange={(e) => {
-                                            // Handle mapping single time string to string[] for backend compatibility
-                                            setFormData(prev => ({ ...prev, timings_preference: [e.target.value] }));
+                                            setFormData(prev => ({ ...prev, timings_preference: e.target.value ? [e.target.value] : [] }));
                                         }}
                                         required
                                     >
-                                        <option value="">Select a time slot...</option>
-                                        <option value="10 am to 1 pm">10:00 AM - 1:00 PM</option>
-                                        <option value="2 pm to 5 pm">2:00 PM - 5:00 PM</option>
-                                        <option value="6 pm to 8 pm">6:00 PM - 8:00 PM</option>
+                                        <option value="">
+                                            {!formData.days_preference[0]
+                                                ? 'Select a date first'
+                                                : slotsLoading
+                                                    ? 'Checking availability...'
+                                                    : availableSlots.length === 0
+                                                        ? 'No slots available'
+                                                        : 'Select a time slot...'}
+                                        </option>
+                                        {availableSlots.map((slot) => (
+                                            <option key={slot.value} value={slot.value}>{slot.label}</option>
+                                        ))}
                                     </select>
+                                    <small style={{ color: slotError ? '#b91c1c' : '#888', marginTop: '6px', display: 'block' }}>
+                                        {slotError
+                                            ? slotError
+                                            : !formData.days_preference[0]
+                                                ? 'Choose a preferred date to load available time slots.'
+                                                : slotsLoading
+                                                    ? 'Checking available slots...'
+                                                    : availableSlots.length === 0
+                                                        ? 'No time slots are available on this date.'
+                                                : 'Select a 1-hour preferred time slot.'}
+                                    </small>
                                 </div>
                             </div>
 
@@ -335,7 +425,12 @@ const IntakeForm: React.FC = () => {
 
                             {error && <div className="status-message error">{error}</div>}
 
-                            <button type="submit" className="btn-primary" disabled={submitting} style={{ marginTop: '20px', width: '100%', padding: '15px', fontSize: '1.1rem' }}>
+                            <button
+                                type="submit"
+                                className="btn-primary"
+                                disabled={submitting || slotsLoading || !formData.days_preference[0] || !formData.timings_preference[0]}
+                                style={{ marginTop: '20px', width: '100%', padding: '15px', fontSize: '1.1rem' }}
+                            >
                                 {submitting ? 'Submitting Form...' : 'Submit Questionnaires & Request Session'}
                             </button>
                         </form>

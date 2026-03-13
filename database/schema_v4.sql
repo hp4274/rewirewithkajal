@@ -20,6 +20,7 @@ CREATE TABLE leads (
     message TEXT,
     status VARCHAR(50) DEFAULT 'new', -- new, accepted, rejected
     preferred_date DATE,
+    preferred_slot VARCHAR(5), -- HH:mm
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -83,6 +84,7 @@ CREATE TABLE blogs (
 
 -- Basic indexes for the requested schema.
 CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
+CREATE INDEX idx_leads_preferred_date_slot ON leads(preferred_date, preferred_slot);
 CREATE INDEX idx_customers_created_at ON customers(created_at DESC);
 CREATE INDEX idx_customers_email ON customers(email);
 CREATE INDEX idx_customers_phone_number ON customers(phone_number);

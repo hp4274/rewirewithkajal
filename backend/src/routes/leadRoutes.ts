@@ -1,8 +1,10 @@
 import express from 'express';
-import { createLead, getLeads, acceptLead, rejectLead, deleteLead } from '../controllers/leadController';
+import { createLead, getLeadAvailability, getLeads, acceptLead, rejectLead, deleteLead } from '../controllers/leadController';
 import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
+
+router.get('/availability', getLeadAvailability);
 
 router.route('/')
     .post(createLead)

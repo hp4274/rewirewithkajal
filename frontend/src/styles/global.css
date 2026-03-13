@@ -1790,6 +1790,24 @@ code {
     min-height: 120px;
 }
 
+.appointment-form .form-group select:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+    background-color: #f8fafc;
+}
+
+.appointment-form .slot-helper {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.86rem;
+    color: var(--color-slate-500);
+}
+
+.appointment-form .slot-helper.error {
+    color: var(--color-danger-700);
+    font-weight: 500;
+}
+
 .form-row:nth-child(1) .form-group { animation-delay: 0.1s; }
 .form-row:nth-child(2) .form-group { animation-delay: 0.2s; }
 .form-row:nth-child(3) .form-group { animation-delay: 0.3s; }
@@ -2405,7 +2423,7 @@ code {
 
 /* Source: src/components/Footer.css */
 .site-footer {
-    background-color: #9a4518;
+    background-color: var(--color-primary-dark);
     /* Primary Orange */
     color: var(--color-white);
     padding-top: 140px;
@@ -2543,7 +2561,7 @@ code {
 .footer-bottom {
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     padding: 24px 0 40px 0;
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.06);
     /* Slightly darker orange for bottom bar */
 }
 
