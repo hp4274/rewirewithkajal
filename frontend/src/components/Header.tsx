@@ -78,30 +78,33 @@ const Header: React.FC = () => {
                 </div>
             </header>
 
-            <div
-                className={`mobile-sidebar-overlay ${mobileMenuOpen ? 'show' : ''}`}
-                onClick={closeMenu}
-                aria-hidden={!mobileMenuOpen}
-            />
+            {mobileMenuOpen && (
+                <>
+                    <div
+                        className="mobile-sidebar-overlay show"
+                        onClick={closeMenu}
+                    />
 
-            <aside className={`mobile-sidebar ${mobileMenuOpen ? 'open' : ''}`} aria-hidden={!mobileMenuOpen}>
-                <div className="mobile-sidebar-top">
-                    <h2 className="mobile-sidebar-brand">Rewirewithkajal</h2>
+                    <aside className="mobile-sidebar open" role="dialog" aria-modal="true" aria-label="Mobile menu">
+                        <div className="mobile-sidebar-top">
+                            <p className="mobile-sidebar-brand">Rewirewithkajal</p>
 
-                    <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
-                        <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
-                        <NavLink to="/about" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
-                        <NavLink to="/blogs" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
-                        <NavLink to="/appointment" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
-                    </nav>
-                </div>
+                            <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
+                                <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
+                                <NavLink to="/about" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
+                                <NavLink to="/blogs" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
+                                <NavLink to="/appointment" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
+                            </nav>
+                        </div>
 
-                <div className="mobile-sidebar-contact">
-                    <p>Contact</p>
-                    <a href="tel:+15551234567">+1 (555) 123-4567</a>
-                    <a href="mailto:hello@rewirewithkajal.com">hello@rewirewithkajal.com</a>
-                </div>
-            </aside>
+                        <div className="mobile-sidebar-contact">
+                            <p>Contact</p>
+                            <a href="tel:+15551234567">+1 (555) 123-4567</a>
+                            <a href="mailto:hello@rewirewithkajal.com">hello@rewirewithkajal.com</a>
+                        </div>
+                    </aside>
+                </>
+            )}
         </>
     );
 };

@@ -1040,7 +1040,7 @@ code {
 }
 
 .mobile-sidebar-nav a {
-    color: var(--color-text-light);
+    color: var(--color-text-main);
     font-size: 1.05rem;
     font-weight: 600;
     letter-spacing: 0.2px;
@@ -1072,7 +1072,7 @@ code {
 }
 
 .mobile-sidebar-contact a {
-    color: var(--color-text-light);
+    color: var(--color-text-main);
     font-size: 0.95rem;
     font-weight: 500;
 }
@@ -2405,7 +2405,7 @@ code {
 
 /* Source: src/components/Footer.css */
 .site-footer {
-    background-color: var(--color-primary);
+    background-color: #9a4518;
     /* Primary Orange */
     color: var(--color-white);
     padding-top: 140px;
@@ -2499,7 +2499,7 @@ code {
 }
 
 .footer-links a {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.96);
     /* Light white */
     text-decoration: none;
     transition: var(--transition-short);

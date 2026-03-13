@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
 
                 {/* Quick Links Column */}
                 <div className="footer-col links-col">
-                    <h4 className="footer-heading">Quick Links</h4>
+                    <h3 className="footer-heading">Quick Links</h3>
                     <ul className="footer-links">
                         <li><NavLink to="/">Home</NavLink></li>
                         <li><NavLink to="/about">About Us</NavLink></li>
@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
 
                 {/* Contact Column */}
                 <div className="footer-col contact-col">
-                    <h4 className="footer-heading">Get in Touch</h4>
+                    <h3 className="footer-heading">Get in Touch</h3>
                     <ul className="footer-contact-info">
                         <li>
                             <MapPin size={16} className="contact-icon" />

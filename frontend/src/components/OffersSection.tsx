@@ -26,7 +26,7 @@ const OffersSection: React.FC = () => {
                             className={`offer-card stagger-item ${offer.shapeClass}`}
                             style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${offer.image})` }}
                         >
-                            <h4 className="offer-title">{offer.title}</h4>
+                            <h3 className="offer-title">{offer.title}</h3>
                         </div>
                     ))}
                 </div>
