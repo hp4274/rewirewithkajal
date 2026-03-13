@@ -2379,6 +2379,7 @@ code {
     /* Truncation */
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -4342,6 +4343,12 @@ input:checked+.switch-slider:before {
     color: var(--color-slate-300);
 }
 
+.a2-layout.a2-theme-dark .a2-selected-date-appts h4,
+.a2-layout.a2-theme-dark .a2-selected-date-appts .a2-selected-item strong,
+.a2-layout.a2-theme-dark .a2-selected-date-appts .a2-selected-meta {
+    color: #ffffff;
+}
+
 .a2-layout.a2-theme-dark .a2-appt-date-box {
     background: #312e81;
     color: #ddd6fe;
@@ -5244,6 +5251,28 @@ input:checked+.switch-slider:before {
 
 .a2-btn-secondary:hover {
     background: var(--color-slate-200);
+}
+
+.a2-btn-profile {
+    background: #16a34a;
+    color: #ffffff;
+    border: 1px solid #15803d;
+}
+
+.a2-btn-profile:hover {
+    background: #15803d;
+    color: #ffffff;
+}
+
+.a2-layout.a2-theme-dark .a2-btn-profile {
+    background: #22c55e;
+    color: #052e16;
+    border-color: #16a34a;
+}
+
+.a2-layout.a2-theme-dark .a2-btn-profile:hover {
+    background: #16a34a;
+    color: #ffffff;
 }
 
 .a2-card-subtitle {

@@ -1207,7 +1207,7 @@ const Admin: React.FC = () => {
                                         />
                                     </div>
                                     <div className="a2-lead-card-footer a2-split-footer">
-                                        <button className="a2-btn-secondary" onClick={() => loadCustomerProfile(customer)}>View Profile</button>
+                                        <button className="a2-btn-secondary a2-btn-profile" onClick={() => loadCustomerProfile(customer)}>View Profile</button>
                                         <button
                                             className={`a2-btn-toggle ${customer.is_active ? 'btn-red' : 'btn-green'}`}
                                             onClick={() => handleUpdateCustomerStatus(customer)}
@@ -1257,7 +1257,7 @@ const Admin: React.FC = () => {
                                             </td>
                                             <td className="text-right">
                                                 <div className="a2-action-group">
-                                                    <button className="a2-btn-secondary" onClick={() => loadCustomerProfile(customer)}>Profile</button>
+                                                    <button className="a2-btn-secondary a2-btn-profile" onClick={() => loadCustomerProfile(customer)}>Profile</button>
                                                     <button
                                                         className={`a2-btn-toggle ${customer.is_active ? 'btn-red' : 'btn-green'}`}
                                                         onClick={() => handleUpdateCustomerStatus(customer)}

@@ -70,12 +70,70 @@ const basePoolConfig: PoolConfig = connectionString
     };
 
 let activePool = createPool(basePoolConfig);
+let activePoolConfig: PoolConfig = basePoolConfig;
 let fallbackAttempted = false;
 let fallbackInFlight: Promise<boolean> | null = null;
 
 const isNotFoundError = (err: unknown): boolean => {
   const maybe = err as { code?: string; message?: string };
   return maybe?.code === 'ENOTFOUND' || (maybe?.message || '').includes('ENOTFOUND');
+};
+
+const transientErrorCodes = new Set([
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'EPIPE',
+  '57P01',
+  '57P02',
+  '57P03',
+]);
+
+const isTransientConnectionError = (err: unknown): boolean => {
+  const maybe = err as { code?: string; message?: string };
+  const code = String(maybe?.code || '').toUpperCase();
+  if (transientErrorCodes.has(code)) {
+    return true;
+  }
+
+  const msg = String(maybe?.message || '').toLowerCase();
+  return (
+    msg.includes('connection terminated unexpectedly') ||
+    msg.includes('server closed the connection unexpectedly') ||
+    msg.includes('terminating connection due to administrator command') ||
+    msg.includes('the database system is starting up') ||
+    msg.includes('could not connect to server') ||
+    msg.includes('timeout expired') ||
+    msg.includes('socket hang up') ||
+    msg.includes('econnreset') ||
+    msg.includes('etimedout') ||
+    msg.includes('econnrefused')
+  );
+};
+
+const shouldRetryQueryAfterTransientError = (args: any[]): boolean => {
+  const queryText = typeof args?.[0] === 'string' ? args[0] : args?.[0]?.text;
+  const normalized = String(queryText || '').trim().toLowerCase();
+  if (!normalized) return false;
+
+  // Restrict automatic retry to read-only queries to avoid duplicate writes.
+  return (
+    normalized.startsWith('select') ||
+    normalized.startsWith('with') ||
+    normalized.startsWith('show') ||
+    normalized.startsWith('explain')
+  );
+};
+
+const logDbFailure = (phase: 'query' | 'connect', err: unknown, args?: any[]) => {
+  const maybe = err as { code?: string; message?: string };
+  const queryText = args ? (typeof args?.[0] === 'string' ? args[0] : args?.[0]?.text) : undefined;
+  const queryPreview = queryText ? formatQueryPreview(queryText) : '<none>';
+  console.error(`[db][${phase}][error]`, {
+    code: maybe?.code || null,
+    message: maybe?.message || String(err),
+    query: queryPreview,
+  });
 };
 
 const extractSupabaseProjectRef = (urlString: string): string | null => {
@@ -190,9 +248,18 @@ const findSupabasePoolerConnectionString = async (directConnectionString: string
 
 const switchToPoolConfig = (config: PoolConfig) => {
   const previousPool = activePool;
+  activePoolConfig = config;
   activePool = createPool(config);
   void previousPool.end().catch(() => {
     // ignore pool close errors during failover
+  });
+};
+
+const recycleActivePool = () => {
+  const previousPool = activePool;
+  activePool = createPool(activePoolConfig);
+  void previousPool.end().catch(() => {
+    // ignore pool close errors during recycle
   });
 };
 
@@ -235,10 +302,19 @@ const queryWithFallback: Pool['query'] = async (...args: any[]) => {
     logSlowQueryIfNeeded(startedAt, args);
     return result;
   } catch (err) {
+    logDbFailure('query', err, args);
     const switched = await trySupabaseFallback(err);
-    if (!switched) {
+    if (switched) {
+      const result = await (activePool.query as any)(...args);
+      logSlowQueryIfNeeded(startedAt, args);
+      return result;
+    }
+
+    if (!isTransientConnectionError(err) || !shouldRetryQueryAfterTransientError(args)) {
       throw err;
     }
+
+    recycleActivePool();
     const result = await (activePool.query as any)(...args);
     logSlowQueryIfNeeded(startedAt, args);
     return result;
@@ -249,10 +325,17 @@ const connectWithFallback: Pool['connect'] = async (...args: any[]) => {
   try {
     return await (activePool.connect as any)(...args);
   } catch (err) {
+    logDbFailure('connect', err);
     const switched = await trySupabaseFallback(err);
-    if (!switched) {
+    if (switched) {
+      return (activePool.connect as any)(...args);
+    }
+
+    if (!isTransientConnectionError(err)) {
       throw err;
     }
+
+    recycleActivePool();
     return (activePool.connect as any)(...args);
   }
 };
