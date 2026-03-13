@@ -16,6 +16,15 @@ const AnimatedBackground = lazy(() => import('./components/AnimatedBackground'))
 const Footer = lazy(() => import('./components/Footer'));
 const Preloader = lazy(() => import('./components/Preloader'));
 
+const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <>
+    <Header />
+    <main id="main-content" tabIndex={-1}>
+      {children}
+    </main>
+  </>
+);
+
 const RoutedAppShell = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -26,11 +35,11 @@ const RoutedAppShell = () => {
       <div className="app-container">
         {!isAdminRoute && <AnimatedBackground />}
         <Routes>
-          <Route path="/" element={<><Header /><Home /></>} />
-          <Route path="/about" element={<><Header /><AboutPage /></>} />
-          <Route path="/blogs" element={<><Header /><Blogs /></>} />
-          <Route path="/appointment" element={<><Header /><Appointment /></>} />
-          <Route path="/intake-form" element={<><Header /><IntakeForm /></>} />
+          <Route path="/" element={<PublicRouteLayout><Home /></PublicRouteLayout>} />
+          <Route path="/about" element={<PublicRouteLayout><AboutPage /></PublicRouteLayout>} />
+          <Route path="/blogs" element={<PublicRouteLayout><Blogs /></PublicRouteLayout>} />
+          <Route path="/appointment" element={<PublicRouteLayout><Appointment /></PublicRouteLayout>} />
+          <Route path="/intake-form" element={<PublicRouteLayout><IntakeForm /></PublicRouteLayout>} />
 
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/customer/:id" element={<CustomerProfile />} />

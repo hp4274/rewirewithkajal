@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -14,6 +14,7 @@ import {
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { isFutureOrCurrentSlot, isTodayOrFutureDate, toDateInputString } from '../utils/validation';
+import { getInitials } from '../utils/avatar';
 import { resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems, getCollectionTotal } from '../utils/collections';
@@ -34,6 +35,16 @@ const formatDateForInput = (dateString?: string) => {
 
 const DEFAULT_PER_SESSION_PRICE = 1500;
 const DEFAULT_TOTAL_SESSIONS = 4;
+const APPOINTMENT_SLOTS: Array<{ label: string; value: string }> = [
+    { label: '09:00 AM', value: '09:00' },
+    { label: '10:00 AM', value: '10:00' },
+    { label: '11:00 AM', value: '11:00' },
+    { label: '12:00 PM', value: '12:00' },
+    { label: '02:00 PM', value: '14:00' },
+    { label: '03:00 PM', value: '15:00' },
+    { label: '04:00 PM', value: '16:00' },
+    { label: '05:00 PM', value: '17:00' }
+];
 
 const formatTimeForInput = (dateString?: string) => {
     if (!dateString) return '';
@@ -70,17 +81,6 @@ const formatSessionHistoryDate = (dateValue?: string) => {
 
 // Extracted Component for Customer Appointment Inputs
 const CustomerAppointmentInput = ({ customer, checkDoubleBooking, onSave, isLocked = false, lockMessage = '' }: any) => {
-    const APPOINTMENT_SLOTS = [
-        { label: '09:00 AM', value: '09:00' },
-        { label: '10:00 AM', value: '10:00' },
-        { label: '11:00 AM', value: '11:00' },
-        { label: '12:00 PM', value: '12:00' },
-        { label: '02:00 PM', value: '14:00' },
-        { label: '03:00 PM', value: '15:00' },
-        { label: '04:00 PM', value: '16:00' },
-        { label: '05:00 PM', value: '17:00' }
-    ];
-
     const initialDate = formatDateForInput(customer.appointment_date);
     const initialSlot = formatTimeForInput(customer.appointment_date);
     const [date, setDate] = useState(initialDate);
@@ -260,17 +260,6 @@ const Admin: React.FC = () => {
     const [bookingSaving, setBookingSaving] = useState(false);
     const [bookingError, setBookingError] = useState<string | null>(null);
     const dashboardFetchRef = useRef<Promise<void> | null>(null);
-
-    const APPOINTMENT_SLOTS: Array<{ label: string; value: string }> = [
-        { label: '09:00 AM', value: '09:00' },
-        { label: '10:00 AM', value: '10:00' },
-        { label: '11:00 AM', value: '11:00' },
-        { label: '12:00 PM', value: '12:00' },
-        { label: '02:00 PM', value: '14:00' },
-        { label: '03:00 PM', value: '15:00' },
-        { label: '04:00 PM', value: '16:00' },
-        { label: '05:00 PM', value: '17:00' }
-    ];
 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
@@ -542,23 +531,23 @@ const Admin: React.FC = () => {
         return d;
     };
 
-    const shiftMonth = (delta: number) => {
+    const shiftMonth = useCallback((delta: number) => {
         setActiveStartDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
-    };
+    }, []);
 
-    const toDateKey = (date: Date) => {
+    const toDateKey = useCallback((date: Date) => {
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
         const dd = String(date.getDate()).padStart(2, '0');
         return `${yyyy}-${mm}-${dd}`;
-    };
+    }, []);
 
-    const getAppointmentName = (app: any) => {
+    const getAppointmentName = useCallback((app: any) => {
         const fullName = app.name || `${app.computed_first || ''} ${app.computed_last || ''}`.trim();
         return fullName || 'Customer';
-    };
+    }, []);
 
-    const getAppointmentSlotLabel = (app: any, fallbackDate?: Date) => {
+    const getAppointmentSlotLabel = useCallback((app: any, fallbackDate?: Date) => {
         const normalizedSlot = app?.slot ? String(app.slot).slice(0, 5) : '';
         if (normalizedSlot) {
             const slotObj = APPOINTMENT_SLOTS.find(s => s.value === normalizedSlot);
@@ -569,20 +558,78 @@ const Admin: React.FC = () => {
             return fallbackDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
         return 'Time not set';
-    };
+    }, []);
 
-    const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, app) => {
-        const appDate = parseDateTimeSmart(app.appointment_date, app.slot);
-        if (isNaN(appDate.getTime())) return acc;
-        const key = toDateKey(appDate);
-        if (!acc[key]) {
-            acc[key] = [];
+    const filteredLeads = useMemo(() => {
+        return allLeads.filter((lead: any) => lead.status === activeLeadTab);
+    }, [allLeads, activeLeadTab]);
+
+    const filteredCustomers = useMemo(() => {
+        return allCustomers.filter((customer: any) =>
+            activeCustomerTab === 'active' ? customer.is_active === true : customer.is_active === false
+        );
+    }, [allCustomers, activeCustomerTab]);
+
+    const dashboardDerived = useMemo(() => {
+        if (activeMenu !== 'dashboard') {
+            return {
+                appointmentsByDate: {} as Record<string, any[]>,
+                todayAppointments: [] as any[],
+                upcomingAppointments: [] as any[],
+                appointmentsOnSelectedDate: [] as any[]
+            };
         }
-        acc[key].push(app);
-        return acc;
-    }, {});
 
-    const checkDoubleBooking = (selectedDateStr: string, slotTimeStr: string, currentCustomerId?: number): boolean => {
+        const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, app: any) => {
+            const appDate = parseDateTimeSmart(app.appointment_date, app.slot);
+            if (isNaN(appDate.getTime())) return acc;
+            const key = toDateKey(appDate);
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(app);
+            return acc;
+        }, {});
+
+        const todayDateStart = new Date();
+        todayDateStart.setHours(0, 0, 0, 0);
+
+        const sortByAppointmentTime = (a: any, b: any) => {
+            return parseDateTimeSmart(a.appointment_date, a.slot).getTime() - parseDateTimeSmart(b.appointment_date, b.slot).getTime();
+        };
+
+        const todayAppointments = appointments.filter((app: any) => {
+            const appDate = parseDateTimeSmart(app.appointment_date, app.slot);
+            if (isNaN(appDate.getTime())) return false;
+            return appDate.getDate() === todayDateStart.getDate() &&
+                appDate.getMonth() === todayDateStart.getMonth() &&
+                appDate.getFullYear() === todayDateStart.getFullYear();
+        }).sort(sortByAppointmentTime);
+
+        const upcomingAppointments = appointments.filter((app: any) => {
+            const appDate = parseDateTimeSmart(app.appointment_date, app.slot);
+            if (isNaN(appDate.getTime())) return false;
+            return appDate > todayDateStart && (
+                appDate.getDate() !== todayDateStart.getDate() ||
+                appDate.getMonth() !== todayDateStart.getMonth() ||
+                appDate.getFullYear() !== todayDateStart.getFullYear());
+        }).sort(sortByAppointmentTime).slice(0, 5);
+
+        const appointmentsOnSelectedDate = (appointmentsByDate[toDateKey(selectedDate)] || [])
+            .slice()
+            .sort(sortByAppointmentTime);
+
+        return {
+            appointmentsByDate,
+            todayAppointments,
+            upcomingAppointments,
+            appointmentsOnSelectedDate
+        };
+    }, [activeMenu, appointments, selectedDate, toDateKey]);
+
+    const { appointmentsByDate, todayAppointments, upcomingAppointments, appointmentsOnSelectedDate } = dashboardDerived;
+
+    const checkDoubleBooking = useCallback((selectedDateStr: string, slotTimeStr: string, currentCustomerId?: number): boolean => {
         const targetDateTime = new Date(`${selectedDateStr}T${slotTimeStr}`);
         return appointments.some(app => {
             if (currentCustomerId && app.id === currentCustomerId) return false; // Ignore current appointment when editing
@@ -590,7 +637,7 @@ const Admin: React.FC = () => {
             if (isNaN(appDate.getTime())) return false;
             return appDate.getTime() === targetDateTime.getTime();
         });
-    };
+    }, [appointments]);
 
     const handleSaveNewSession = async () => {
         setBookingError(null);
@@ -635,7 +682,7 @@ const Admin: React.FC = () => {
         setBookingSaving(false);
     };
 
-    const tileContent = ({ date, view }: { date: Date, view: string }) => {
+    const tileContent = useCallback(({ date, view }: { date: Date, view: string }) => {
         if (view === 'month') {
             const dayAppts = appointmentsByDate[toDateKey(date)] || [];
             if (dayAppts.length > 0) {
@@ -648,38 +695,20 @@ const Admin: React.FC = () => {
             }
         }
         return null;
-    };
+    }, [appointmentsByDate, toDateKey]);
 
-    const tileClassName = ({ date, view }: { date: Date, view: string }) => {
+    const tileClassName = useCallback(({ date, view }: { date: Date, view: string }) => {
         if (view !== 'month') return '';
         return (appointmentsByDate[toDateKey(date)] || []).length > 0 ? 'a2-calendar-has-booking' : '';
-    };
+    }, [appointmentsByDate, toDateKey]);
 
-    const todayDateStart = new Date();
-    todayDateStart.setHours(0, 0, 0, 0);
+    const handleMenuChange = useCallback((menu: 'dashboard' | 'leads' | 'customers' | 'blogs') => {
+        if (menu === activeMenu) return;
+        startTransition(() => {
+            setActiveMenu(menu);
+        });
+    }, [activeMenu]);
 
-    const todayAppointments = appointments.filter(app => {
-        const appDate = parseDateTimeSmart(app.appointment_date, app.slot);
-        if (isNaN(appDate.getTime())) return false;
-
-        // Match today's date exactly
-        return appDate.getDate() === todayDateStart.getDate() &&
-            appDate.getMonth() === todayDateStart.getMonth() &&
-            appDate.getFullYear() === todayDateStart.getFullYear();
-    }).sort((a, b) => parseDateTimeSmart(a.appointment_date, a.slot).getTime() - parseDateTimeSmart(b.appointment_date, b.slot).getTime());
-
-    const upcomingAppointments = appointments.filter(app => {
-        const appDate = parseDateTimeSmart(app.appointment_date, app.slot);
-        if (isNaN(appDate.getTime())) return false;
-        return appDate > todayDateStart && (
-            appDate.getDate() !== todayDateStart.getDate() ||
-            appDate.getMonth() !== todayDateStart.getMonth() ||
-            appDate.getFullYear() !== todayDateStart.getFullYear());
-    }).sort((a, b) => parseDateTimeSmart(a.appointment_date, a.slot).getTime() - parseDateTimeSmart(b.appointment_date, b.slot).getTime()).slice(0, 5);
-
-    const appointmentsOnSelectedDate = (appointmentsByDate[toDateKey(selectedDate)] || [])
-        .slice()
-        .sort((a, b) => parseDateTimeSmart(a.appointment_date, a.slot).getTime() - parseDateTimeSmart(b.appointment_date, b.slot).getTime());
     const handleUpdateLeadStatus = async (id: number, action: 'accept' | 'reject') => {
         if (updatingLeadId === id) return;
 
@@ -705,8 +734,6 @@ const Admin: React.FC = () => {
     };
 
     const renderLeadsView = () => {
-        const filteredLeads = allLeads.filter(l => l.status === activeLeadTab);
-
         return (
             <div className="a2-leads-container">
                 <header className="a2-header a2-leads-header">
@@ -1134,12 +1161,6 @@ const Admin: React.FC = () => {
             return renderCustomerProfile();
         }
 
-        const filteredCustomers = allCustomers.filter(c =>
-            activeCustomerTab === 'active'
-                ? (c.is_active === true)
-                : (c.is_active === false)
-        );
-
         return (
             <div className="a2-leads-container">
                 <header className="a2-header a2-leads-header">
@@ -1186,18 +1207,23 @@ const Admin: React.FC = () => {
                             {filteredCustomers.map(customer => (
                                 <div key={customer.id} className="a2-lead-card">
                                     <div className="a2-customer-card-header">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <div className={`a2-calendar-dot ${customer.is_active ? 'a2-dot-active' : 'a2-dot-inactive'}`} />
-                                            <h3>{customer.name}</h3>
-                                        </div>
-                                        <div className="a2-card-subtitle">
-                                            <Phone size={12} className="mr-1" /> {customer.phone || 'No phone'}
-                                        </div>
-                                        {customer.concern && (
-                                            <div className="a2-card-concern" title={customer.concern}>
-                                                {customer.concern.length > 60 ? customer.concern.substring(0, 57) + "..." : customer.concern}
+                                        <div className="a2-customer-card-top">
+                                            <div className="generated-profile-avatar generated-profile-avatar-sm" aria-hidden="true">{getInitials(customer.name)}</div>
+                                            <div className="a2-customer-card-identity">
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div className={`a2-calendar-dot ${customer.is_active ? 'a2-dot-active' : 'a2-dot-inactive'}`} />
+                                                    <h3>{customer.name}</h3>
+                                                </div>
+                                                <div className="a2-card-subtitle">
+                                                    <Phone size={12} className="mr-1" /> {customer.phone || 'No phone'}
+                                                </div>
+                                                {customer.concern && (
+                                                    <div className="a2-card-concern" title={customer.concern}>
+                                                        {customer.concern.length > 60 ? customer.concern.substring(0, 57) + "..." : customer.concern}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                     <div className="a2-lead-card-body">
                                         <CustomerAppointmentInput
@@ -1233,10 +1259,13 @@ const Admin: React.FC = () => {
                                     {filteredCustomers.map(customer => (
                                         <tr key={customer.id}>
                                             <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div className={`a2-calendar-dot ${customer.is_active ? 'a2-dot-active' : 'a2-dot-inactive'}`} />
+                                                <div className="a2-customer-list-identity">
+                                                    <div className="generated-profile-avatar generated-profile-avatar-xs" aria-hidden="true">{getInitials(customer.name)}</div>
                                                     <div>
-                                                        <div className="fw-600 text-dark">{customer.name}</div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <div className={`a2-calendar-dot ${customer.is_active ? 'a2-dot-active' : 'a2-dot-inactive'}`} />
+                                                            <div className="fw-600 text-dark">{customer.name}</div>
+                                                        </div>
                                                         <div className="a2-card-subtitle" style={{ marginTop: '2px' }}>
                                                             {customer.phone}
                                                         </div>
@@ -1292,6 +1321,7 @@ const Admin: React.FC = () => {
         const price = Number(profileData.per_session_price ?? DEFAULT_PER_SESSION_PRICE);
         const totalSessions = Number(profileData.total_sessions ?? DEFAULT_TOTAL_SESSIONS);
         const dueAmount = (totalSessions * price) - totalPaid;
+        const profileName = profileData.name || fd.name || 'Customer';
 
         const currentAppointmentDate = formatDateForInput(profileData.appointment_date);
         const currentAppointmentSlot = (profileData.slot ? String(profileData.slot).slice(0, 5) : formatTimeForInput(profileData.appointment_date));
@@ -1342,9 +1372,12 @@ const Admin: React.FC = () => {
                 <header className="a2-profile-header">
                     <button className="a2-btn-back" onClick={() => setSelectedCustomerId(null)}><ArrowLeft size={16} /> Back to Directory</button>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', margin: '16px 0' }}>
-                        <div>
-                            <h1>{profileData.name} <span className={`a2-badge ${profileData.is_active ? 'active' : 'inactive'}`}>{profileData.is_active ? 'Active' : 'Inactive'}</span></h1>
-                            <p>Joined {new Date(profileData.created_at).toLocaleDateString()}</p>
+                        <div className="a2-profile-identity">
+                            <div className="generated-profile-avatar generated-profile-avatar-lg" aria-hidden="true">{getInitials(profileName)}</div>
+                            <div>
+                                <h1>{profileName} <span className={`a2-badge ${profileData.is_active ? 'active' : 'inactive'}`}>{profileData.is_active ? 'Active' : 'Inactive'}</span></h1>
+                                <p>Joined {new Date(profileData.created_at).toLocaleDateString()}</p>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -1872,16 +1905,16 @@ const Admin: React.FC = () => {
                     </div>
                 </div>
                 <nav className="a2-sidebar-nav">
-                    <button className={`a2-nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveMenu('dashboard')}>
+                    <button className={`a2-nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => handleMenuChange('dashboard')}>
                         <LayoutDashboard size={20} /> Dashboard
                     </button>
-                    <button className={`a2-nav-item ${activeMenu === 'leads' ? 'active' : ''}`} onClick={() => setActiveMenu('leads')}>
+                    <button className={`a2-nav-item ${activeMenu === 'leads' ? 'active' : ''}`} onClick={() => handleMenuChange('leads')}>
                         <UserPlus size={20} /> Leads
                     </button>
-                    <button className={`a2-nav-item ${activeMenu === 'customers' ? 'active' : ''}`} onClick={() => setActiveMenu('customers')}>
+                    <button className={`a2-nav-item ${activeMenu === 'customers' ? 'active' : ''}`} onClick={() => handleMenuChange('customers')}>
                         <Users size={20} /> Customers
                     </button>
-                    <button className={`a2-nav-item ${activeMenu === 'blogs' ? 'active' : ''}`} onClick={() => setActiveMenu('blogs')}>
+                    <button className={`a2-nav-item ${activeMenu === 'blogs' ? 'active' : ''}`} onClick={() => handleMenuChange('blogs')}>
                         <FileText size={20} /> Blogs
                     </button>
                 </nav>
@@ -2151,7 +2184,7 @@ const Admin: React.FC = () => {
                     <div className="a2-placeholder-view">
                         <h2>{String(activeMenu).charAt(0).toUpperCase() + String(activeMenu).slice(1)}</h2>
                         <p>This section is available in the original admin dashboard or to be built in the future.</p>
-                        <button onClick={() => setActiveMenu('dashboard')} className="a2-btn-secondary">Return to Dashboard</button>
+                        <button onClick={() => handleMenuChange('dashboard')} className="a2-btn-secondary">Return to Dashboard</button>
                     </div>
                 )}
             </main>

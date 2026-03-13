@@ -105,14 +105,13 @@ const HomeBlogs: React.FC = () => {
                 {/* 60% Width - Latest Blog */}
                 {latestBlog && (
                     <div className="home-blog-card latest">
-                        <div className="home-blog-image-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', overflow: 'hidden' }}>
+                        <div className="home-blog-image-wrap">
                             <img
                                 src={latestImageUrl || logo}
                                 alt={latestBlog.title}
                                 loading="lazy"
                                 decoding="async"
-                                className="home-blog-logo"
-                                style={latestImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
+                                className={`home-blog-logo${latestImageUrl ? ' is-photo' : ' is-fallback'}`}
                                 onError={(e) => { e.currentTarget.src = logo; }}
                             />
                         </div>
@@ -128,14 +127,13 @@ const HomeBlogs: React.FC = () => {
                 {/* 40% Width - Second Latest Blog */}
                 {secondLatestBlog && (
                     <div className="home-blog-card second-latest">
-                        <div className="home-blog-image-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', overflow: 'hidden' }}>
+                        <div className="home-blog-image-wrap">
                             <img
                                 src={secondLatestImageUrl || logo}
                                 alt={secondLatestBlog.title}
                                 loading="lazy"
                                 decoding="async"
-                                className="home-blog-logo"
-                                style={secondLatestImageUrl ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
+                                className={`home-blog-logo${secondLatestImageUrl ? ' is-photo' : ' is-fallback'}`}
                                 onError={(e) => { e.currentTarget.src = logo; }}
                             />
                         </div>

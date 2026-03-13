@@ -3,17 +3,16 @@
    Keep third-party package CSS imports in component files when required. */
 
 /* External font imports */
-@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 /* ==========================================================================
    Reset / Base Styles + Root Variables + Typography + Layout
    ========================================================================== */
 
 :root {
-  --font-body: 'Outfit', sans-serif;
-  --font-heading: 'Playfair Display', serif;
-  --font-script: 'Alex Brush', cursive;
+    --font-body: 'Poppins', sans-serif;
+    --font-heading: 'Poppins', sans-serif;
+    --font-script: 'Poppins', sans-serif;
   --font-admin: 'Poppins', sans-serif;
   --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 
@@ -25,8 +24,10 @@
   --color-white: #ffffff;
   --color-text-main: #2d3748;
     --color-text: #2d3748;
-  --color-text-light: #718096;
+    --color-text-light: #4b5563;
   --color-background: #fffaf0;
+    --color-focus-ring: #0f172a;
+    --color-focus-ring-soft: rgba(15, 23, 42, 0.2);
 
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
@@ -116,11 +117,39 @@ a {
   color: inherit;
 }
 
+.skip-link {
+    position: fixed;
+    top: -48px;
+    left: 16px;
+    z-index: 3000;
+    background: #111827;
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus-visible {
+    top: 16px;
+}
+
 button {
   cursor: pointer;
   border: none;
   outline: none;
   font-family: inherit;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--color-focus-ring-soft);
 }
 
 img {
@@ -2274,6 +2303,7 @@ code {
                 box-shadow 0.4s ease,
                 background-color 0.3s ease;
     position: relative;
+    isolation: isolate;
 }
 
 .home-blog-card::after {
@@ -2304,7 +2334,7 @@ code {
 }
 
 .home-blog-card.latest .home-blog-image-wrap {
-    height: 250px;
+    height: 340px;
 }
 
 .home-blog-card.latest h3 {
@@ -2317,7 +2347,7 @@ code {
 }
 
 .home-blog-card.second-latest .home-blog-image-wrap {
-    height: 200px;
+    height: 300px;
 }
 
 .home-blog-card.second-latest h3 {
@@ -2327,41 +2357,77 @@ code {
 
 
 .home-blog-image-wrap {
-    background-color: var(--color-background);
+    background: linear-gradient(180deg, rgba(255, 179, 133, 0.3) 0%, rgba(255, 250, 240, 0.92) 100%);
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: var(--space-5);
+    padding: 0;
+    position: relative;
     transition: transform 0.3s ease, filter 0.3s ease;
     overflow: hidden;
 }
 
+.home-blog-image-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.06) 0%, rgba(17, 24, 39, 0.22) 100%);
+    pointer-events: none;
+}
+
 .home-blog-card:hover .home-blog-image-wrap {
-    transform: scale(1.05);
-    filter: brightness(1.1);
+    filter: brightness(1.04);
 }
 
 .home-blog-logo {
-    height: 80%;
-    max-height: 120px;
-    width: auto;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease, transform 0.45s ease;
+}
+
+.home-blog-logo.is-photo {
+    object-fit: cover;
+}
+
+.home-blog-logo.is-fallback {
     object-fit: contain;
-    opacity: 0.8;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    padding: 36px;
+    opacity: 0.85;
 }
 
 .home-blog-card:hover .home-blog-logo {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .home-blog-content {
-    padding: 30px;
+    padding: 34px 30px 30px;
     display: flex;
     flex-direction: column;
     flex: 1;
     position: relative;
+    background: linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, #ffffff 100%);
+    box-shadow: 0 -14px 28px rgba(148, 87, 46, 0.08);
+    z-index: 2;
+}
+
+.home-blog-content::before {
+    content: none;
+}
+
+.home-blog-content::after {
+    content: none;
+}
+
+.home-blog-card.latest .home-blog-content {
+    margin: -54px 22px 22px 18px;
+    border-radius: 34px 30px 24px 20px;
+}
+
+.home-blog-card.second-latest .home-blog-content {
+    margin: -46px 18px 18px 30px;
+    border-radius: 28px 34px 20px 24px;
 }
 
 .home-blog-content .blog-date {
@@ -2418,6 +2484,18 @@ code {
     .home-blog-card.second-latest {
         flex: auto;
     }
+
+    .home-blog-card.latest .home-blog-image-wrap,
+    .home-blog-card.second-latest .home-blog-image-wrap {
+        height: 280px;
+    }
+
+    .home-blog-card.latest .home-blog-content,
+    .home-blog-card.second-latest .home-blog-content {
+        margin: -46px 16px 16px;
+        border-radius: 28px 28px 20px 20px;
+    }
+
 }
 
 
@@ -3189,6 +3267,59 @@ code {
     margin-bottom: var(--space-5);
     border-bottom: 2px solid var(--color-primary-light);
     padding-bottom: var(--space-2);
+}
+
+.generated-profile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-white);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-soft);
+    flex-shrink: 0;
+}
+
+.generated-profile-avatar-lg {
+    width: 72px;
+    height: 72px;
+    font-size: 1.35rem;
+}
+
+.generated-profile-avatar-sm {
+    width: 52px;
+    height: 52px;
+    font-size: 1rem;
+}
+
+.generated-profile-avatar-xs {
+    width: 40px;
+    height: 40px;
+    font-size: 0.88rem;
+}
+
+.profile-title-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: var(--space-5);
+}
+
+.profile-title-copy {
+    min-width: 0;
+}
+
+.profile-title-copy .profile-header {
+    margin: 0 0 8px;
+}
+
+.profile-subtext {
+    margin: 0;
+    color: var(--color-text-light);
+    font-size: 0.95rem;
 }
 
 /* The Plus Layout - 4 Quadrants */
@@ -5728,11 +5859,28 @@ input:checked+.switch-slider:before {
     gap: var(--space-1);
 }
 
+.a2-customer-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.a2-customer-card-identity {
+    min-width: 0;
+    flex: 1;
+}
+
 .a2-customer-card-header h3 {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--color-slate-900);
+}
+
+.a2-customer-list-identity {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .a2-lead-card-body {
@@ -6100,6 +6248,17 @@ input:checked+.switch-slider:before {
     font-size: 1.8rem;
     margin: 0 0 4px 0;
     color: var(--color-slate-900);
+}
+
+.a2-profile-identity {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.a2-profile-identity p {
+    margin: 0;
+    color: var(--color-slate-500);
 }
 
 .a2-badge {
@@ -7056,6 +7215,10 @@ input:checked+.switch-slider:before {
     .a2-profile-header h1 {
         font-size: 1.45rem;
         flex-wrap: wrap;
+    }
+
+    .a2-profile-identity {
+        align-items: flex-start;
     }
 }
 

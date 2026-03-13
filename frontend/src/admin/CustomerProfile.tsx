@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { getCollectionItems } from '../utils/collections';
+import { getInitials } from '../utils/avatar';
 
 interface CustomerData {
     id: number;
@@ -259,11 +260,18 @@ const CustomerProfile: React.FC = () => {
     const detailScoreValue = computeTotalScore(customer.form_data);
     const detailScore = detailScoreValue ?? 'N/A';
     const detailStatus = (customer.status || 'pending').toUpperCase();
+    const profileInitials = getInitials(profileName);
 
     return (
         <div className="profile-wrapper">
             <button className="back-btn" onClick={() => navigate('/admin?section=leads')}>← Back to Management</button>
-            <h2 className="profile-header">{profileName}'s Profile</h2>
+            <div className="profile-title-row">
+                <div className="generated-profile-avatar generated-profile-avatar-lg" aria-hidden="true">{profileInitials}</div>
+                <div className="profile-title-copy">
+                    <h2 className="profile-header">{profileName}'s Profile</h2>
+                    <p className="profile-subtext">{detailEmail}</p>
+                </div>
+            </div>
 
             <div className="profile-quadrants">
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { getInitials } from '../utils/avatar';
 
 const q1Questions = [
     "Have you ever walked in your sleep during your adult life?",
@@ -72,10 +73,19 @@ const CustomerFormDetails: React.FC = () => {
     if (error) return <div style={{ padding: '40px', color: 'red' }}>{error}</div>;
     if (!formData) return <div style={{ padding: '40px' }}>No form data found.</div>;
 
+    const profileName = [formData.first_name, formData.last_name].filter(Boolean).join(' ').trim() || formData.name || 'Customer';
+    const profileInitials = getInitials(profileName);
+
     return (
         <div className="profile-wrapper" style={{ maxWidth: '900px', margin: '0 auto', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: 'var(--shadow-soft)' }}>
             <button className="back-btn" onClick={() => navigate(`/admin/customer/${id}`)}>← Back to Profile</button>
-            <h2 className="profile-header" style={{ marginTop: '20px' }}>Intake Form Results</h2>
+            <div className="profile-title-row" style={{ marginTop: '20px' }}>
+                <div className="generated-profile-avatar generated-profile-avatar-lg" aria-hidden="true">{profileInitials}</div>
+                <div className="profile-title-copy">
+                    <h2 className="profile-header" style={{ marginTop: 0 }}>Intake Form Results</h2>
+                    <p className="profile-subtext">{profileName}</p>
+                </div>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '40px', padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
                 <div><strong>Name:</strong> {formData.first_name} {formData.last_name}</div>

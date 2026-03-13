@@ -1,11 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import logo from '../assets/logo3.png';
 
 const Header: React.FC = () => {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const menuToggleRef = useRef<HTMLButtonElement | null>(null);
+    const mobileDrawerRef = useRef<HTMLElement | null>(null);
     const location = useLocation();
+
+    const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
+        const selectors = [
+            'a[href]',
+            'button:not([disabled])',
+            'textarea:not([disabled])',
+            'input:not([disabled])',
+            'select:not([disabled])',
+            '[tabindex]:not([tabindex="-1"])'
+        ];
+        return Array.from(container.querySelectorAll<HTMLElement>(selectors.join(',')))
+            .filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -32,12 +47,76 @@ const Header: React.FC = () => {
         };
     }, [mobileMenuOpen]);
 
-    const closeMenu = () => {
+    useEffect(() => {
+        if (!mobileMenuOpen) return;
+
+        const drawer = mobileDrawerRef.current;
+        if (!drawer) return;
+
+        const focusables = getFocusableElements(drawer);
+        if (focusables.length > 0) {
+            focusables[0].focus();
+        } else {
+            drawer.focus();
+        }
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (!mobileMenuOpen) return;
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeMenu(true);
+                return;
+            }
+
+            if (event.key !== 'Tab') return;
+
+            const currentDrawer = mobileDrawerRef.current;
+            if (!currentDrawer) return;
+
+            const drawerFocusables = getFocusableElements(currentDrawer);
+            if (drawerFocusables.length === 0) {
+                event.preventDefault();
+                currentDrawer.focus();
+                return;
+            }
+
+            const firstElement = drawerFocusables[0];
+            const lastElement = drawerFocusables[drawerFocusables.length - 1];
+            const activeElement = document.activeElement as HTMLElement | null;
+
+            if (event.shiftKey) {
+                if (activeElement === firstElement || !currentDrawer.contains(activeElement)) {
+                    event.preventDefault();
+                    lastElement.focus();
+                }
+                return;
+            }
+
+            if (activeElement === lastElement) {
+                event.preventDefault();
+                firstElement.focus();
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [mobileMenuOpen]);
+
+    const closeMenu = (restoreFocus = false) => {
         setMobileMenuOpen(false);
+        if (restoreFocus) {
+            requestAnimationFrame(() => {
+                menuToggleRef.current?.focus();
+            });
+        }
     };
 
     return (
         <>
+            <a href="#main-content" className="skip-link">Skip to main content</a>
             <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
                 <div className="header-container">
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
@@ -66,9 +145,11 @@ const Header: React.FC = () => {
 
                     <button
                         type="button"
+                        ref={menuToggleRef}
                         className={`mobile-menu-toggle ${mobileMenuOpen ? 'is-open' : ''}`}
                         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         aria-expanded={mobileMenuOpen}
+                        aria-controls="mobile-nav-drawer"
                         onClick={() => setMobileMenuOpen((open) => !open)}
                     >
                         <span></span>
@@ -82,18 +163,26 @@ const Header: React.FC = () => {
                 <>
                     <div
                         className="mobile-sidebar-overlay show"
-                        onClick={closeMenu}
+                        onClick={() => closeMenu(true)}
                     />
 
-                    <aside className="mobile-sidebar open" role="dialog" aria-modal="true" aria-label="Mobile menu">
+                    <aside
+                        id="mobile-nav-drawer"
+                        ref={mobileDrawerRef}
+                        className="mobile-sidebar open"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Mobile menu"
+                        tabIndex={-1}
+                    >
                         <div className="mobile-sidebar-top">
                             <p className="mobile-sidebar-brand">Rewirewithkajal</p>
 
                             <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
-                                <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
-                                <NavLink to="/about" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
-                                <NavLink to="/blogs" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
-                                <NavLink to="/appointment" onClick={closeMenu} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
+                                <NavLink to="/" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
+                                <NavLink to="/about" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
+                                <NavLink to="/blogs" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
+                                <NavLink to="/appointment" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
                             </nav>
                         </div>
 
