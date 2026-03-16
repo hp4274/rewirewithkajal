@@ -79,6 +79,12 @@ const formatSessionHistoryDate = (dateValue?: string) => {
     });
 };
 
+const isCustomerActive = (customer: any) => customer?.is_active === true;
+
+const shouldShowCalendarAppointment = (customer: any) => {
+    return isCustomerActive(customer) && Boolean(customer?.appointment_date);
+};
+
 // Extracted Component for Customer Appointment Inputs
 const CustomerAppointmentInput = ({ customer, checkDoubleBooking, onSave, isLocked = false, lockMessage = '' }: any) => {
     const initialDate = formatDateForInput(customer.appointment_date);
@@ -207,8 +213,6 @@ const Admin: React.FC = () => {
     });
 
     // Data state
-    const [appointments, setAppointments] = useState<any[]>([]);
-    const [bookingCustomers, setBookingCustomers] = useState<any[]>([]);
     const [allLeads, setAllLeads] = useState<any[]>([]);
     const [allCustomers, setAllCustomers] = useState<any[]>([]);
 
@@ -329,7 +333,7 @@ const Admin: React.FC = () => {
                 const customersTotal = getCollectionTotal<any>(customersRes.data) ?? customers.length;
 
                 const turnover = turnoverRes.data.turnover || 0;
-                const activeCustomersCount = customers.filter((c: any) => c.status === 'confirmed' || c.is_active === true).length;
+                const activeCustomersCount = customers.filter((c: any) => isCustomerActive(c)).length;
 
                 setStats({
                     leads: leadsTotal,
@@ -350,13 +354,6 @@ const Admin: React.FC = () => {
                     return true;
                 });
                 setAllCustomers(filteredCustomers);
-
-                // Show every booked slot on the calendar, even if status labels vary.
-                const allAppointments = customers.filter((c: any) => !!c.appointment_date);
-                setAppointments(allAppointments);
-
-                const bookable = customers.filter((c: any) => c.is_active === true);
-                setBookingCustomers(bookable);
 
             } catch (error) {
                 console.error("Dashboard Fetch Error", error);
@@ -569,6 +566,14 @@ const Admin: React.FC = () => {
             activeCustomerTab === 'active' ? customer.is_active === true : customer.is_active === false
         );
     }, [allCustomers, activeCustomerTab]);
+
+    const appointments = useMemo(() => {
+        return allCustomers.filter((customer: any) => shouldShowCalendarAppointment(customer));
+    }, [allCustomers]);
+
+    const bookingCustomers = useMemo(() => {
+        return allCustomers.filter((customer: any) => isCustomerActive(customer));
+    }, [allCustomers]);
 
     const dashboardDerived = useMemo(() => {
         if (activeMenu !== 'dashboard') {
@@ -909,12 +914,6 @@ const Admin: React.FC = () => {
 
             const nextAppointmentDate = `${dateVal}T${slotVal}`;
             setAllCustomers((prev: any[]) => prev.map((c: any) => c.id === id ? { ...c, appointment_date: nextAppointmentDate, slot: slotVal } : c));
-            setAppointments((prev: any[]) => {
-                const base = allCustomers.find((c: any) => c.id === id) || profileData || { id };
-                const updated = { ...base, appointment_date: nextAppointmentDate, slot: slotVal };
-                const withoutCurrent = prev.filter((app: any) => app.id !== id);
-                return [...withoutCurrent, updated];
-            });
             setProfileData((prev: any) => prev && prev.id === id ? { ...prev, appointment_date: nextAppointmentDate, slot: slotVal } : prev);
         } catch (error: any) {
             const message = error?.response?.data?.message || 'Failed to update appointment.';

@@ -6,3 +6,5 @@ dist/
 build/
 .vercel
 .env*.local
+backend/.env.local
+.env.local

@@ -7308,3 +7308,63 @@ input:checked+.switch-slider:before {
         width: 100%;
     }
 }
+
+/* Source: src/admin/Admin.css (dark mode fixes) */
+.a2-layout.a2-theme-dark .a2-pill:hover:not(.active) {
+    background: var(--color-neutral-800);
+    color: var(--color-slate-50);
+}
+
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='background-color: #f8fafc'],
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='background: #f8fafc'],
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='background: #fff'],
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='background-color: #fff'] {
+    background: var(--color-slate-900) !important;
+    border-color: var(--color-slate-700) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='color: #334155'],
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='color: #64748b'],
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='color: #94a3b8'] {
+    color: var(--color-slate-200) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='border: 1px solid #e2e8f0'],
+.a2-layout.a2-theme-dark .a2-eval-panel [style*='border: 2px dashed #cbd5e1'] {
+    border-color: var(--color-slate-700) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-blog-modal-footer {
+    background: var(--color-neutral-900) !important;
+    color: var(--color-slate-200) !important;
+    border-top-color: var(--color-slate-700) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-blog-modal-footer .a2-switch-label,
+.a2-layout.a2-theme-dark .a2-blog-modal-footer span,
+.a2-layout.a2-theme-dark .a2-blog-modal-footer div,
+.a2-layout.a2-theme-dark .a2-blog-modal-footer label {
+    color: var(--color-slate-200) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-blog-modal-footer input[type='checkbox'] {
+    accent-color: var(--color-violet-500);
+}
+
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-toolbar,
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-container,
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-editor,
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-tooltip {
+    background: var(--color-neutral-900) !important;
+    color: var(--color-slate-200) !important;
+    border-color: var(--color-slate-700) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-editor.ql-blank::before {
+    color: var(--color-slate-500) !important;
+}
+
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-snow button:hover,
+.a2-layout.a2-theme-dark .a2-quill-wrapper .ql-snow .ql-picker-label:hover {
+    color: var(--color-slate-50) !important;
+}

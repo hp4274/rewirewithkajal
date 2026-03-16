@@ -6,6 +6,10 @@ dotenv.config();
 const connectionString = process.env.DATABASE_URL;
 const sslConfig = process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false };
 
+if (!connectionString) {
+  throw new Error('DATABASE_URL is required. Configure your Supabase PostgreSQL connection string.');
+}
+
 const createPool = (config: PoolConfig) => {
   const nextPool = new Pool(config);
   const statementTimeoutMs = parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '10000', 10);
@@ -53,21 +57,12 @@ const logSlowQueryIfNeeded = (startedAt: number, args: any[]) => {
   console.warn(`[db][slow-query] ${duration}ms ${formatQueryPreview(queryText)}`);
 };
 
-const basePoolConfig: PoolConfig = connectionString
-  ? {
-      connectionString,
-      // Supabase requires SSL in hosted environments.
-      ssl: sslConfig,
-      ...commonPoolOptions,
-    }
-  : {
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      database: process.env.DB_NAME || 'rewire_kajal',
-      password: process.env.DB_PASSWORD || 'postgres',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      ...commonPoolOptions,
-    };
+const basePoolConfig: PoolConfig = {
+  connectionString,
+  // Supabase requires SSL in hosted environments.
+  ssl: sslConfig,
+  ...commonPoolOptions,
+};
 
 let activePool = createPool(basePoolConfig);
 let activePoolConfig: PoolConfig = basePoolConfig;
