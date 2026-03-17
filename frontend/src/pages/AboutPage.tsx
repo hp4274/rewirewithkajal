@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { HeartHandshake, Users, BookOpen, Clock } from 'lucide-react';
 
 const stats = [
     { value: '200+', label: 'Clients Helped' },
@@ -10,22 +11,22 @@ const stats = [
 
 const philosophyPillars = [
     {
-        icon: 'NJ',
+        icon: <HeartHandshake size={24} />,
         title: 'Non-Judgment',
         desc: 'A space free from shame, where every part of you is welcome exactly as it is.'
     },
     {
-        icon: 'CO',
+        icon: <Users size={24} />,
         title: 'Collaboration',
         desc: 'We work as partners. Your insights guide the direction as much as mine.'
     },
     {
-        icon: 'EB',
+        icon: <BookOpen size={24} />,
         title: 'Evidence-Based',
         desc: 'Grounded in research while remaining warm, adaptive, and deeply human.'
     },
     {
-        icon: 'YP',
+        icon: <Clock size={24} />,
         title: 'Your Pace',
         desc: 'Healing is not a race. We move at a rhythm that honors where you are today.'
     }
