@@ -96,7 +96,7 @@ export const getBlogs = async (req: Request, res: Response) => {
         const whereClause = isAdmin ? '' : 'WHERE is_active = true';
         const selectContent = summaryMode ? 'LEFT(content, 450) AS content' : 'content';
         const result = await pool.query(
-            `SELECT id, title, ${selectContent}, image_url, is_active, created_at
+            `SELECT id, title, ${selectContent}, image_url, is_active, created_at, category, excerpt, reading_time
              FROM blogs
              ${whereClause}
              ORDER BY created_at DESC
@@ -128,11 +128,11 @@ export const getBlogs = async (req: Request, res: Response) => {
 
 export const createBlog = async (req: Request, res: Response) => {
     try {
-        const { title, content, image_url, is_active } = req.body;
+        const { title, content, image_url, is_active, category, excerpt, reading_time } = req.body;
 
         const result = await pool.query(
-            'INSERT INTO blogs (title, content, image_url, is_active) VALUES ($1, $2, $3, $4) RETURNING *',
-            [title, content, image_url, is_active || false]
+            'INSERT INTO blogs (title, content, image_url, is_active, category, excerpt, reading_time) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [title, content, image_url, is_active || false, category || 'Mindfulness', excerpt || '', reading_time || '5 min read']
         );
 
         clearPublicBlogsCache();
@@ -146,11 +146,11 @@ export const createBlog = async (req: Request, res: Response) => {
 export const updateBlog = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, content, image_url, is_active } = req.body;
+        const { title, content, image_url, is_active, category, excerpt, reading_time } = req.body;
 
         const result = await pool.query(
-            'UPDATE blogs SET title = $1, content = $2, image_url = $3, is_active = $4 WHERE id = $5 RETURNING *',
-            [title, content, image_url, is_active, id]
+            'UPDATE blogs SET title = $1, content = $2, image_url = $3, is_active = $4, category = $5, excerpt = $6, reading_time = $7 WHERE id = $8 RETURNING *',
+            [title, content, image_url, is_active, category, excerpt, reading_time, id]
         );
 
         if (result.rows.length === 0) {

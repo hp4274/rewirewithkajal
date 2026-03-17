@@ -28,12 +28,13 @@ const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 const RoutedAppShell = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const shouldShowAnimatedBackground = !isAdminRoute && location.pathname !== '/';
 
   return (
     <>
       {!isAdminRoute && <Preloader />}
       <div className="app-container">
-        {!isAdminRoute && <AnimatedBackground />}
+        {shouldShowAnimatedBackground && <AnimatedBackground />}
         <Routes>
           <Route path="/" element={<PublicRouteLayout><Home /></PublicRouteLayout>} />
           <Route path="/about" element={<PublicRouteLayout><AboutPage /></PublicRouteLayout>} />

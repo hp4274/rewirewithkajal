@@ -3,17 +3,17 @@
    Keep third-party package CSS imports in component files when required. */
 
 /* External font imports */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=Quicksand:wght@300;400;500;600;700&display=swap');
 
 /* ==========================================================================
    Reset / Base Styles + Root Variables + Typography + Layout
    ========================================================================== */
 
 :root {
-    --font-body: 'Poppins', sans-serif;
-    --font-heading: 'Poppins', sans-serif;
-    --font-script: 'Poppins', sans-serif;
-  --font-admin: 'Poppins', sans-serif;
+    --font-body: 'Quicksand', sans-serif;
+    --font-heading: 'Philosopher', sans-serif;
+    --font-script: 'Philosopher', sans-serif;
+  --font-admin: 'Quicksand', sans-serif;
   --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 
   --color-primary: #ff8f4b;

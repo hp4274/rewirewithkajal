@@ -18,7 +18,11 @@ type SlotAvailabilityResponse = {
     available_slots?: SlotOption[];
 };
 
-const AppointmentForm: React.FC = () => {
+interface AppointmentFormProps {
+    isRefactoredDesign?: boolean;
+}
+
+const AppointmentForm: React.FC<AppointmentFormProps> = ({ isRefactoredDesign }) => {
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -173,12 +177,90 @@ const AppointmentForm: React.FC = () => {
     const slotHelperText = slotError
         ? slotError
         : !formData.preferred_date
-            ? 'Choose a preferred date to see live slot availability.'
+            ? 'Choose a preferred date to see availability.'
             : slotsLoading
-                ? 'Checking available slots...'
+                ? 'Availability...'
                 : availableSlots.length === 0
-                    ? 'No slots are available on this date. Please choose another date.'
-                    : 'Select your preferred slot.';
+                    ? 'No slots available on this date.'
+                    : 'Select a slot.';
+
+    if (isRefactoredDesign) {
+        return (
+            <div className="ra-form-card">
+                {status === 'success' && <div className="ra-form-alert success">Your request has been sent successfully. We will reach out within 24 hours.</div>}
+                {status === 'error' && <div className="ra-form-alert error">{errorMessage || 'Something went wrong.'}</div>}
+                <form onSubmit={handleSubmit}>
+                    <div className="ra-form-section-hdr">Personal Details <span>Step 1 of 2</span></div>
+                    <div className="ra-form-row">
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="first_name">First Name</label>
+                            <input className="ra-form-input" type="text" id="first_name" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" required />
+                        </div>
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="last_name">Last Name</label>
+                            <input className="ra-form-input" type="text" id="last_name" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" required />
+                        </div>
+                    </div>
+                    <div className="ra-form-row">
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="email">Email Address</label>
+                            <input className="ra-form-input" type="email" id="email" name="email" value={formData.email} onChange={handleChange} placeholder="you@email.com" required />
+                        </div>
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="phone">Phone Number</label>
+                            <input className="ra-form-input" type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="10-digit number" required />
+                        </div>
+                    </div>
+                    <div className="ra-form-row">
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="dob">Date of Birth</label>
+                            <input className="ra-form-input" type="date" id="dob" name="dob" value={formData.dob} onChange={handleChange} max={todayDateInput} required />
+                        </div>
+                        <div className="ra-form-group">
+                            {/* Instead of completely dropping Format, we can repurpose this spot or leave it blank - keeping layout balanced */}
+                            <label className="ra-form-label" htmlFor="concern">Primary Concern</label>
+                            <select className="ra-form-select" id="concern" name="concern" value={formData.concern} onChange={handleChange} required>
+                                <option value="">Select a concern</option>
+                                <option value="Anxiety">Anxiety / Stress</option>
+                                <option value="Depression">Depression / Low Mood</option>
+                                <option value="Relationship">Relationship Issues</option>
+                                <option value="Trauma">Trauma / Past Experiences</option>
+                                <option value="Identity">Identity &amp; Self-Worth</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="ra-form-section-hdr gap">About Your Session <span>Step 2 of 2</span></div>
+                    <div className="ra-form-row">
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="preferred_date">Preferred Date</label>
+                            <input className="ra-form-input" type="date" id="preferred_date" name="preferred_date" value={formData.preferred_date} onChange={handleChange} min={todayDateInput} required />
+                        </div>
+                        <div className="ra-form-group">
+                            <label className="ra-form-label" htmlFor="preferred_slot">Preferred Slot</label>
+                            <select className="ra-form-select" id="preferred_slot" name="preferred_slot" value={formData.preferred_slot} onChange={handleChange} disabled={!formData.preferred_date || slotsLoading || availableSlots.length === 0} required>
+                                <option value="">{slotHelperText}</option>
+                                {availableSlots.map(slot => (
+                                    <option key={slot.value} value={slot.value}>{slot.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="ra-form-group">
+                        <label className="ra-form-label" htmlFor="message">Message (Optional)</label>
+                        <textarea className="ra-form-textarea" placeholder="Tell us a little more about what brings you here..." id="message" name="message" value={formData.message} onChange={handleChange}></textarea>
+                    </div>
+
+                    <button type="submit" className="ra-btn-submit" disabled={status === 'loading' || slotsLoading || !formData.preferred_date || !formData.preferred_slot}>
+                        {status === 'loading' ? 'Submitting...' : 'Request Appointment'}
+                        {!status && <span className="ra-btn-arrow">→</span>}
+                    </button>
+                    <p className="ra-btn-note">By submitting, you agree to the 24-hr cancellation policy.</p>
+                </form>
+            </div>
+        );
+    }
 
     return (
         <section className="appointment-section container" id="appointment">
@@ -191,7 +273,6 @@ const AppointmentForm: React.FC = () => {
                         will reach out to confirm your session.
                     </p>
                     <div className="appointment-illustration">
-                        {/* Abstract soft shape or illustration here */}
                         <div className="soft-circle"></div>
                         <div className="soft-circle-small"></div>
                     </div>

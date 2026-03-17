@@ -9,6 +9,9 @@ import { getCollectionItems } from '../utils/collections';
 interface Blog {
     id: number;
     title: string;
+    category?: string;
+    excerpt?: string;
+    reading_time?: string;
     content: string;
     image_url: string;
     is_active: boolean;
@@ -19,8 +22,8 @@ const BlogsManager: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [formBlog, setFormBlog] = useState<{ id: number | null, title: string, content: string, image_url: string, is_active: boolean }>({
-        id: null, title: '', content: '', image_url: '', is_active: true
+    const [formBlog, setFormBlog] = useState<{ id: number | null, title: string, category: string, excerpt: string, reading_time: string, content: string, image_url: string, is_active: boolean }>({
+        id: null, title: '', category: 'General', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true
     });
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
@@ -79,6 +82,9 @@ const BlogsManager: React.FC = () => {
 
             const payload = {
                 title: formBlog.title,
+                category: formBlog.category,
+                excerpt: formBlog.excerpt,
+                reading_time: formBlog.reading_time,
                 content: formBlog.content,
                 image_url: finalImageUrl,
                 is_active: formBlog.is_active
@@ -97,7 +103,7 @@ const BlogsManager: React.FC = () => {
             }
 
             // Reset form
-            setFormBlog({ id: null, title: '', content: '', image_url: '', is_active: true });
+            setFormBlog({ id: null, title: '', category: 'General', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
             setSelectedImage(null);
 
             // clear the file input manually by referencing its DOM if needed, but since we rely on selectedImage state, its UI value is handled minimally. (A full reset would involve a ref to the file input).
@@ -115,6 +121,9 @@ const BlogsManager: React.FC = () => {
         setFormBlog({
             id: blog.id,
             title: blog.title,
+            category: blog.category || 'General',
+            excerpt: blog.excerpt || '',
+            reading_time: blog.reading_time || '5 min read',
             content: blog.content,
             image_url: blog.image_url || '',
             is_active: blog.is_active
@@ -126,7 +135,7 @@ const BlogsManager: React.FC = () => {
     };
 
     const cancelEdit = () => {
-        setFormBlog({ id: null, title: '', content: '', image_url: '', is_active: true });
+        setFormBlog({ id: null, title: '', category: 'General', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
         setSelectedImage(null);
         const fileInput = document.getElementById('blog-image-upload') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
@@ -207,6 +216,25 @@ const BlogsManager: React.FC = () => {
                             type="text" placeholder="Blog Title" required
                             value={formBlog.title} onChange={e => setFormBlog({ ...formBlog, title: e.target.value })}
                             style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', width: '100%' }}
+                        />
+
+                        <div style={{ display: 'flex', gap: 16 }}>
+                            <input
+                                type="text" placeholder="Category (e.g. Anxiety, Relationships)"
+                                value={formBlog.category} onChange={e => setFormBlog({ ...formBlog, category: e.target.value })}
+                                style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', flex: 1 }}
+                            />
+                            <input
+                                type="text" placeholder="Reading Time (e.g. 5 min read)"
+                                value={formBlog.reading_time} onChange={e => setFormBlog({ ...formBlog, reading_time: e.target.value })}
+                                style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', flex: 1 }}
+                            />
+                        </div>
+
+                        <textarea
+                            placeholder="Short Excerpt (max 200 chars)" rows={2}
+                            value={formBlog.excerpt} onChange={e => setFormBlog({ ...formBlog, excerpt: e.target.value })}
+                            style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', width: '100%', resize: 'vertical' }}
                         />
 
                         <div>

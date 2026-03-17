@@ -9,6 +9,7 @@ import {
     toDateInputString
 } from '../utils/validation';
 import { apiUrl, requestWithApiFallback } from '../utils/api';
+import '../styles/appointment-redesign.css';
 
 type SlotOption = {
     label: string;
@@ -249,195 +250,221 @@ const IntakeForm: React.FC = () => {
     };
 
     return (
-        <section className="appointment-section container fade-in" style={{ marginTop: '120px', minHeight: '60vh', marginBottom: '80px' }}>
-            <div className="appointment-wrapper" style={{ flexDirection: 'column', maxWidth: '800px', margin: '0 auto' }}>
-                <div className="appointment-info" style={{ width: '100%', marginBottom: '40px', padding: '30px', textAlign: 'center' }}>
-                    <h2>Patient Intake Form</h2>
-                    <p>
-                        Please fill out the details and questionnaires below to request therapy sessions and officially register with us.
-                    </p>
+        <div className="ra-page-wrapper">
+            {/* Hero Section */}
+            <section className="ra-appt-hero" style={{ minHeight: '40vh', paddingBottom: '3rem' }}>
+                <div className="ra-hero-bg">
+                    <div className="ra-hero-blob"></div>
+                    <div className="ra-hero-blob"></div>
+                    <div className="ra-hero-blob"></div>
                 </div>
+                <div className="ra-hero-content" style={{ padding: '8rem 2rem 0' }}>
+                    <div className="ra-hero-eyebrow">
+                        <span className="ra-eyebrow-line"></span> Next Steps <span className="ra-eyebrow-line"></span>
+                    </div>
+                    <h1 className="ra-hero-title">Patient <em>Intake</em></h1>
+                </div>
+                <div className="ra-hero-wave">
+                    <svg viewBox="0 0 1440 110" fill="none" preserveAspectRatio="none">
+                        <path d="M0,55 C400,110 1000,0 1440,55 L1440,110 L0,110 Z" />
+                    </svg>
+                </div>
+            </section>
 
-                <div className="appointment-form-container" style={{ width: '100%' }}>
-                    {success ? (
-                        <div className="status-message success" style={{ textAlign: 'center', padding: '40px' }}>
-                            <h3>Confirmed!</h3>
-                            <p>{success}</p>
-                            <button className="btn-secondary" onClick={() => navigate('/')} style={{ marginTop: '20px' }}>Return Home</button>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleSubmit} className="appointment-form">
-                            <h3 style={{ marginBottom: '24px', color: 'var(--color-primary-dark)', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Personal Information</h3>
-
-                            <div className="form-group">
-                                <label>Email <span style={{ color: 'red' }}>*</span></label>
-                                <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Enter email" required />
+            <section className="ra-booking-main" style={{ paddingTop: '2rem' }}>
+                <div className="ra-booking-inner" style={{ maxWidth: '900px' }}>
+                    <div className="ra-form-card" style={{ animation: 'raRevealUp 0.8s 0.6s ease both' }}>
+                        {success ? (
+                            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
+                                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', color: 'var(--ra-brown)', marginBottom: '1rem' }}>Confirmed!</h3>
+                                <p style={{ fontSize: '1rem', color: 'var(--ra-text-muted)', marginBottom: '2rem' }}>{success}</p>
+                                <button className="ra-btn-submit" onClick={() => navigate('/')} style={{ maxWidth: '250px', margin: '0 auto' }}>
+                                    Return Home
+                                </button>
                             </div>
+                        ) : (
+                            <form onSubmit={handleSubmit}>
+                                <div className="ra-form-section-hdr">Personal Information <span>Section 1</span></div>
 
-                            <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>First Name <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="text" name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="Enter your first name" required />
+                                <div className="ra-form-row">
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">First Name *</label>
+                                        <input className="ra-form-input" type="text" name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="First Name" required />
+                                    </div>
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">Last Name *</label>
+                                        <input className="ra-form-input" type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} placeholder="Last Name" required />
+                                    </div>
                                 </div>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Last Name <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} placeholder="Enter your last name" required />
-                                </div>
-                            </div>
 
-                            <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>City <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Enter your city" required />
+                                <div className="ra-form-row">
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">Email *</label>
+                                        <input className="ra-form-input" type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="you@email.com" required />
+                                    </div>
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">Phone Number *</label>
+                                        <input className="ra-form-input" type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="10-digit number" inputMode="numeric" minLength={10} maxLength={10} pattern="[0-9]{10}" title="Enter exactly 10 digits" required />
+                                    </div>
                                 </div>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Phone Number <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone" inputMode="numeric" minLength={10} maxLength={10} pattern="[0-9]{10}" title="Enter exactly 10 digits" required />
+
+                                <div className="ra-form-row">
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">City *</label>
+                                        <input className="ra-form-input" type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Your City" required />
+                                    </div>
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">Occupation *</label>
+                                        <input className="ra-form-input" type="text" name="occupation" value={formData.occupation} onChange={handleInputChange} placeholder="Your Occupation" required />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Occupation <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="text" name="occupation" value={formData.occupation} onChange={handleInputChange} placeholder="Enter your occupation" required />
+                                <div className="ra-form-row">
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">Date Of Birth *</label>
+                                        <input className="ra-form-input" type="date" name="dob" value={formData.dob} onChange={handleInputChange} max={todayDateInput} required />
+                                    </div>
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label">Primary Concern *</label>
+                                        <select className="ra-form-select" name="primary_concern" value={formData.primary_concern} onChange={handleInputChange as any} required>
+                                            <option value="">Select a concern</option>
+                                            <option value="Anxiety">Anxiety / Stress</option>
+                                            <option value="Depression">Depression / Low Mood</option>
+                                            <option value="Relationship">Relationship Guidance</option>
+                                            <option value="Stress">Stress / Burnout</option>
+                                            <option value="Trauma">Emotional Trauma</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Date Of Birth <span style={{ color: 'red' }}>*</span></label>
-                                    <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} max={todayDateInput} required />
-                                </div>
-                            </div>
 
-                            <div className="form-group">
-                                <label>Primary Concern <span style={{ color: 'red' }}>*</span></label>
-                                <select name="primary_concern" value={formData.primary_concern} onChange={handleInputChange as any} required style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid #ddd' }}>
-                                    <option value="">Select a concern</option>
-                                    <option value="Anxiety">Anxiety</option>
-                                    <option value="Depression">Depression</option>
-                                    <option value="Relationship">Relationship Guidance</option>
-                                    <option value="Stress">Stress / Burnout</option>
-                                    <option value="Trauma">Emotional Trauma</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
+                                <div className="ra-form-section-hdr gap">Preferences <span>Section 2</span></div>
 
-                            <h3 style={{ marginTop: '40px', marginBottom: '24px', color: 'var(--color-primary-dark)', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Preferences</h3>
-
-                            <div className="form-group">
-                                <label>Would you prefer your consultation ? <span style={{ color: 'red' }}>*</span></label>
-                                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
-                                        <input type="radio" name="consultation_preference" value="Online" checked={formData.consultation_preference === 'Online'} onChange={handleInputChange} required /> Online
-                                    </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
-                                        <input type="radio" name="consultation_preference" value="Onsite" checked={formData.consultation_preference === 'Onsite'} onChange={handleInputChange} required /> Onsite
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>What is your preferred date? <span style={{ color: 'red' }}>*</span></label>
-                                    <input
-                                        type="date"
-                                        value={formData.days_preference[0] || ''}
-                                        min={todayDateInput}
-                                        style={{ marginTop: '10px', width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
-                                        onChange={(e) => {
-                                            const selectedDate = e.target.value;
-                                            setSlotError('');
-                                            setFormData(prev => ({ ...prev, days_preference: selectedDate ? [selectedDate] : [], timings_preference: [] }));
-                                        }}
-                                        required
-                                    />
-                                    <small style={{ color: '#888', marginTop: '6px', display: 'block' }}>Only today or future dates are allowed.</small>
-                                </div>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>What is your preferred time? <span style={{ color: 'red' }}>*</span></label>
-                                    <select
-                                        value={formData.timings_preference[0] || ''}
-                                        style={{ marginTop: '10px', width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '4px' }}
-                                        disabled={!formData.days_preference[0] || slotsLoading || availableSlots.length === 0}
-                                        onChange={(e) => {
-                                            setFormData(prev => ({ ...prev, timings_preference: e.target.value ? [e.target.value] : [] }));
-                                        }}
-                                        required
-                                    >
-                                        <option value="">
-                                            {!formData.days_preference[0]
-                                                ? 'Select a date first'
-                                                : slotsLoading
-                                                    ? 'Checking availability...'
-                                                    : availableSlots.length === 0
-                                                        ? 'No slots available'
-                                                        : 'Select a time slot...'}
-                                        </option>
-                                        {availableSlots.map((slot) => (
-                                            <option key={slot.value} value={slot.value}>{slot.label}</option>
-                                        ))}
-                                    </select>
-                                    <small style={{ color: slotError ? '#b91c1c' : '#888', marginTop: '6px', display: 'block' }}>
-                                        {slotError
-                                            ? slotError
-                                            : !formData.days_preference[0]
-                                                ? 'Choose a preferred date to load available time slots.'
-                                                : slotsLoading
-                                                    ? 'Checking available slots...'
-                                                    : availableSlots.length === 0
-                                                        ? 'No time slots are available on this date.'
-                                                : 'Select a 1-hour preferred time slot.'}
-                                    </small>
-                                </div>
-                            </div>
-
-                            <h3 style={{ marginTop: '40px', marginBottom: '8px', color: 'var(--color-primary-dark)', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Questionnaire 1</h3>
-                            <p style={{ marginBottom: '24px', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>Please answer all questions honestly.</p>
-
-                            {q1Questions.map((q, index) => (
-                                <div key={`q1-${index}`} className="form-group" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-                                    <label style={{ marginBottom: '10px', display: 'block', lineHeight: '1.4' }}>{index + 1}. {q} <span style={{ color: 'red' }}>*</span></label>
-                                    <div style={{ display: 'flex', gap: '20px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
-                                            <input type="radio" name={`q1-${index}`} value="Yes" checked={formData.q1[index] === 'Yes'} onChange={() => handleQChange('q1', index, 'Yes')} /> Yes
+                                <div className="ra-form-group" style={{ marginBottom: '1.5rem' }}>
+                                    <label className="ra-form-label">Would you prefer your consultation? *</label>
+                                    <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.95rem' }}>
+                                            <input type="radio" name="consultation_preference" value="Online" checked={formData.consultation_preference === 'Online'} onChange={handleInputChange} required /> Online
                                         </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
-                                            <input type="radio" name={`q1-${index}`} value="No" checked={formData.q1[index] === 'No'} onChange={() => handleQChange('q1', index, 'No')} /> No
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.95rem' }}>
+                                            <input type="radio" name="consultation_preference" value="Onsite" checked={formData.consultation_preference === 'Onsite'} onChange={handleInputChange} required /> Onsite
                                         </label>
                                     </div>
                                 </div>
-                            ))}
 
-                            <h3 style={{ marginTop: '40px', marginBottom: '8px', color: 'var(--color-primary-dark)', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Questionnaire 2</h3>
-                            <p style={{ marginBottom: '24px', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>Please answer all questions honestly.</p>
-
-                            {q2Questions.map((q, index) => (
-                                <div key={`q2-${index}`} className="form-group" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-                                    <label style={{ marginBottom: '10px', display: 'block', lineHeight: '1.4' }}>{index + 1}. {q} <span style={{ color: 'red' }}>*</span></label>
-                                    <div style={{ display: 'flex', gap: '20px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
-                                            <input type="radio" name={`q2-${index}`} value="Yes" checked={formData.q2[index] === 'Yes'} onChange={() => handleQChange('q2', index, 'Yes')} /> Yes
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
-                                            <input type="radio" name={`q2-${index}`} value="No" checked={formData.q2[index] === 'No'} onChange={() => handleQChange('q2', index, 'No')} /> No
-                                        </label>
+                                <div className="ra-form-row">
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label" htmlFor="days_preference">What is your preferred date? *</label>
+                                        <input
+                                            className="ra-form-input"
+                                            id="days_preference"
+                                            type="date"
+                                            value={formData.days_preference[0] || ''}
+                                            min={todayDateInput}
+                                            onChange={(e) => {
+                                                const selectedDate = e.target.value;
+                                                setSlotError('');
+                                                setFormData(prev => ({ ...prev, days_preference: selectedDate ? [selectedDate] : [], timings_preference: [] }));
+                                            }}
+                                            required
+                                        />
+                                        <small style={{ color: 'var(--ra-text-muted)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>Only today or future dates are allowed.</small>
+                                    </div>
+                                    <div className="ra-form-group">
+                                        <label className="ra-form-label" htmlFor="timings_preference">What is your preferred time? *</label>
+                                        <select
+                                            className="ra-form-select"
+                                            id="timings_preference"
+                                            value={formData.timings_preference[0] || ''}
+                                            disabled={!formData.days_preference[0] || slotsLoading || availableSlots.length === 0}
+                                            onChange={(e) => {
+                                                setFormData(prev => ({ ...prev, timings_preference: e.target.value ? [e.target.value] : [] }));
+                                            }}
+                                            required
+                                        >
+                                            <option value="">
+                                                {!formData.days_preference[0]
+                                                    ? 'Select a date first'
+                                                    : slotsLoading
+                                                        ? 'Checking availability...'
+                                                        : availableSlots.length === 0
+                                                            ? 'No slots available'
+                                                            : 'Select a time slot...'}
+                                            </option>
+                                            {availableSlots.map((slot) => (
+                                                <option key={slot.value} value={slot.value}>{slot.label}</option>
+                                            ))}
+                                        </select>
+                                        <small style={{ color: slotError ? '#b91c1c' : 'var(--ra-text-muted)', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>
+                                            {slotError
+                                                ? slotError
+                                                : !formData.days_preference[0]
+                                                    ? 'Choose a preferred date to load time slots.'
+                                                    : slotsLoading
+                                                        ? 'Checking available slots...'
+                                                        : availableSlots.length === 0
+                                                            ? 'No time slots are available on this date.'
+                                                    : 'Select a 1-hour preferred time slot.'}
+                                        </small>
                                     </div>
                                 </div>
-                            ))}
 
-                            {error && <div className="status-message error">{error}</div>}
+                                <div className="ra-form-section-hdr gap">Questionnaire 1 <span>Section 3</span></div>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--ra-text-muted)', marginBottom: '1.5rem', fontFamily: 'var(--font-body)' }}>Please answer all questions honestly.</p>
 
-                            <button
-                                type="submit"
-                                className="btn-primary"
-                                disabled={submitting || slotsLoading || !formData.days_preference[0] || !formData.timings_preference[0]}
-                                style={{ marginTop: '20px', width: '100%', padding: '15px', fontSize: '1.1rem' }}
-                            >
-                                {submitting ? 'Submitting Form...' : 'Submit Questionnaires & Request Session'}
-                            </button>
-                        </form>
-                    )}
+                                {q1Questions.map((q, index) => (
+                                    <div key={`q1-${index}`} className="ra-form-group" style={{ marginBottom: '1.2rem', padding: '1rem 1.2rem', background: 'var(--ra-cream)', borderRadius: '12px', border: '1px solid rgba(59,46,36,0.05)' }}>
+                                        <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 500, fontFamily: 'var(--font-body)', lineHeight: '1.5', color: 'var(--ra-brown)' }}>
+                                            {index + 1}. {q} <span style={{ color: '#b91c1c' }}>*</span>
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '24px' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>
+                                                <input type="radio" name={`q1-${index}`} value="Yes" checked={formData.q1[index] === 'Yes'} onChange={() => handleQChange('q1', index, 'Yes')} /> Yes
+                                            </label>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>
+                                                <input type="radio" name={`q1-${index}`} value="No" checked={formData.q1[index] === 'No'} onChange={() => handleQChange('q1', index, 'No')} /> No
+                                            </label>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <div className="ra-form-section-hdr gap">Questionnaire 2 <span>Section 4</span></div>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--ra-text-muted)', marginBottom: '1.5rem', fontFamily: 'var(--font-body)' }}>Please answer all questions honestly.</p>
+
+                                {q2Questions.map((q, index) => (
+                                    <div key={`q2-${index}`} className="ra-form-group" style={{ marginBottom: '1.2rem', padding: '1rem 1.2rem', background: 'var(--ra-cream)', borderRadius: '12px', border: '1px solid rgba(59,46,36,0.05)' }}>
+                                        <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 500, fontFamily: 'var(--font-body)', lineHeight: '1.5', color: 'var(--ra-brown)' }}>
+                                            {index + 1}. {q} <span style={{ color: '#b91c1c' }}>*</span>
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '24px' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>
+                                                <input type="radio" name={`q2-${index}`} value="Yes" checked={formData.q2[index] === 'Yes'} onChange={() => handleQChange('q2', index, 'Yes')} /> Yes
+                                            </label>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>
+                                                <input type="radio" name={`q2-${index}`} value="No" checked={formData.q2[index] === 'No'} onChange={() => handleQChange('q2', index, 'No')} /> No
+                                            </label>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {error && <div className="ra-form-alert error" style={{ marginTop: '2rem' }}>{error}</div>}
+
+                                <button
+                                    type="submit"
+                                    className="ra-btn-submit"
+                                    disabled={submitting || slotsLoading || !formData.days_preference[0] || !formData.timings_preference[0]}
+                                    style={{ marginTop: '2.5rem' }}
+                                >
+                                    {submitting ? 'Submitting Form...' : 'Submit Questionnaires & Request Session'}
+                                    {!submitting && <span className="ra-btn-arrow">→</span>}
+                                </button>
+                            </form>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     );
 };
 
