@@ -28,7 +28,7 @@ const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 const RoutedAppShell = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const shouldShowAnimatedBackground = !isAdminRoute && location.pathname !== '/';
+  const shouldShowAnimatedBackground = !isAdminRoute && location.pathname !== '/' && location.pathname !== '/appointment' && location.pathname !== '/intake-form';
 
   return (
     <>

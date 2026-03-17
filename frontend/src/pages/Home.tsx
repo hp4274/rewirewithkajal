@@ -168,12 +168,12 @@ const Home: React.FC = () => {
             setBlogsLoading(true);
             try {
                 const response = await requestWithApiFallback(() =>
-                    axios.get(apiUrl('/api/blogs/public?limit=5&page=1'))
+                    axios.get(apiUrl('/api/blogs/public?limit=4&page=1'))
                 );
 
                 if (canceled) return;
                 const items = getCollectionItems<BlogPost>(response.data);
-                setLatestBlogs(items.slice(0, 5));
+                setLatestBlogs(items.slice(0, 4));
             } catch (error) {
                 if (!canceled) {
                     setLatestBlogs([]);
@@ -193,7 +193,7 @@ const Home: React.FC = () => {
     }, []);
 
     const featuredBlog = latestBlogs.length > 0 ? latestBlogs[0] : null;
-    const listBlogs = latestBlogs.length > 1 ? latestBlogs.slice(1, 5) : [];
+    const listBlogs = latestBlogs.length > 1 ? latestBlogs.slice(1, 4) : [];
 
     const getExcerpt = (content: string, maxLength = 170) => {
         const plain = blogContentToPlainText(content || '');

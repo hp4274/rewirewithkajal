@@ -15,12 +15,26 @@ const pool = new Pool({
 
 async function runMigration() {
     try {
-        const migrationPath = path.join(__dirname, '../../database/migration_v2.sql');
-        const sql = fs.readFileSync(migrationPath, 'utf8');
+        const migrationsDir = path.join(__dirname, '../../database');
+        const migrationFiles = fs
+            .readdirSync(migrationsDir)
+            .filter((file) => /^migration_.*\.sql$/i.test(file))
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-        console.log('Running migration...');
-        await pool.query(sql);
-        console.log('Migration completed successfully.');
+        if (migrationFiles.length === 0) {
+            console.log('No migration files found.');
+            return;
+        }
+
+        for (const migrationFile of migrationFiles) {
+            const migrationPath = path.join(migrationsDir, migrationFile);
+            const sql = fs.readFileSync(migrationPath, 'utf8');
+
+            console.log(`Running migration: ${migrationFile}`);
+            await pool.query(sql);
+        }
+
+        console.log('All migrations completed successfully.');
     } catch (err) {
         console.error('Migration failed:', err);
     } finally {

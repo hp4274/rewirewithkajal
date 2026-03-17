@@ -78,8 +78,13 @@ CREATE TABLE blogs (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     image_url TEXT,
+    category VARCHAR(50) NOT NULL DEFAULT 'Mindfulness',
+    excerpt TEXT DEFAULT '',
+    reading_time VARCHAR(50) DEFAULT '5 min read',
     is_active BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT blogs_category_check
+        CHECK (category IN ('Anxiety', 'Relationships', 'Self-Growth', 'Trauma', 'Mindfulness'))
 );
 
 -- Basic indexes for the requested schema.
@@ -93,3 +98,5 @@ CREATE INDEX idx_payments_customer_date ON payments(customer_id, payment_date DE
 CREATE INDEX idx_session_notes_customer_date ON session_notes(customer_id, created_at DESC);
 CREATE INDEX idx_customer_sessions_customer_date ON customer_sessions(customer_id, session_date DESC);
 CREATE INDEX idx_customer_sessions_date_slot ON customer_sessions(session_date, slot);
+CREATE INDEX idx_blogs_created_at ON blogs(created_at DESC);
+CREATE INDEX idx_blogs_category_active_created ON blogs(category, is_active, created_at DESC);

@@ -247,13 +247,29 @@ const Admin: React.FC = () => {
     const [isSavingSettings, setIsSavingSettings] = useState(false);
 
     // Blog UI and Data State
+    const BLOG_CATEGORIES = ['Anxiety', 'Relationships', 'Self-Growth', 'Trauma', 'Mindfulness'] as const;
+    type BlogCategory = typeof BLOG_CATEGORIES[number];
+    type FormBlogCategory = BlogCategory | '';
+    const BLOG_FILTER_OPTIONS = ['All', ...BLOG_CATEGORIES] as const;
+
+    const normalizeBlogCategory = (value?: string): BlogCategory => {
+        const normalized = (value || '').trim().toLowerCase();
+        if (normalized === 'anxiety') return 'Anxiety';
+        if (normalized === 'relationship' || normalized === 'relationships') return 'Relationships';
+        if (normalized === 'self-growth' || normalized === 'self growth' || normalized === 'selfgrowth') return 'Self-Growth';
+        if (normalized === 'trauma') return 'Trauma';
+        if (normalized === 'mindfull' || normalized === 'mindfulness' || normalized === 'mindful') return 'Mindfulness';
+        return 'Mindfulness';
+    };
+
     const [blogs, setBlogs] = useState<any[]>([]);
-    const [formBlog, setFormBlog] = useState<{ id: number | null, title: string, content: string, image_url: string, is_active: boolean }>({
-        id: null, title: '', content: '', image_url: '', is_active: true
+    const [formBlog, setFormBlog] = useState<{ id: number | null, title: string, category: FormBlogCategory, excerpt: string, reading_time: string, content: string, image_url: string, is_active: boolean }>({
+        id: null, title: '', category: '', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true
     });
     const [selectedBlogImage, setSelectedBlogImage] = useState<File | null>(null);
     const [showBlogForm, setShowBlogForm] = useState(false);
     const [blogViewMode, setBlogViewMode] = useState<'grid' | 'list'>('grid');
+    const [blogCategoryFilter, setBlogCategoryFilter] = useState<(typeof BLOG_FILTER_OPTIONS)[number]>('All');
 
     // Calendar & Booking state
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -414,6 +430,9 @@ const Admin: React.FC = () => {
 
             const payload = {
                 title: formBlog.title,
+                category: formBlog.category,
+                excerpt: formBlog.excerpt,
+                reading_time: formBlog.reading_time,
                 content: formBlog.content,
                 image_url: finalImageUrl,
                 is_active: formBlog.is_active
@@ -442,6 +461,9 @@ const Admin: React.FC = () => {
         setFormBlog({
             id: blog.id,
             title: blog.title,
+            category: normalizeBlogCategory(blog.category),
+            excerpt: blog.excerpt || '',
+            reading_time: blog.reading_time || '5 min read',
             content: blog.content,
             image_url: blog.image_url || '',
             is_active: blog.is_active
@@ -451,7 +473,7 @@ const Admin: React.FC = () => {
     };
 
     const cancelEditBlog = () => {
-        setFormBlog({ id: null, title: '', content: '', image_url: '', is_active: true });
+        setFormBlog({ id: null, title: '', category: '', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
         setSelectedBlogImage(null);
         setShowBlogForm(false);
     };
@@ -1684,6 +1706,8 @@ const Admin: React.FC = () => {
     };
 
     const renderBlogsView = () => {
+        const adminFilteredBlogs = blogCategoryFilter === 'All' ? blogs : blogs.filter((b: any) => normalizeBlogCategory(b.category) === blogCategoryFilter);
+        
         return (
             <div className="a2-leads-container">
                 <header className="a2-header a2-leads-header">
@@ -1692,7 +1716,16 @@ const Admin: React.FC = () => {
                         <p>Create and manage your website articles.</p>
                     </div>
                     <div className="a2-leads-actions">
-                        <button className="a2-btn-primary" onClick={() => { setFormBlog({ id: null, title: '', content: '', image_url: '', is_active: true }); setSelectedBlogImage(null); setShowBlogForm(true); }}>+ Add New Blog</button>
+                        <select
+                            value={blogCategoryFilter}
+                            onChange={(e) => setBlogCategoryFilter(e.target.value as (typeof BLOG_FILTER_OPTIONS)[number])}
+                            style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#fff', fontSize: '0.9rem', marginRight: '8px' }}
+                        >
+                            {BLOG_FILTER_OPTIONS.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                        <button className="a2-btn-primary" onClick={() => { setFormBlog({ id: null, title: '', category: '', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true }); setSelectedBlogImage(null); setShowBlogForm(true); }}>+ Add New Blog</button>
                         <div className="a2-view-toggle">
                             <button
                                 className={`a2-icon-btn ${blogViewMode === 'grid' ? 'active' : ''}`}
@@ -1717,14 +1750,14 @@ const Admin: React.FC = () => {
                 </header>
 
                 <div className="a2-leads-content">
-                    {blogs.length === 0 ? (
+                    {adminFilteredBlogs.length === 0 ? (
                         <div className="a2-empty-state">
                             <BookOpen size={48} opacity={0.2} />
                             <p>No blogs created yet.</p>
                         </div>
                     ) : blogViewMode === 'grid' ? (
                         <div className="a2-leads-grid">
-                            {blogs.map((blog: any) => {
+                            {adminFilteredBlogs.map((blog: any) => {
                                 const blogImageUrl = resolveMediaUrl(blog.image_url);
                                 const blogExcerpt = blogContentToPlainText(blog.content);
                                 return (
@@ -1736,7 +1769,10 @@ const Admin: React.FC = () => {
                                     )}
                                     <div className="a2-lead-card-header">
                                         <h3 style={{ fontSize: '1.1rem', margin: 0, lineHeight: 1.3 }}>{blog.title}</h3>
-                                        <span className={`a2-status-pill ${blog.is_active ? 'accepted' : 'rejected'}`}>{blog.is_active ? 'Active' : 'Inactive'}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                            <span className={`a2-status-pill ${blog.is_active ? 'accepted' : 'rejected'}`}>{blog.is_active ? 'Active' : 'Inactive'}</span>
+                                            {blog.category && <span style={{ fontSize: '0.75rem', background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>{blog.category}</span>}
+                                        </div>
                                     </div>
                                     <div className="a2-lead-card-body" style={{ flexGrow: 1 }}>
                                         <p style={{ color: '#64748b', fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
@@ -1765,18 +1801,22 @@ const Admin: React.FC = () => {
                                     <tr>
                                         <th>Status</th>
                                         <th>Title</th>
+                                        <th>Category</th>
                                         <th>Published On</th>
                                         <th className="text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {blogs.map((blog: any) => (
+                                    {adminFilteredBlogs.map((blog: any) => (
                                         <tr key={blog.id}>
                                             <td>
                                                 <div className="text-sm status-pill-mini">{blog.is_active ? 'Active' : 'Inactive'}</div>
                                             </td>
                                             <td>
                                                 <div className="fw-600 text-dark">{blog.title}</div>
+                                            </td>
+                                            <td>
+                                                <div className="text-sm" style={{ color: '#64748b' }}>{blog.category || 'N/A'}</div>
                                             </td>
                                             <td>{new Date(blog.created_at).toLocaleDateString()}</td>
                                             <td className="text-right">
@@ -1806,13 +1846,29 @@ const Admin: React.FC = () => {
                             </div>
                             <div className="a2-blog-modal-content">
                                 <div className="a2-form-group">
-                                    <label>Article Title</label>
+                                    <label>Article Title *</label>
                                     <input
                                         type="text"
                                         placeholder="Enter an engaging title..."
                                         value={formBlog.title}
                                         onChange={e => setFormBlog({ ...formBlog, title: e.target.value })}
+                                        required
                                     />
+                                </div>
+
+                                <div className="a2-form-group">
+                                    <label>Type of Blog *</label>
+                                    <select
+                                        value={formBlog.category}
+                                        onChange={e => setFormBlog({ ...formBlog, category: e.target.value as BlogCategory })}
+                                        style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', width: '100%', background: '#fff' }}
+                                        required
+                                    >
+                                        <option value="" disabled>Select blog type</option>
+                                        {BLOG_CATEGORIES.map((cat) => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="a2-form-group">
@@ -1866,7 +1922,7 @@ const Admin: React.FC = () => {
                                 </label>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <button className="a2-btn-secondary" onClick={cancelEditBlog}>Cancel</button>
-                                    <button className="a2-btn-primary" onClick={saveBlog} disabled={!formBlog.title || !formBlog.content || (!formBlog.image_url && !selectedBlogImage)}>
+                                    <button className="a2-btn-primary" onClick={saveBlog} disabled={!formBlog.title || !formBlog.category || !formBlog.content || (!formBlog.image_url && !selectedBlogImage)}>
                                         {formBlog.id ? 'Save Changes' : 'Publish Article'}
                                     </button>
                                 </div>

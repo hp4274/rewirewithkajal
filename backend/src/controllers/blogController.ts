@@ -74,18 +74,33 @@ const parseBooleanQuery = (value: unknown, defaultValue: boolean): boolean => {
     return defaultValue;
 };
 
+const normalizeBlogCategory = (value: unknown): string => {
+    if (typeof value !== 'string') return 'Mindfulness';
+
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'anxiety') return 'Anxiety';
+    if (normalized === 'relationship' || normalized === 'relationships') return 'Relationships';
+    if (normalized === 'self-growth' || normalized === 'self growth' || normalized === 'selfgrowth') return 'Self-Growth';
+    if (normalized === 'trauma') return 'Trauma';
+    if (normalized === 'mindfull' || normalized === 'mindful' || normalized === 'mindfulness') return 'Mindfulness';
+
+    return 'Mindfulness';
+};
+
 export const getBlogs = async (req: Request, res: Response) => {
     try {
         const isAdmin = (req as any).admin ? true : false;
         const summaryMode = parseBooleanQuery(req.query.summary, false);
         const includeMeta = parseBooleanQuery(req.query.includeMeta, true);
+        const rawCategoryFilter = typeof req.query.category === 'string' ? req.query.category.trim() : '';
+        const categoryFilter = rawCategoryFilter ? normalizeBlogCategory(rawCategoryFilter) : '';
         const { page, limit, offset } = parsePagination(req.query.page, req.query.limit, {
             defaultLimit: 12,
             maxLimit: 100,
         });
 
         if (!isAdmin) {
-            const cacheKey = `${page}:${limit}:${summaryMode ? 'summary' : 'full'}:${includeMeta ? 'meta' : 'nometa'}`;
+            const cacheKey = `${page}:${limit}:${summaryMode ? 'summary' : 'full'}:${includeMeta ? 'meta' : 'nometa'}:${categoryFilter || 'all'}`;
             const cachedPayload = getCachedPublicBlogs(cacheKey);
             if (cachedPayload) {
                 res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
@@ -93,15 +108,28 @@ export const getBlogs = async (req: Request, res: Response) => {
             }
         }
 
-        const whereClause = isAdmin ? '' : 'WHERE is_active = true';
+        const whereConditions: string[] = [];
+        const whereParams: Array<string | number> = [];
+
+        if (!isAdmin) {
+            whereConditions.push('is_active = true');
+        }
+        if (categoryFilter) {
+            whereParams.push(categoryFilter);
+            whereConditions.push(`category = $${whereParams.length}`);
+        }
+
+        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
         const selectContent = summaryMode ? 'LEFT(content, 450) AS content' : 'content';
+        const limitParamIndex = whereParams.length + 1;
+        const offsetParamIndex = whereParams.length + 2;
         const result = await pool.query(
             `SELECT id, title, ${selectContent}, image_url, is_active, created_at, category, excerpt, reading_time
              FROM blogs
              ${whereClause}
              ORDER BY created_at DESC
-             LIMIT $1 OFFSET $2`,
-            [limit, offset]
+             LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`,
+            [...whereParams, limit, offset]
         );
         const payload: { items: any[]; meta?: ReturnType<typeof buildPaginationMeta> } = {
             items: result.rows,
@@ -109,13 +137,13 @@ export const getBlogs = async (req: Request, res: Response) => {
 
         if (includeMeta) {
             const countQuery = `SELECT COUNT(*)::int AS total FROM blogs ${whereClause}`;
-            const totalResult = await pool.query(countQuery);
+            const totalResult = await pool.query(countQuery, whereParams);
             const total = Number(totalResult.rows[0]?.total || 0);
             payload.meta = buildPaginationMeta(total, page, limit);
         }
 
         if (!isAdmin) {
-            const cacheKey = `${page}:${limit}:${summaryMode ? 'summary' : 'full'}:${includeMeta ? 'meta' : 'nometa'}`;
+            const cacheKey = `${page}:${limit}:${summaryMode ? 'summary' : 'full'}:${includeMeta ? 'meta' : 'nometa'}:${categoryFilter || 'all'}`;
             setCachedPublicBlogs(cacheKey, payload);
             res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
         }
@@ -129,10 +157,11 @@ export const getBlogs = async (req: Request, res: Response) => {
 export const createBlog = async (req: Request, res: Response) => {
     try {
         const { title, content, image_url, is_active, category, excerpt, reading_time } = req.body;
+        const normalizedCategory = normalizeBlogCategory(category);
 
         const result = await pool.query(
             'INSERT INTO blogs (title, content, image_url, is_active, category, excerpt, reading_time) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-            [title, content, image_url, is_active || false, category || 'Mindfulness', excerpt || '', reading_time || '5 min read']
+            [title, content, image_url, is_active || false, normalizedCategory, excerpt || '', reading_time || '5 min read']
         );
 
         clearPublicBlogsCache();
@@ -147,10 +176,11 @@ export const updateBlog = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { title, content, image_url, is_active, category, excerpt, reading_time } = req.body;
+        const normalizedCategory = normalizeBlogCategory(category);
 
         const result = await pool.query(
             'UPDATE blogs SET title = $1, content = $2, image_url = $3, is_active = $4, category = $5, excerpt = $6, reading_time = $7 WHERE id = $8 RETURNING *',
-            [title, content, image_url, is_active, category, excerpt, reading_time, id]
+            [title, content, image_url, is_active, normalizedCategory, excerpt, reading_time, id]
         );
 
         if (result.rows.length === 0) {

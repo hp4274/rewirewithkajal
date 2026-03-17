@@ -18,20 +18,41 @@ interface Blog {
     created_at: string;
 }
 
+const BLOG_CATEGORIES = ['Anxiety', 'Relationships', 'Self-Growth', 'Trauma', 'Mindfulness'] as const;
+type BlogCategory = typeof BLOG_CATEGORIES[number];
+type FormBlogCategory = BlogCategory | '';
+const BLOG_FILTER_OPTIONS = ['All', ...BLOG_CATEGORIES] as const;
+
+const normalizeBlogCategory = (value?: string): BlogCategory => {
+    const normalized = (value || '').trim().toLowerCase();
+
+    if (normalized === 'anxiety') return 'Anxiety';
+    if (normalized === 'relationship' || normalized === 'relationships') return 'Relationships';
+    if (normalized === 'self-growth' || normalized === 'self growth' || normalized === 'selfgrowth') return 'Self-Growth';
+    if (normalized === 'trauma') return 'Trauma';
+    if (normalized === 'mindfull' || normalized === 'mindfulness' || normalized === 'mindful') return 'Mindfulness';
+
+    return 'Mindfulness';
+};
+
 const BlogsManager: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [formBlog, setFormBlog] = useState<{ id: number | null, title: string, category: string, excerpt: string, reading_time: string, content: string, image_url: string, is_active: boolean }>({
-        id: null, title: '', category: 'General', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true
+    const [formBlog, setFormBlog] = useState<{ id: number | null, title: string, category: FormBlogCategory, excerpt: string, reading_time: string, content: string, image_url: string, is_active: boolean }>({
+        id: null, title: '', category: '', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true
     });
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<(typeof BLOG_FILTER_OPTIONS)[number]>('All');
 
     const fetchBlogs = async () => {
         try {
             const token = localStorage.getItem('adminToken');
             const res = await axios.get('/api/blogs?limit=100&page=1', {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                params: selectedCategoryFilter === 'All'
+                    ? undefined
+                    : { category: selectedCategoryFilter }
             });
             setBlogs(getCollectionItems<Blog>(res.data));
         } catch (err) {
@@ -42,8 +63,8 @@ const BlogsManager: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchBlogs();
-    }, []);
+        void fetchBlogs();
+    }, [selectedCategoryFilter]);
 
     const uploadImage = async (file: File): Promise<string | null> => {
         try {
@@ -103,7 +124,7 @@ const BlogsManager: React.FC = () => {
             }
 
             // Reset form
-            setFormBlog({ id: null, title: '', category: 'General', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
+            setFormBlog({ id: null, title: '', category: '', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
             setSelectedImage(null);
 
             // clear the file input manually by referencing its DOM if needed, but since we rely on selectedImage state, its UI value is handled minimally. (A full reset would involve a ref to the file input).
@@ -121,7 +142,7 @@ const BlogsManager: React.FC = () => {
         setFormBlog({
             id: blog.id,
             title: blog.title,
-            category: blog.category || 'General',
+            category: normalizeBlogCategory(blog.category),
             excerpt: blog.excerpt || '',
             reading_time: blog.reading_time || '5 min read',
             content: blog.content,
@@ -135,7 +156,7 @@ const BlogsManager: React.FC = () => {
     };
 
     const cancelEdit = () => {
-        setFormBlog({ id: null, title: '', category: 'General', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
+        setFormBlog({ id: null, title: '', category: '', excerpt: '', reading_time: '5 min read', content: '', image_url: '', is_active: true });
         setSelectedImage(null);
         const fileInput = document.getElementById('blog-image-upload') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
@@ -177,6 +198,16 @@ const BlogsManager: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2>Manage Blogs</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <select
+                        value={selectedCategoryFilter}
+                        onChange={(e) => setSelectedCategoryFilter(e.target.value as (typeof BLOG_FILTER_OPTIONS)[number])}
+                        style={{ padding: '10px 12px', border: '1px solid #ced4da', borderRadius: '6px', background: '#fff' }}
+                        aria-label="Filter blogs by category"
+                    >
+                        {BLOG_FILTER_OPTIONS.map((categoryOption) => (
+                            <option key={categoryOption} value={categoryOption}>{categoryOption}</option>
+                        ))}
+                    </select>
                     <button
                         className="btn-primary"
                         onClick={() => { setShowForm(!showForm); if (!showForm) cancelEdit(); }}
@@ -218,24 +249,21 @@ const BlogsManager: React.FC = () => {
                             style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', width: '100%' }}
                         />
 
-                        <div style={{ display: 'flex', gap: 16 }}>
-                            <input
-                                type="text" placeholder="Category (e.g. Anxiety, Relationships)"
-                                value={formBlog.category} onChange={e => setFormBlog({ ...formBlog, category: e.target.value })}
-                                style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', flex: 1 }}
-                            />
-                            <input
-                                type="text" placeholder="Reading Time (e.g. 5 min read)"
-                                value={formBlog.reading_time} onChange={e => setFormBlog({ ...formBlog, reading_time: e.target.value })}
-                                style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', flex: 1 }}
-                            />
+                        <div>
+                            <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>Type of Blog *</label>
+                            <select
+                                value={formBlog.category}
+                                onChange={e => setFormBlog({ ...formBlog, category: e.target.value as BlogCategory })}
+                                style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', width: '100%', background: '#fff' }}
+                                aria-label="Blog category"
+                                required
+                            >
+                                <option value="" disabled>Select blog type</option>
+                                {BLOG_CATEGORIES.map((categoryOption) => (
+                                    <option key={categoryOption} value={categoryOption}>{categoryOption}</option>
+                                ))}
+                            </select>
                         </div>
-
-                        <textarea
-                            placeholder="Short Excerpt (max 200 chars)" rows={2}
-                            value={formBlog.excerpt} onChange={e => setFormBlog({ ...formBlog, excerpt: e.target.value })}
-                            style={{ padding: '12px', border: '1px solid #ced4da', borderRadius: '6px', width: '100%', resize: 'vertical' }}
-                        />
 
                         <div>
                             <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>Upload Photo</label>
@@ -287,13 +315,14 @@ const BlogsManager: React.FC = () => {
                             <tr>
                                 <th>Status</th>
                                 <th>Title</th>
+                                <th>Category</th>
                                 <th>Publish Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {blogs.length === 0 ? (
-                                <tr><td colSpan={4} style={{ textAlign: 'center' }}>No blogs created yet.</td></tr>
+                                <tr><td colSpan={5} style={{ textAlign: 'center' }}>No blogs found for this filter.</td></tr>
                             ) : (
                                 blogs.map(blog => (
                                     <tr key={blog.id}>
@@ -302,6 +331,7 @@ const BlogsManager: React.FC = () => {
                                             {blog.is_active ? 'Active' : 'Inactive'}
                                         </td>
                                         <td style={{ fontWeight: 500 }}>{blog.title}</td>
+                                        <td>{normalizeBlogCategory(blog.category)}</td>
                                         <td>{new Date(blog.created_at).toLocaleDateString()}</td>
                                         <td>
                                             <div style={{ display: 'flex', gap: '8px' }}>
@@ -340,6 +370,9 @@ const BlogsManager: React.FC = () => {
                                             <h3 className="lead-name" style={{ fontSize: '1.1rem', marginBottom: '8px' }}>{blog.title}</h3>
                                             <div className="lead-date" style={{ color: 'var(--color-text-light)', fontSize: '0.85rem' }}>
                                                 Published: {new Date(blog.created_at).toLocaleDateString()}
+                                            </div>
+                                            <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--color-text-light)', fontWeight: 600 }}>
+                                                {normalizeBlogCategory(blog.category)}
                                             </div>
                                         </div>
                                         <span className={`lead-status-badge status-${blog.is_active ? 'confirmed' : 'declined'}`} style={{ backgroundColor: blog.is_active ? '#f0fff4' : '#fff5f5', color: blog.is_active ? '#38a169' : '#e53e3e' }}>

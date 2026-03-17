@@ -95,7 +95,6 @@ html {
 body {
   font-family: var(--font-body);
   background-color: var(--color-background);
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c13.866 0 25.332-9.435 28.182-22H50c-3.116 16.568-17.587 29-35 29zM89 82c-13.866 0-25.332 9.435-28.182 22H50c3.116-16.568 17.587-29 35-29zM11 82c13.866 0 25.332 9.435 28.182 22h-10.816c-2.617-8.312-10.395-14.33-19.53-14.832V82zm78-64c-13.866 0-25.332-9.435-28.182-22h10.816c2.617 8.312 10.395 14.33 19.53 14.832V18z' fill='%23e67e3f' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
   color: var(--color-text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -2504,11 +2503,11 @@ code {
     background-color: var(--color-primary-dark);
     /* Primary Orange */
     color: var(--color-white);
-    padding-top: 140px;
+    padding-top: 70px;
     /* Give room for the wave */
     position: relative;
     z-index: 10;
-    margin-top: 120px;
+    margin-top: 0;
 }
 
 /* Wavy Top Divider */
