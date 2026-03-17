@@ -2503,8 +2503,8 @@ code {
     background-color: var(--color-primary-dark);
     /* Primary Orange */
     color: var(--color-white);
-    padding-top: 70px;
-    /* Give room for the wave */
+    padding-top: 90px;
+    /* Give room for the wave and some extra space */
     position: relative;
     z-index: 10;
     margin-top: 0;

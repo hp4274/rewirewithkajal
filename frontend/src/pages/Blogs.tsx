@@ -72,9 +72,6 @@ const Blogs: React.FC = () => {
     const remainingBlogs = filteredBlogs.length > 1 ? filteredBlogs.slice(1) : [];
 
     const getBlogImageStyle = (index: number) => {
-        if (index % 5 === 0) return "rb-blog-card wide rb-reveal rb-d1";
-        if (index % 4 === 0) return "rb-blog-card dark rb-reveal rb-d2";
-        if (index % 3 === 0) return "rb-blog-card sand-bg rb-reveal rb-d3";
         return "rb-blog-card rb-reveal rb-d1";
     };
 
