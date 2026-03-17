@@ -94,7 +94,7 @@ const faqItems = [
     {
         question: 'Do you offer online sessions?',
         answer:
-            'Yes. Online and in-person sessions are available in English and Hindi, depending on your comfort and schedule.'
+            'Yes. Online and in-person sessions are available in Gujarati, English and Hindi, depending on your comfort and schedule.'
     }
 ];
 

@@ -5,7 +5,7 @@ const stats = [
     { value: '200+', label: 'Clients Helped' },
     { value: '8', label: 'Years in Practice' },
     { value: '98%', label: 'Satisfaction Rate' },
-    { value: '2', label: 'Languages (EN + HI)' }
+    { value: '3', label: 'Languages (EN + HI + GU)' }
 ];
 
 const philosophyPillars = [
@@ -211,7 +211,6 @@ const AboutPage: React.FC = () => {
                     <div className="ra-portrait-frame ra-reveal-right">
                         <span className="ra-portrait-tag">Licensed Therapist</span>
                         <span className="ra-portrait-tag">8+ Years Experience</span>
-                        <span className="ra-portrait-tag">Hindi and English</span>
                         <div className="ra-portrait-main">
                             <img
                                 src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"

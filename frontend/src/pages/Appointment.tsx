@@ -91,7 +91,7 @@ const Appointment: React.FC = () => {
                             <div className="ra-chip-icon">🌐</div>
                             <div>
                                 <div className="ra-chip-label">Languages</div>
-                                <div className="ra-chip-val">English &amp; Hindi available</div>
+                                <div className="ra-chip-val">Gujarati, English &amp; Hindi available</div>
                             </div>
                         </div>
                         <div className="ra-info-chip">
