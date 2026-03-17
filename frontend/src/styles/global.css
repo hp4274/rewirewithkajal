@@ -8024,12 +8024,12 @@ input:checked+.switch-slider:before {
 
 .ra-timeline-item.left::after {
     right: -40px;
-    transform: translate(50%, -50%);
+    transform: translateY(-50%);
 }
 
 .ra-timeline-item.right::after {
     left: -40px;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
 }
 
 .ra-timeline-card {
@@ -8378,8 +8378,8 @@ input:checked+.switch-slider:before {
     .ra-timeline-item::after,
     .ra-timeline-item.left::after,
     .ra-timeline-item.right::after {
-        left: -34px;
-        transform: translate(-50%, -50%);
+        left: -24px;
+        transform: translateY(-50%);
     }
 
     .ra-mosaic {
@@ -10738,12 +10738,12 @@ input:checked+.switch-slider:before {
 
 .ra-timeline-item.left::after {
     right: -40px;
-    transform: translate(50%, -50%);
+    transform: translateY(-50%);
 }
 
 .ra-timeline-item.right::after {
     left: -40px;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
 }
 
 .ra-timeline-card {
@@ -11092,8 +11092,8 @@ input:checked+.switch-slider:before {
     .ra-timeline-item::after,
     .ra-timeline-item.left::after,
     .ra-timeline-item.right::after {
-        left: -34px;
-        transform: translate(-50%, -50%);
+        left: -24px;
+        transform: translateY(-50%);
     }
 
     .ra-mosaic {
