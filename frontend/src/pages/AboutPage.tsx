@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import '../styles/about-redesign.css';
 
 const stats = [
     { value: '200+', label: 'Clients Helped' },

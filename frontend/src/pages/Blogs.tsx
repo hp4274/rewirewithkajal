@@ -3,7 +3,6 @@ import axios from 'axios';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
-import '../styles/blog-redesign.css';
 
 interface Blog {
     id: number;

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
 import AppointmentForm from '../components/AppointmentForm';
-import '../styles/home-redesign.css';
 
 type BlogPost = {
     id: number;
@@ -404,8 +404,8 @@ const Home: React.FC = () => {
                                         onClick={() => setOpenFaqIndex((prev) => (prev === index ? -1 : index))}
                                     >
                                         <span>{item.question}</span>
-                                        <span className="rh-faq-toggle" aria-hidden="true">
-                                            {isOpen ? 'x' : '+'}
+                                        <span className="rh-faq-toggle" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                         </span>
                                     </button>
                                     <div className="rh-faq-answer">{item.answer}</div>

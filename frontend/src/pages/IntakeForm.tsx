@@ -9,7 +9,6 @@ import {
     toDateInputString
 } from '../utils/validation';
 import { apiUrl, requestWithApiFallback } from '../utils/api';
-import '../styles/appointment-redesign.css';
 
 type SlotOption = {
     label: string;

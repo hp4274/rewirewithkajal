@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppointmentForm from '../components/AppointmentForm';
-import '../styles/appointment-redesign.css';
 
 const Appointment: React.FC = () => {
     const navigate = useNavigate();
