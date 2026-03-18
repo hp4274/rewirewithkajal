@@ -341,10 +341,7 @@ const Home: React.FC = () => {
                                     ))}
                                 </div>
                             </div>
-                            <div className="rw-floating-pill">
-                                <strong>{`Slide ${activeHeroSlide + 1} of ${heroSlides.length}`}</strong>
-                                <span>{currentHeroSlide.primaryLabel}</span>
-                            </div>
+
                         </div>
                     </div>
 
