@@ -14147,6 +14147,10 @@ input:checked+.switch-slider:before {
 /* =============================================
    JOURNEY + FAQ SECTION
    ============================================= */
+.rw-services + .rw-section {
+  padding-top: 20px;
+}
+
 .rw-journey-wrap {
   background-color: var(--rw-peach);
   border-radius: var(--rw-radius-lg);

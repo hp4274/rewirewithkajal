@@ -87,7 +87,7 @@ const Blogs: React.FC = () => {
     useEffect(() => {
         const reveals = document.querySelectorAll('.rb-reveal');
         reveals.forEach(el => el.classList.remove('visible'));
-        
+
         setTimeout(() => {
             reveals.forEach(el => el.classList.add('visible'));
         }, 150);
@@ -97,8 +97,8 @@ const Blogs: React.FC = () => {
         return <div className="rb-page-wrapper rbv2" style={{ paddingTop: '100px', textAlign: 'center', minHeight: '100vh', background: 'var(--rb-cream)' }}>Loading mind-expanding insights...</div>;
     }
 
-    const filteredBlogs = activeTopic === ALL_TOPICS 
-        ? blogs 
+    const filteredBlogs = activeTopic === ALL_TOPICS
+        ? blogs
         : blogs.filter(b => b.category && b.category.toLowerCase().includes(activeTopic.toLowerCase()));
 
     const featuredBlog = filteredBlogs.length > 0 ? filteredBlogs[0] : null;
@@ -110,22 +110,23 @@ const Blogs: React.FC = () => {
 
     return (
         <div className="rb-page-wrapper rbv2">
-            
+
 
             {/* HERO SECTION */}
             <header className="rb-blog-hero">
+                <div style={{ position: 'relative', zIndex: 8, paddingLeft: '10px', width: 'fit-content', marginRight: 'auto' }}>
+                    <Link to="/" className="rbv2-home-link" aria-label="Back to home page">
+                        <span className="rbv2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+                        <span>Back to Home</span>
+                    </Link>
+                </div>
                 <div className="rb-blog-hero-bg">
-                    <div style={{ position: 'relative', zIndex: 8, paddingTop: '12px', paddingLeft: '18px' }}>
-                <Link to="/" className="rbv2-home-link" aria-label="Back to home page">
-                    <span className="rbv2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
-                    <span>Back to Home</span>
-                </Link>
-            </div>
                     <div className="rb-blog-hero-blob"></div>
                     <div className="rb-blog-hero-blob"></div>
                     <div className="rb-blog-hero-blob"></div>
                 </div>
                 <div className="rb-blog-hero-content"   >
+
                     <div className="rb-blog-eyebrow">
                         <span className="rb-blog-eyebrow-line"></span>
                         Mental Wellness Insights
@@ -133,10 +134,10 @@ const Blogs: React.FC = () => {
                     </div>
                     <h1 className="rb-blog-hero-title">The <em>Rewire</em> Blog</h1>
                     <p className="rb-blog-hero-sub">Honest, research-backed writing on anxiety, healing, relationships, and the everyday art of taking care of your mind.</p>
-                    
+
                     <div className="rb-blog-filters rb-reveal">
                         {TOPICS.map(topic => (
-                            <button 
+                            <button
                                 key={topic}
                                 className={`rb-filter-pill ${activeTopic === topic ? 'active' : ''}`}
                                 onClick={() => setActiveTopic(topic)}
@@ -211,14 +212,14 @@ const Blogs: React.FC = () => {
                                             'linear-gradient(145deg,#F4C090,#D08050)'
                                         ];
                                         const emojis = ['🔌', '🌊', '💞', '🪞', '🌱', '✨'];
-                                        
+
                                         return (
                                             <a href="#!" key={blog.id} className={getBlogImageStyle(index + 1)} onClick={(e) => { e.preventDefault(); setActiveBlog(blog); }}>
                                                 <div className="rb-blog-card-img" style={{ background: blog.image_url ? '#FAF3EC' : gradients[index % gradients.length] }}>
                                                     {blog.image_url ? (
                                                         <img src={resolveMediaUrl(blog.image_url)} alt={blog.title} />
                                                     ) : (
-                                                        <div style={{fontSize: '3.5rem', color: 'white'}}>{emojis[index % emojis.length]}</div>
+                                                        <div style={{ fontSize: '3.5rem', color: 'white' }}>{emojis[index % emojis.length]}</div>
                                                     )}
                                                     <div className="rb-blog-card-cat">{formatCategory(blog.category)}</div>
                                                 </div>
