@@ -147,7 +147,7 @@ const AboutPage: React.FC = () => {
 
     return (
         <div className="abt2-wrapper">
-            <div className="abt2-topbar">
+            <div style={{ position: 'relative', zIndex: 8, paddingBottom: '10px', paddingLeft: '18px' }}>
                 <Link to="/" className="abt2-home-link" aria-label="Back to home page">
                     <span className="abt2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
                     <span>Back to Home</span>

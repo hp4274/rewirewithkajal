@@ -40,6 +40,7 @@ const formatCategory = (category?: string) => {
 const Blogs: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [activeBlog, setActiveBlog] = useState<Blog | null>(null);
     const [activeTopic, setActiveTopic] = useState<string>(ALL_TOPICS);
 
@@ -47,19 +48,39 @@ const Blogs: React.FC = () => {
     // If backend returns distinct categories we could merge them.
     // For now we'll stick to static to mimic the HTML
     useEffect(() => {
+        const controller = new AbortController();
+        let isMounted = true;
+
         const fetchBlogs = async () => {
+            setLoadError(null);
             try {
-                const response = await requestWithApiFallback(() => axios.get(apiUrl('/api/blogs/public?limit=24&page=1')));
+                const response = await requestWithApiFallback(() =>
+                    axios.get(apiUrl('/api/blogs/public?limit=24&page=1'), {
+                        timeout: 12000,
+                        signal: controller.signal
+                    })
+                );
+                if (!isMounted) return;
                 setBlogs(getCollectionItems<Blog>(response.data));
-            } catch (error) {
+            } catch (error: any) {
+                if (!isMounted || error?.name === 'CanceledError') return;
                 console.error('Error fetching blogs:', error);
                 setBlogs([]);
+                const status = Number(error?.response?.status || 0);
+                setLoadError(status ? 'Could not load blog posts right now.' : 'Blog request timed out. Please refresh and try again.');
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchBlogs();
+
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
     }, []);
 
     // Reveal Animation effect on mount and category change
@@ -89,21 +110,22 @@ const Blogs: React.FC = () => {
 
     return (
         <div className="rb-page-wrapper rbv2">
-            <div className="rbv2-topbar">
+            
+
+            {/* HERO SECTION */}
+            <header className="rb-blog-hero">
+                <div className="rb-blog-hero-bg">
+                    <div style={{ position: 'relative', zIndex: 8, paddingTop: '12px', paddingLeft: '18px' }}>
                 <Link to="/" className="rbv2-home-link" aria-label="Back to home page">
                     <span className="rbv2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
                     <span>Back to Home</span>
                 </Link>
             </div>
-
-            {/* HERO SECTION */}
-            <header className="rb-blog-hero">
-                <div className="rb-blog-hero-bg">
                     <div className="rb-blog-hero-blob"></div>
                     <div className="rb-blog-hero-blob"></div>
                     <div className="rb-blog-hero-blob"></div>
                 </div>
-                <div className="rb-blog-hero-content">
+                <div className="rb-blog-hero-content"   >
                     <div className="rb-blog-eyebrow">
                         <span className="rb-blog-eyebrow-line"></span>
                         Mental Wellness Insights
@@ -128,7 +150,7 @@ const Blogs: React.FC = () => {
 
             {filteredBlogs.length === 0 ? (
                 <div className="rb-featured-section" style={{ textAlign: 'center', paddingBottom: '10rem' }}>
-                    <div className="rb-reveal">More insights are coming soon.</div>
+                    <div className="rb-reveal">{loadError || 'More insights are coming soon.'}</div>
                 </div>
             ) : (
                 <>
