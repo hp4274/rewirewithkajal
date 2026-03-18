@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './styles/global.css';
 
-const Header = lazy(() => import('./components/Header'));
 const Home = lazy(() => import('./pages/Home'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const Blogs = lazy(() => import('./pages/Blogs'));
@@ -17,12 +16,9 @@ const Footer = lazy(() => import('./components/Footer'));
 const Preloader = lazy(() => import('./components/Preloader'));
 
 const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <>
-    <Header />
-    <main id="main-content" tabIndex={-1}>
-      {children}
-    </main>
-  </>
+  <main id="main-content" tabIndex={-1}>
+    {children}
+  </main>
 );
 
 const RoutedAppShell = () => {

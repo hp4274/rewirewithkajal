@@ -119,8 +119,17 @@ const Header: React.FC = () => {
             <a href="#main-content" className="skip-link">Skip to main content</a>
             <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
                 <div className="header-container">
-                    <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                        <img src={logo} alt="Rewire With Kajal Logo" width={180} height={50} loading="eager" fetchPriority="high" decoding="async" style={{ height: '50px', maxHeight: '50px', width: 'auto', objectFit: 'contain' }} />
+                    <Link to="/" className="header-brand-link">
+                        <img
+                            src={logo}
+                            alt="Rewire With Kajal Logo"
+                            width={180}
+                            height={50}
+                            loading="eager"
+                            fetchPriority="high"
+                            decoding="async"
+                            className="header-logo-image"
+                        />
                     </Link>
 
                     <nav className="header-nav" aria-label="Main navigation">
@@ -176,7 +185,7 @@ const Header: React.FC = () => {
                         tabIndex={-1}
                     >
                         <div className="mobile-sidebar-top">
-                            <p className="mobile-sidebar-brand">Rewirewithkajal</p>
+                            <p className="mobile-sidebar-brand">Rewire With Kajal</p>
 
                             <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
                                 <NavLink to="/" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>

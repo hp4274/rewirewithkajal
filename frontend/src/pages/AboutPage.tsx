@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { HeartHandshake, Users, BookOpen, Clock } from 'lucide-react';
+import { HeartHandshake, Users, BookOpen, Clock, ChevronLeft } from 'lucide-react';
 
 const stats = [
     { value: '200+', label: 'Clients Helped' },
@@ -143,105 +143,65 @@ const storyImages = [
 const AboutPage: React.FC = () => {
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'auto' });
-
-        const revealElements = document.querySelectorAll<HTMLElement>(
-            '.ra-reveal, .ra-reveal-left, .ra-reveal-right'
-        );
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('is-visible');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            },
-            { threshold: 0.14 }
-        );
-
-        revealElements.forEach((element) => observer.observe(element));
-
-        return () => {
-            observer.disconnect();
-        };
     }, []);
 
     return (
-        <div className="ra-about">
-            <section className="ra-hero">
-                <div className="ra-hero-left">
-                    <div className="ra-blob ra-blob-one"></div>
-                    <div className="ra-blob ra-blob-two"></div>
+        <div className="abt2-wrapper">
+            <div className="abt2-topbar">
+                <Link to="/" className="abt2-home-link" aria-label="Back to home page">
+                    <span className="abt2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+                    <span>Back to Home</span>
+                </Link>
+            </div>
 
-                    <div className="ra-hero-left-content">
-                        <div className="ra-eyebrow">
-                            <span className="ra-eyebrow-line"></span>
-                            <span>The Story Behind the Space</span>
-                        </div>
-
-                        <h1>
-                            I&apos;m Kajal.
-                            <em>Your Guide to Healing.</em>
-                        </h1>
-
-                        <p className="ra-hero-desc">
-                            A licensed therapist with 8+ years of experience helping individuals
-                            untangle anxiety, heal from within, and step into their most authentic
-                            selves.
+            <section className="abt2-hero">
+                <div className="abt2-hero-img-col">
+                    <div className="abt2-hero-img-wrapper">
+                        <img
+                            src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                            alt="Profile"
+                            loading="eager"
+                        />
+                    </div>
+                    <div className="abt2-hero-quote">
+                        <p>
+                            &quot;Healing is not about becoming someone new. It is about coming home to
+                            who you have always been.&quot;
                         </p>
-
-                        <div className="ra-quote-chip">
-                            <span className="ra-quote-mark">&quot;</span>
-                            <div>
-                                <p>
-                                    Healing is not about becoming someone new. It is about coming
-                                    home to who you have always been.
-                                </p>
-                                <span>- Kajal&apos;s core belief</span>
-                            </div>
-                        </div>
+                        <span>- Kajal&apos;s core belief</span>
                     </div>
                 </div>
-
-                <div className="ra-hero-right">
-                    <div className="ra-hero-right-bg-text" aria-hidden="true">
-                        Kajal
-                    </div>
-
-                    <div className="ra-portrait-frame ra-reveal-right">
-                        <span className="ra-portrait-tag">Licensed Therapist</span>
-                        <span className="ra-portrait-tag">8+ Years Experience</span>
-                        <div className="ra-portrait-main">
-                            <img
-                                src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                alt="Profile"
-                                loading="eager"
-                                decoding="async"
-                                style={{ borderRadius: 'inherit' }}
-                            />
-                        </div>
-                    </div>
+                <div className="abt2-hero-text-col">
+                    <div className="abt2-kicker">The Story Behind the Space</div>
+                    <h1>
+                        I&apos;m Kajal.
+                        <em>Your Guide to Healing.</em>
+                    </h1>
+                    <p className="abt2-hero-desc">
+                        A licensed therapist with 8+ years of experience helping individuals
+                        untangle anxiety, heal from within, and step into their most authentic
+                        selves.
+                    </p>
                 </div>
             </section>
 
-            <section className="ra-stats-strip">
-                {stats.map((stat, index) => (
-                    <article className="ra-stat-cell ra-reveal" key={stat.label} style={{ transitionDelay: `${index * 70}ms` }}>
+            <section className="abt2-stats">
+                {stats.map((stat) => (
+                    <div className="abt2-stat-item" key={stat.label}>
                         <strong>{stat.value}</strong>
                         <span>{stat.label}</span>
-                    </article>
+                    </div>
                 ))}
             </section>
 
-            <section className="ra-story">
-                <div className="ra-story-grid">
-                    <div className="ra-reveal-left">
-                        <p className="ra-section-kicker">My Story</p>
-                        <h2>
-                            A Journey That Began With
-                            <em>My Own Healing</em>
-                        </h2>
+            <section className="abt2-story">
+                <div className="abt2-story-content">
+                    <div className="abt2-kicker">My Story</div>
+                    <h2>
+                        A Journey That Began With
+                        <em>My Own Healing</em>
+                    </h2>
+                    <div className="abt2-story-text">
                         <p>
                             I did not choose therapy. It chose me. In my mid-20s, I found myself
                             caught in patterns I could not explain, anxiety that came from nowhere,
@@ -255,74 +215,49 @@ const AboutPage: React.FC = () => {
                             Today my practice is built on one conviction. You are not broken. You are
                             someone who has not been given the right tools yet.
                         </p>
-
-                        <div className="ra-signature">
-                            <div className="ra-sign-avatar">K</div>
-                            <div>
-                                <strong>Kajal</strong>
-                                <span>Licensed Therapist - Rewire with Kajal</span>
-                            </div>
+                    </div>
+                    <div className="abt2-profile-card">
+                        <div className="abt2-avatar">K</div>
+                        <div className="abt2-profile-details">
+                            <strong>Kajal</strong>
+                            <span>Licensed Therapist - Rewire with Kajal</span>
                         </div>
                     </div>
-
-                    <div className="ra-mosaic ra-reveal-right">
-                        <div className="ra-mosaic-cell ra-mosaic-main">
-                            <img
-                                src={storyImages[0].image}
-                                alt={storyImages[0].title}
-                                loading="lazy"
-                                decoding="async"
-                            />
-                            <span>{storyImages[0].title}</span>
-                        </div>
-                        <div className="ra-mosaic-cell">
-                            <img
-                                src={storyImages[1].image}
-                                alt={storyImages[1].title}
-                                loading="lazy"
-                                decoding="async"
-                            />
-                            <span>{storyImages[1].title}</span>
-                        </div>
-                        <div className="ra-mosaic-cell">
-                            <img
-                                src={storyImages[2].image}
-                                alt={storyImages[2].title}
-                                loading="lazy"
-                                decoding="async"
-                            />
-                            <span>{storyImages[2].title}</span>
-                        </div>
+                </div>
+                <div className="abt2-story-images">
+                    <div className="abt2-img-wrap main">
+                        <img src={storyImages[0].image} alt={storyImages[0].title} loading="lazy" />
+                        <span className="abt2-img-label">{storyImages[0].title}</span>
+                    </div>
+                    <div className="abt2-img-wrap sub">
+                        <img src={storyImages[1].image} alt={storyImages[1].title} loading="lazy" />
+                        <span className="abt2-img-label">{storyImages[1].title}</span>
+                    </div>
+                    <div className="abt2-img-wrap sub">
+                        <img src={storyImages[2].image} alt={storyImages[2].title} loading="lazy" />
+                        <span className="abt2-img-label">{storyImages[2].title}</span>
                     </div>
                 </div>
             </section>
 
-            <section className="ra-philosophy">
-                <div className="ra-philosophy-bg" aria-hidden="true">
-                    Rewire
-                </div>
-
-                <div className="ra-philosophy-grid">
-                    <div className="ra-reveal-left">
-                        <p className="ra-section-kicker ra-kicker-light">My Philosophy</p>
+            <section className="abt2-philosophy">
+                <div className="abt2-phil-inner">
+                    <div className="abt2-phil-header">
+                        <div className="abt2-kicker">My Philosophy</div>
                         <h2>
                             Therapy Is a Space to
                             <em>Be, Not Just Perform</em>
                         </h2>
                         <p>
                             I do not believe in one-size-fits-all therapy. Every person brings a
-                            different constellation of experiences, fears, and strengths.
-                        </p>
-                        <p>
-                            My role is not to fix you. My role is to help you see yourself clearly,
-                            without the distortion of old stories.
+                            different constellation of experiences, fears, and strengths. My role is
+                            not to fix you, but to help you see yourself clearly.
                         </p>
                     </div>
-
-                    <div className="ra-pillar-grid ra-reveal-right">
-                        {philosophyPillars.map((pillar, index) => (
-                            <article className="ra-pillar-card ra-reveal" key={pillar.title} style={{ transitionDelay: `${index * 70}ms` }}>
-                                <div className="ra-pillar-icon">{pillar.icon}</div>
+                    <div className="abt2-phil-grid">
+                        {philosophyPillars.map((pillar) => (
+                            <article className="abt2-phil-card" key={pillar.title}>
+                                <div className="abt2-phil-icon">{pillar.icon}</div>
                                 <h3>{pillar.title}</h3>
                                 <p>{pillar.desc}</p>
                             </article>
@@ -331,75 +266,75 @@ const AboutPage: React.FC = () => {
                 </div>
             </section>
 
-            <section className="ra-credentials">
-                <div className="ra-section-head ra-reveal">
-                    <p className="ra-section-kicker">Education and Training</p>
-                    <h2>
-                        Built on
-                        <em>Solid Foundations</em>
-                    </h2>
-                    <p>Years of rigorous learning in service of your healing.</p>
-                </div>
-
-                <div className="ra-timeline">
-                    {credentials.map((item, index) => (
-                        <article className={`ra-timeline-item ra-reveal ${index % 2 === 0 ? 'left' : 'right'}`} key={`${item.year}-${item.title}`}>
-                            <div className="ra-timeline-card">
-                                <p className="ra-timeline-year">{item.year}</p>
-                                <h3>{item.title}</h3>
-                                <p>{item.institute}</p>
-                            </div>
-                        </article>
-                    ))}
-                </div>
-            </section>
-
-            <section className="ra-modalities">
-                <div className="ra-section-head ra-reveal">
-                    <p className="ra-section-kicker">How I Work</p>
-                    <h2>
-                        Therapeutic
-                        <em>Modalities</em>
-                    </h2>
-                    <p>An integrative approach drawing from modern and holistic psychology.</p>
-                </div>
-
-                <div className="ra-modality-grid">
-                    {modalities.map((modality, index) => (
-                        <article className="ra-modality-card ra-reveal" key={modality.name} style={{ transitionDelay: `${index * 60}ms` }}>
-                            <div className="ra-modality-number">{String(index + 1).padStart(2, '0')}</div>
-                            <h3>{modality.name}</h3>
-                            <p>{modality.desc}</p>
-                            <span>{modality.tag}</span>
-                        </article>
-                    ))}
-                </div>
-            </section>
-
-            <section className="ra-testimonials">
-                <div className="ra-test-bg ra-test-bg-one"></div>
-                <div className="ra-test-bg ra-test-bg-two"></div>
-
-                <div className="ra-test-inner">
-                    <div className="ra-section-head ra-reveal">
-                        <p className="ra-section-kicker ra-kicker-light">Client Stories</p>
+            <section className="abt2-creds">
+                <div className="abt2-creds-layout">
+                    <div className="abt2-creds-left">
+                        <div className="abt2-kicker">Credentials</div>
                         <h2>
-                            Words From Those Who&apos;ve
-                            <em>Walked This Path</em>
+                            Built on
+                            <em>Solid Foundations</em>
                         </h2>
-                        <p>Every story is shared with permission and love.</p>
+                        <p>
+                            A blend of academic rigor and continuous lifelong learning across
+                            multiple disciplines of psychology.
+                        </p>
                     </div>
+                    <div className="abt2-creds-list">
+                        {credentials.map((cred) => (
+                            <article className="abt2-cred-item" key={`${cred.year}-${cred.title}`}>
+                                <div className="abt2-cred-year">{cred.year}</div>
+                                <div className="abt2-cred-detail">
+                                    <h3>{cred.title}</h3>
+                                    <p>{cred.institute}</p>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-                    <div className="ra-test-grid">
-                        {testimonials.map((testimonial, index) => (
-                            <article className={`ra-test-card ra-reveal ${testimonial.featured ? 'featured' : ''}`} key={testimonial.name} style={{ transitionDelay: `${index * 70}ms` }}>
-                                <p className="ra-stars">5.0</p>
-                                <p className="ra-test-quote">{testimonial.quote}</p>
-                                <div className="ra-test-author">
-                                    <div className="ra-test-avatar">{testimonial.name.slice(0, 1)}</div>
+            <section className="abt2-mod">
+                <div className="abt2-mod-inner">
+                    <div className="abt2-mod-header">
+                        <div className="abt2-kicker">Therapeutic Modalities</div>
+                        <h2>
+                            How We
+                            <em>Work Together</em>
+                        </h2>
+                    </div>
+                    <div className="abt2-mod-grid">
+                        {modalities.map((mod, index) => (
+                            <article className="abt2-mod-card" key={mod.name}>
+                                <div className="abt2-mod-num">{String(index + 1).padStart(2, '0')}</div>
+                                <span>{mod.tag}</span>
+                                <h3>{mod.name}</h3>
+                                <p>{mod.desc}</p>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            <section className="abt2-test">
+                <div className="abt2-test-inner">
+                    <div className="abt2-kicker">Client Stories</div>
+                    <h2>
+                        Words From
+                        <em>Those I&apos;ve Helped</em>
+                    </h2>
+                    <div className="abt2-test-grid">
+                        {testimonials.map((test) => (
+                            <article
+                                className={`abt2-test-card ${test.featured ? 'featured' : ''}`}
+                                key={test.name}
+                            >
+                                <div className="abt2-test-stars">★★★★★</div>
+                                <p className="abt2-test-quote">&quot;{test.quote}&quot;</p>
+                                <div className="abt2-test-author">
+                                    <div className="abt2-test-avatar">{test.name.charAt(0)}</div>
                                     <div>
-                                        <strong>{testimonial.name}</strong>
-                                        <span>{testimonial.detail}</span>
+                                        <strong>{test.name}</strong>
+                                        <span>{test.detail}</span>
                                     </div>
                                 </div>
                             </article>
@@ -408,22 +343,18 @@ const AboutPage: React.FC = () => {
                 </div>
             </section>
 
-            <section className="ra-cta">
-                <div className="ra-cta-inner ra-reveal">
-                    <p className="ra-cta-kicker">Ready to Begin?</p>
-                    <h2>
-                        Let&apos;s Start Your
-                        <em>Healing Journey Together</em>
-                    </h2>
+            <section className="abt2-cta">
+                <div className="abt2-cta-inner">
+                    <h2>Ready to Begin?</h2>
                     <p>
-                        The most courageous thing you can do is ask for support. I am here and
-                        honored to walk alongside you.
+                        Taking the first step can feel daunting, but you don&apos;t have to do it
+                        alone. Let&apos;s explore if we&apos;re the right fit for your healing journey.
                     </p>
-                    <div className="ra-cta-actions">
-                        <Link to="/appointment" className="ra-btn-white">
-                            Book a Free Discovery Call
+                    <div className="abt2-cta-actions">
+                        <Link to="/appointment" className="abt2-btn-primary">
+                            Book a Consultation
                         </Link>
-                        <Link to="/intake-form" className="ra-btn-ghost-white">
+                        <Link to="/intake-form" className="abt2-btn-secondary">
                             Complete Intake Form
                         </Link>
                     </div>

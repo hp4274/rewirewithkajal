@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
     if (this.state.hasError) {
       return (
         <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#FFFAF0', padding: '24px' }}>
-          <div style={{ maxWidth: '520px', textAlign: 'center', background: '#ffffff', borderRadius: '16px', boxShadow: '0 12px 40px rgba(0,0,0,0.08)', padding: '24px' }}>
+          <div style={{ maxWidth: '520px', textAlign: 'center', background: '#ffffff', borderRadius: '16px', padding: '24px' }}>
             <h2 style={{ marginBottom: '8px' }}>Something went wrong</h2>
             <p style={{ marginBottom: '16px', color: '#5b6470' }}>
               The page hit an unexpected error. Please retry, and if it continues, contact support.

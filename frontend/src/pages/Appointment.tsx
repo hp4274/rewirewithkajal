@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import AppointmentForm from '../components/AppointmentForm';
 
 const Appointment: React.FC = () => {
@@ -28,9 +29,15 @@ const Appointment: React.FC = () => {
 
     return (
         <div className="ra-page-wrapper">
-            {/* Hero Section */}
+                    {/* Hero Section */}
             <section className="ra-appt-hero">
                 <div className="ra-hero-bg">
+                    <div style={{ position: 'relative', zIndex: 8, paddingTop: '12px', paddingLeft: '18px' }}>
+                        <Link to="/" className="ra-home-link" aria-label="Back to home page">
+                            <span className="ra-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+                            <span>Back to Home</span>
+                        </Link>
+                    </div>
                     <div className="ra-hero-blob"></div>
                     <div className="ra-hero-blob"></div>
                     <div className="ra-hero-blob"></div>

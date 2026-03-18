@@ -6,13 +6,6 @@ import logo from '../assets/logo3.png'; // Reusing the logo
 const Footer: React.FC = () => {
     return (
         <footer className="site-footer">
-            {/* Wavy Top SVG */}
-            <div className="footer-wave">
-                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C79.86,125.75,198.43,80.7,321.39,56.44Z" className="shape-fill"></path>
-                </svg>
-            </div>
-
             <div className="container footer-container">
                 {/* Brand Column */}
                 <div className="footer-col brand-col">

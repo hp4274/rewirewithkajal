@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, CalendarCheck, Users, Activity, Brain, Heart } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
 import AppointmentForm from '../components/AppointmentForm';
+import logoMark from '../assets/logo3.png';
 
 type BlogPost = {
     id: number;
@@ -20,6 +21,56 @@ const heroStats = [
     { value: '8', label: 'Years Experience' },
     { value: '98%', label: 'Client Satisfaction' }
 ];
+
+const aboutHeroGirlImage = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+
+const heroSlides = [
+    {
+        id: 'book',
+        eyebrow: 'Dedicated Mental Health Guidance',
+        lineOne: 'Book Your Session.',
+        lineTwo: 'Begin Your Journey to Healing.',
+        description:
+            'A safe, compassionate space to untangle anxiety, heal relationships, and reconnect with the version of you that feels steady and alive.',
+        primaryLabel: 'Book a Session',
+        primaryPath: '/appointment',
+        secondaryLabel: '',
+        secondaryPath: '',
+        panelTitle: 'Session Booking',
+        panelBody: 'Choose your preferred date and time. Kajal personally reviews each request and confirms within 24 hours.',
+        tags: ['Private', 'Flexible', 'Guided']
+    },
+    {
+        id: 'about',
+        eyebrow: 'Meet Your Therapist',
+        lineOne: 'About Kajal.',
+        lineTwo: 'Your Guide to Rewiring.',
+        description:
+            'Explore Kajal\'s approach, professional journey, and therapy philosophy to see if this space feels right for your healing path.',
+        primaryLabel: 'About Kajal',
+        primaryPath: '/about',
+        secondaryLabel: 'Book a Session',
+        secondaryPath: '/appointment',
+        panelTitle: 'Human-Centered Care',
+        panelBody: 'Evidence-based methods, trauma-informed practice, and practical emotional tools tailored to your life context.',
+        tags: ['CBT', 'Mindfulness', 'Somatic']
+    },
+    {
+        id: 'blogs',
+        eyebrow: 'Practical Mental Wellness',
+        lineOne: 'Read The Blog.',
+        lineTwo: 'Grow Between Sessions.',
+        description:
+            'Honest, research-backed insights on anxiety, relationships, boundaries, and emotional regulation for everyday life.',
+        primaryLabel: 'Explore Blogs',
+        primaryPath: '/blogs',
+        secondaryLabel: 'Book a Session',
+        secondaryPath: '/appointment',
+        panelTitle: 'Latest Insights',
+        panelBody: 'Short, practical reads designed to help you reflect, reset, and apply therapeutic ideas in real situations.',
+        tags: ['Anxiety', 'Relationships', 'Self-Growth']
+    }
+] as const;
 
 const challengeCards = [
     {
@@ -52,26 +103,26 @@ const serviceCards = [
     {
         title: 'Relationship Guidance',
         desc: 'Rebuild trust, communication, and emotional safety in key relationships.',
-        icon: 'RL',
-        cardClass: 'rh-service-card-standard'
+        icon: Users,
+        cardClass: 'rw-service-card-white'
     },
     {
         title: 'Stress Management',
         desc: 'Body-based tools to regulate your nervous system and reclaim calm.',
-        icon: 'SM',
-        cardClass: 'rh-service-card-accent'
+        icon: Activity,
+        cardClass: 'rw-service-card-peach'
     },
     {
         title: 'Mind Rewiring Sessions',
         desc: 'Shift the core beliefs and thought loops that keep you stuck.',
-        icon: 'MR',
-        cardClass: 'rh-service-card-sand'
+        icon: Brain,
+        cardClass: 'rw-service-card-sand'
     },
     {
         title: 'Emotional Healing',
         desc: 'Process grief and emotional pain through trauma-informed care.',
-        icon: 'EH',
-        cardClass: 'rh-service-card-standard'
+        icon: Heart,
+        cardClass: 'rw-service-card-white'
     }
 ];
 
@@ -143,7 +194,7 @@ const Reveal: React.FC<RevealProps> = ({ children, className = '', delayMs = 0, 
     return (
         <div
             ref={ref}
-            className={`rh-reveal ${className}`.trim()}
+            className={`rw-reveal ${className}`.trim()}
             style={{ transitionDelay: `${delayMs}ms`, ...style }}
         >
             {children}
@@ -156,6 +207,9 @@ const Home: React.FC = () => {
     const [openFaqIndex, setOpenFaqIndex] = useState<number>(0);
     const [latestBlogs, setLatestBlogs] = useState<BlogPost[]>([]);
     const [blogsLoading, setBlogsLoading] = useState(true);
+    const [activeHeroSlide, setActiveHeroSlide] = useState<number>(0);
+
+    const currentHeroSlide = heroSlides[activeHeroSlide];
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'auto' });
@@ -174,21 +228,26 @@ const Home: React.FC = () => {
                 if (canceled) return;
                 const items = getCollectionItems<BlogPost>(response.data);
                 setLatestBlogs(items.slice(0, 4));
-            } catch (error) {
-                if (!canceled) {
-                    setLatestBlogs([]);
-                }
+            } catch {
+                if (!canceled) setLatestBlogs([]);
             } finally {
-                if (!canceled) {
-                    setBlogsLoading(false);
-                }
+                if (!canceled) setBlogsLoading(false);
             }
         };
 
         void fetchLatestBlogs();
-
         return () => {
             canceled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length);
+        }, 6500);
+
+        return () => {
+            window.clearInterval(intervalId);
         };
     }, []);
 
@@ -202,175 +261,226 @@ const Home: React.FC = () => {
     };
 
     return (
-        <div className="rh-home">
-            <section className="rh-hero">
-                <div className="rh-hero-bg">
-                    <div className="rh-hero-blob rh-blob-one"></div>
-                    <div className="rh-hero-blob rh-blob-two"></div>
-                    <div className="rh-hero-blob rh-blob-three"></div>
-                </div>
+        <div className="rw-home">
 
-                <div className="rh-shell rh-hero-grid">
-                    <Reveal className="rh-hero-copy">
-                        <p className="rh-eyebrow">Dedicated Mental Health Guidance</p>
-                        <h1>
-                            Find Your Peace.
-                            <span>Rewire Your Mind.</span>
-                        </h1>
-                        <p className="rh-hero-sub">
-                            A safe, compassionate space to untangle anxiety, heal relationships,
-                            and reconnect with the version of you that feels steady and alive.
-                        </p>
-
-                        <div className="rh-hero-actions">
-                            <button
-                                type="button"
-                                className="rh-btn-solid"
-                                onClick={() => navigate('/appointment')}
-                            >
-                                Book Sessions
-                            </button>
+            {/* ── HERO ── */}
+            <div className="rw-hero">
+                <Reveal>
+                    <div className="rw-hero-panel">
+                        <div className="rw-hero-copy">
+                            <p className="rw-eyebrow">{currentHeroSlide.eyebrow}</p>
+                            <h1>
+                                {currentHeroSlide.lineOne}
+                                <span>{currentHeroSlide.lineTwo}</span>
+                            </h1>
+                            <p className="rw-hero-sub">
+                                {currentHeroSlide.description}
+                            </p>
+                            <div className="rw-hero-actions">
+                                <button
+                                    type="button"
+                                    className="rw-btn-solid"
+                                    onClick={() => navigate(currentHeroSlide.primaryPath)}
+                                >
+                                    {currentHeroSlide.primaryLabel}
+                                </button>
+                                {currentHeroSlide.secondaryLabel && currentHeroSlide.secondaryPath && (
+                                    <button
+                                        type="button"
+                                        className="rw-btn-outline"
+                                        onClick={() => navigate(currentHeroSlide.secondaryPath)}
+                                    >
+                                        {currentHeroSlide.secondaryLabel}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="rw-hero-stats">
+                                {heroStats.map((stat) => (
+                                    <div key={stat.label}>
+                                        <div className="rw-stat-value">{stat.value}</div>
+                                        <div className="rw-stat-label">{stat.label}</div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="rh-hero-stats">
-                            {heroStats.map((stat) => (
-                                <div key={stat.label}>
-                                    <div className="rh-stat-value">{stat.value}</div>
-                                    <div className="rh-stat-label">{stat.label}</div>
+                        <div className="rw-hero-right">
+                            <div className="rw-hero-card">
+                                <div className="rw-card-visual" aria-hidden="true">
+                                    {currentHeroSlide.id === 'book' && (
+                                        <img
+                                            src={logoMark}
+                                            alt="Rewire With Kajal logo"
+                                            className="rw-signature rw-card-logo"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    )}
+                                    {currentHeroSlide.id === 'about' && (
+                                        <img
+                                            src={aboutHeroGirlImage}
+                                            alt="Kajal portrait"
+                                            className="rw-signature rw-card-girl"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    )}
+                                    {currentHeroSlide.id === 'blogs' && (
+                                        <div className="rw-session-icon">
+                                            <CalendarCheck size={44} />
+                                        </div>
+                                    )}
                                 </div>
+                                <h3>{currentHeroSlide.panelTitle}</h3>
+                                <p>
+                                    {currentHeroSlide.panelBody}
+                                </p>
+                                <div className="rw-tag-row">
+                                    {currentHeroSlide.tags.map((tag) => (
+                                        <span key={tag}>{tag}</span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="rw-floating-pill">
+                                <strong>{`Slide ${activeHeroSlide + 1} of ${heroSlides.length}`}</strong>
+                                <span>{currentHeroSlide.primaryLabel}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rw-hero-slider-nav" aria-label="Hero slider controls">
+                        <button
+                            type="button"
+                            className="rw-hero-arrow-btn"
+                            aria-label="Previous slide"
+                            onClick={() => setActiveHeroSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                        <div className="rw-hero-dots">
+                            {heroSlides.map((slide, index) => (
+                                <button
+                                    type="button"
+                                    key={slide.id}
+                                    className={`rw-hero-dot ${index === activeHeroSlide ? 'active' : ''}`}
+                                    aria-label={`Go to ${slide.primaryLabel} slide`}
+                                    onClick={() => setActiveHeroSlide(index)}
+                                />
                             ))}
                         </div>
-                    </Reveal>
+                        <button
+                            type="button"
+                            className="rw-hero-arrow-btn"
+                            aria-label="Next slide"
+                            onClick={() => setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length)}
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                </Reveal>
+            </div>
 
-                    <Reveal className="rh-hero-card-wrap" delayMs={120}>
-                        <article className="rh-hero-card">
-                            <div className="rh-avatar">K</div>
-                            <h3>Kajal</h3>
-                            <p>
-                                Licensed therapist specializing in anxiety, relationships,
-                                and meaningful emotional recovery.
-                            </p>
-                            <div className="rh-tag-row">
-                                <span>CBT</span>
-                                <span>Mindfulness</span>
-                                <span>Somatic</span>
-                                <span>Trauma Informed</span>
-                            </div>
-                        </article>
-
-                        <div className="rh-floating-pill rh-pill-bottom">
-                            <strong>Highly Rated</strong>
-                            <span>Trusted by 150+ clients</span>
-                        </div>
-                    </Reveal>
-                </div>
-
-                <div className="rh-hero-wave" aria-hidden="true">
-                    <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
-                        <path d="M0,60 C360,120 1080,0 1440,60 L1440,120 L0,120 Z" fill="#fffdf9" />
-                    </svg>
-                </div>
-            </section>
-
-            <div className="rh-ticker" aria-hidden="true">
-                <div className="rh-ticker-track">
+            {/* ── TICKER ── */}
+            <div className="rw-ticker" aria-hidden="true">
+                <div className="rw-ticker-track">
                     {[...tickerItems, ...tickerItems].map((item, index) => (
-                        <span className="rh-ticker-item" key={`${item}-${index}`}>
-                            <span className="rh-dot"></span>
+                        <span className="rw-ticker-item" key={`${item}-${index}`}>
+                            <span className="rw-dot"></span>
                             {item}
                         </span>
                     ))}
                 </div>
             </div>
 
-            <section className="rh-section rh-challenges">
-                <div className="rh-shell">
-                    <Reveal className="rh-section-head rh-center">
-                        <p className="rh-kicker">What We Address</p>
-                        <h2>
-                            Mental Health Challenges
-                            <span>We Navigate Together</span>
-                        </h2>
-                        <p>
-                            Understanding the root of your experience is the first step toward
-                            meaningful and lasting change.
-                        </p>
-                    </Reveal>
+            {/* ── WHAT WE ADDRESS ── */}
+            <section className="rw-section rw-challenges">
+                <Reveal className="rw-section-head rw-center">
+                    <p className="rw-kicker">What We Address</p>
+                    <h2>
+                        Mental Health Challenges
+                        <span>We Navigate Together</span>
+                    </h2>
+                    <p className="rw-section-desc">
+                        Understanding the root of your experience is the first step toward
+                        meaningful and lasting change.
+                    </p>
+                </Reveal>
 
-                    <div className="rh-challenge-grid">
-                        {challengeCards.map((card, index) => (
-                            <Reveal
-                                className="rh-challenge-card"
-                                key={card.title}
-                                delayMs={index * 70}
-                                style={{
-                                    backgroundImage: `linear-gradient(150deg, rgba(53, 39, 31, 0.28), rgba(53, 39, 31, 0.62)), url(${card.imageUrl})`
-                                }}
-                            >
-                                <h3>{card.title}</h3>
-                                <p>{card.desc}</p>
-                            </Reveal>
-                        ))}
-                    </div>
+                <div className="rw-challenge-grid">
+                    {challengeCards.map((card, index) => (
+                        <Reveal
+                            className="rw-challenge-card"
+                            key={card.title}
+                            delayMs={index * 70}
+                            style={{
+                                backgroundImage: `linear-gradient(150deg, rgba(0,55,62,0.30), rgba(0,55,62,0.65)), url(${card.imageUrl})`
+                            }}
+                        >
+                            <h3>{card.title}</h3>
+                            <p>{card.desc}</p>
+                        </Reveal>
+                    ))}
                 </div>
             </section>
 
-            <section className="rh-section rh-services">
-                <div className="rh-shell">
-                    <Reveal className="rh-services-top">
+            {/* ── SERVICES ── */}
+            <section className="rw-section rw-services">
+                <Reveal className="rw-section-head">
+                    <p className="rw-kicker">What We Offer</p>
+                    <h2>
+                        Your Path to
+                        <span>Well-being</span>
+                    </h2>
+                    <p className="rw-section-desc">
+                        Discover expert guidance for a healthier mind and balanced life.
+                    </p>
+                </Reveal>
+
+                <div className="rw-services-grid">
+                    <Reveal className="rw-service-featured" delayMs={50}>
+                        <div className="rw-featured-badge">1:1</div>
                         <div>
-                            <p className="rh-kicker">What We Offer</p>
-                            <h2 className="rh-services-title-animate">
-                                Curated Paths to
-                                <span>Rediscover Your Strength</span>
-                            </h2>
+                            <p className="rw-kicker">Signature Care</p>
+                            <h3>Individual Counseling</h3>
                             <p>
-                                Personalized therapy tracks built for your current phase,
-                                your goals, and your pace.
+                                A private and grounded space to work through anxiety,
+                                depression, trauma, and identity patterns using structured and
+                                compassionate therapeutic methods.
                             </p>
                         </div>
+                        <button
+                            type="button"
+                            className="rw-btn-featured"
+                            onClick={() => navigate('/appointment')}
+                        >
+                            Book Sessions
+                        </button>
                     </Reveal>
 
-                    <div className="rh-services-grid">
-                        <Reveal className="rh-service-card-featured" delayMs={50}>
-                            <div className="rh-featured-badge">1:1</div>
-                            <div className="rh-featured-content">
-                                <p className="rh-kicker rh-kicker-on-dark">Signature Care</p>
-                                <h3>Individual Counseling</h3>
-                                <p>
-                                    A private and grounded space to work through anxiety,
-                                    depression, trauma, and identity patterns using structured and
-                                    compassionate therapeutic methods.
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                className="rh-btn-solid rh-btn-solid-on-amber"
-                                onClick={() => navigate('/appointment')}
-                            >
-                                Book Sessions
-                            </button>
-                        </Reveal>
-
-                        {serviceCards.map((service, index) => (
+                    {serviceCards.map((service, index) => {
+                        const Icon = service.icon;
+                        return (
                             <Reveal
-                                className={`rh-service-card ${service.cardClass}`}
+                                className={`rw-service-card ${service.cardClass}`}
                                 key={service.title}
-                                delayMs={120 + index * 65}
+                                delayMs={100 + index * 60}
                             >
-                                <div className="rh-service-icon">{service.icon}</div>
+                                <div className="rw-service-icon" aria-hidden="true">
+                                    <Icon size={24} strokeWidth={2.1} />
+                                </div>
                                 <h4>{service.title}</h4>
                                 <p>{service.desc}</p>
                             </Reveal>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
             </section>
 
-            <section className="rh-section rh-journey" id="rh-journey">
-                <div className="rh-shell rh-journey-grid">
-                    <Reveal>
-                        <p className="rh-kicker">Your Journey</p>
+            {/* ── JOURNEY + FAQ ── */}
+            <section className="rw-section">
+                <div className="rw-journey-wrap">
+                    <Reveal className="rw-journey-copy">
+                        <p className="rw-kicker">Your Journey</p>
                         <h2>
                             Therapy Starts with
                             <span>One Brave Conversation</span>
@@ -385,131 +495,147 @@ const Home: React.FC = () => {
                         </p>
                         <button
                             type="button"
-                            className="rh-btn-dark"
+                            className="rw-btn-dark"
                             onClick={() => navigate('/appointment')}
                         >
                             Book Sessions
                         </button>
                     </Reveal>
 
-                    <Reveal className="rh-faq" delayMs={120}>
-                        {faqItems.map((item, index) => {
-                            const isOpen = index === openFaqIndex;
-                            return (
-                                <article className={`rh-faq-item ${isOpen ? 'open' : ''}`} key={item.question}>
-                                    <button
-                                        type="button"
-                                        className="rh-faq-question"
-                                        aria-expanded={isOpen}
-                                        onClick={() => setOpenFaqIndex((prev) => (prev === index ? -1 : index))}
+                    <Reveal delayMs={120}>
+                        <div className="rw-faq-list">
+                            {faqItems.map((item, index) => {
+                                const isOpen = index === openFaqIndex;
+                                return (
+                                    <article
+                                        className={`rw-faq-item${isOpen ? ' open' : ''}`}
+                                        key={item.question}
                                     >
-                                        <span>{item.question}</span>
-                                        <span className="rh-faq-toggle" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                        </span>
-                                    </button>
-                                    <div className="rh-faq-answer">{item.answer}</div>
-                                </article>
-                            );
-                        })}
-                    </Reveal>
-                </div>
-            </section>
-
-            <section className="rh-section rh-insights">
-                <div className="rh-shell">
-                    <Reveal className="rh-section-head rh-center">
-                        <p className="rh-kicker">Latest Insights</p>
-                        <h2>
-                            Thoughts on Mental Wellness
-                            <span>for Everyday Life</span>
-                        </h2>
-                    </Reveal>
-
-                    {blogsLoading ? (
-                        <div className="rh-insights-loading">Loading latest blogs...</div>
-                    ) : latestBlogs.length === 0 ? (
-                        <div className="rh-insights-loading">Latest blogs will appear here shortly.</div>
-                    ) : (
-                        <div className="rh-insights-grid">
-                            {featuredBlog && (
-                                <Reveal className="rh-insight-featured" delayMs={80}>
-                                    <div className="rh-insight-cover">
-                                        {featuredBlog.image_url ? (
-                                            <img
-                                                src={resolveMediaUrl(featuredBlog.image_url)}
-                                                alt={featuredBlog.title}
-                                                loading="lazy"
-                                                decoding="async"
-                                            />
-                                        ) : (
-                                            <span className="rh-insight-badge">Latest Blog</span>
-                                        )}
-                                    </div>
-                                    <div className="rh-insight-body">
-                                        <h3>{featuredBlog.title}</h3>
-                                        <p>{getExcerpt(featuredBlog.content, 200)}</p>
                                         <button
                                             type="button"
-                                            className="rh-insight-readmore"
-                                            onClick={() => navigate('/blogs')}
+                                            className="rw-faq-question"
+                                            aria-expanded={isOpen}
+                                            onClick={() =>
+                                                setOpenFaqIndex((prev) => (prev === index ? -1 : index))
+                                            }
                                         >
-                                            Read more
+                                            <span>{item.question}</span>
+                                            <span
+                                                className="rw-faq-toggle"
+                                                aria-hidden="true"
+                                            >
+                                                {isOpen
+                                                    ? <ChevronUp size={18} />
+                                                    : <ChevronDown size={18} />
+                                                }
+                                            </span>
                                         </button>
-                                    </div>
-                                </Reveal>
-                            )}
-
-                            <div className="rh-insight-list">
-                                {listBlogs.map((item, index) => {
-                                    const thumb = resolveMediaUrl(item.image_url || '');
-                                    return (
-                                        <Reveal className="rh-insight-item" key={item.id} delayMs={130 + index * 60}>
-                                            <div className="rh-insight-thumb-wrap">
-                                                {thumb ? (
-                                                    <img
-                                                        src={thumb}
-                                                        alt={item.title}
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        className="rh-insight-thumb-image"
-                                                    />
-                                                ) : (
-                                                    <div className="rh-insight-thumb rh-insight-soft-peach"></div>
-                                                )}
-                                            </div>
-                                            <div className="rh-insight-content">
-                                                <p className="rh-insight-tag">Latest Blog</p>
-                                                <h4>{item.title}</h4>
-                                                <p className="rh-insight-snippet">{getExcerpt(item.content, 110)}</p>
-                                                <button
-                                                    type="button"
-                                                    className="rh-insight-readmore"
-                                                    onClick={() => navigate('/blogs')}
-                                                >
-                                                    Read more
-                                                </button>
-                                            </div>
-                                        </Reveal>
-                                    );
-                                })}
-                            </div>
+                                        <div className="rw-faq-answer">{item.answer}</div>
+                                    </article>
+                                );
+                            })}
                         </div>
-                    )}
+                    </Reveal>
                 </div>
             </section>
 
-            <section className="rh-section rh-appointment-section" id="book-session">
-                <div className="rh-shell">
-                    <Reveal className="rh-section-head rh-center">
-                        <p className="rh-kicker">Take the First Step</p>
-                        <h2>
-                            Book Your <span>Session</span>
-                        </h2>
-                    </Reveal>
-                    <AppointmentForm />
-                </div>
+            {/* ── LATEST BLOGS ── */}
+            <section className="rw-section rw-insights-section">
+                <Reveal className="rw-section-head rw-center">
+                    <p className="rw-kicker">Latest Insights</p>
+                    <h2>
+                        Thoughts on Mental Wellness
+                        <span>for Everyday Life</span>
+                    </h2>
+                </Reveal>
+
+                {blogsLoading ? (
+                    <p className="rw-insights-empty">Loading latest blogs…</p>
+                ) : latestBlogs.length === 0 ? (
+                    <p className="rw-insights-empty">Latest blogs will appear here shortly.</p>
+                ) : (
+                    <div className="rw-insights-grid">
+                        {featuredBlog && (
+                            <Reveal className="rw-insight-featured" delayMs={80}>
+                                <div className="rw-insight-cover">
+                                    {featuredBlog.image_url ? (
+                                        <img
+                                            src={resolveMediaUrl(featuredBlog.image_url)}
+                                            alt={featuredBlog.title}
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    ) : (
+                                        <span className="rw-insight-cover-placeholder">Latest Blog</span>
+                                    )}
+                                </div>
+                                <div className="rw-insight-body">
+                                    <h3>{featuredBlog.title}</h3>
+                                    <p>{getExcerpt(featuredBlog.content, 200)}</p>
+                                    <button
+                                        type="button"
+                                        className="rw-insight-readmore"
+                                        onClick={() => navigate('/blogs')}
+                                    >
+                                        Read more
+                                    </button>
+                                </div>
+                            </Reveal>
+                        )}
+
+                        <div className="rw-insight-list">
+                            {listBlogs.map((item, index) => {
+                                const thumb = resolveMediaUrl(item.image_url || '');
+                                return (
+                                    <Reveal
+                                        className="rw-insight-item"
+                                        key={item.id}
+                                        delayMs={130 + index * 60}
+                                    >
+                                        <div className="rw-insight-thumb-wrap">
+                                            {thumb ? (
+                                                <img
+                                                    src={thumb}
+                                                    alt={item.title}
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    className="rw-insight-thumb-image"
+                                                />
+                                            ) : null}
+                                        </div>
+                                        <div className="rw-insight-content">
+                                            <p className="rw-insight-tag">Latest Blog</p>
+                                            <h4>{item.title}</h4>
+                                            <p className="rw-insight-snippet">
+                                                {getExcerpt(item.content, 110)}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                className="rw-insight-readmore"
+                                                onClick={() => navigate('/blogs')}
+                                            >
+                                                Read more
+                                            </button>
+                                        </div>
+                                    </Reveal>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </section>
+
+            {/* ── BOOK SESSION ── */}
+            <section className="rw-section rw-appointment-section" id="book-session">
+                <Reveal className="rw-section-head rw-center">
+                    <p className="rw-kicker">Take the First Step</p>
+                    <h2>
+                        Book Your <span>Session</span>
+                    </h2>
+                </Reveal>
+                <AppointmentForm isRefactoredDesign={true} />
+            </section>
+
         </div>
     );
 };

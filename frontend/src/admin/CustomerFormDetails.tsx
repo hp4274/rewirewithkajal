@@ -77,7 +77,7 @@ const CustomerFormDetails: React.FC = () => {
     const profileInitials = getInitials(profileName);
 
     return (
-        <div className="profile-wrapper" style={{ maxWidth: '900px', margin: '0 auto', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: 'var(--shadow-soft)' }}>
+        <div className="profile-wrapper" style={{ maxWidth: '900px', margin: '0 auto', background: 'white', padding: '40px', borderRadius: '12px' }}>
             <button className="back-btn" onClick={() => navigate(`/admin/customer/${id}`)}>← Back to Profile</button>
             <div className="profile-title-row" style={{ marginTop: '20px' }}>
                 <div className="generated-profile-avatar generated-profile-avatar-lg" aria-hidden="true">{profileInitials}</div>

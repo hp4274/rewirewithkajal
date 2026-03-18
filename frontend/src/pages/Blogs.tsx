@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
@@ -24,6 +26,16 @@ const TOPICS = [
     "Trauma",
     "Mindfulness"
 ];
+
+const formatCategory = (category?: string) => {
+    if (!category) return 'Reflections';
+    const normalized = category.replace(/[-_]+/g, ' ').trim();
+    if (!normalized) return 'Reflections';
+    return normalized
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+};
 
 const Blogs: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -61,7 +73,7 @@ const Blogs: React.FC = () => {
     }, [activeTopic, loading]);
 
     if (loading) {
-        return <div className="rb-page-wrapper" style={{ paddingTop: '100px', textAlign: 'center', minHeight: '100vh', background: 'var(--rb-cream)' }}>Loading mind-expanding insights...</div>;
+        return <div className="rb-page-wrapper rbv2" style={{ paddingTop: '100px', textAlign: 'center', minHeight: '100vh', background: 'var(--rb-cream)' }}>Loading mind-expanding insights...</div>;
     }
 
     const filteredBlogs = activeTopic === ALL_TOPICS 
@@ -76,7 +88,14 @@ const Blogs: React.FC = () => {
     };
 
     return (
-        <div className="rb-page-wrapper">
+        <div className="rb-page-wrapper rbv2">
+            <div className="rbv2-topbar">
+                <Link to="/" className="rbv2-home-link" aria-label="Back to home page">
+                    <span className="rbv2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+                    <span>Back to Home</span>
+                </Link>
+            </div>
+
             {/* HERO SECTION */}
             <header className="rb-blog-hero">
                 <div className="rb-blog-hero-bg">
@@ -105,11 +124,6 @@ const Blogs: React.FC = () => {
                         ))}
                     </div>
                 </div>
-                <div className="rb-blog-hero-wave">
-                    <svg viewBox="0 0 1440 100" fill="none" preserveAspectRatio="none">
-                        <path d="M0,50 C400,100 1000,0 1440,50 L1440,100 L0,100 Z" fill="#FFFCF8"/>
-                    </svg>
-                </div>
             </header>
 
             {filteredBlogs.length === 0 ? (
@@ -131,7 +145,7 @@ const Blogs: React.FC = () => {
                                             <div className="rb-featured-img-emoji">🧠</div>
                                         )}
                                         <div className="rb-featured-img-overlay"></div>
-                                        <div className="rb-featured-cat-badge">{featuredBlog.category || 'Therapy'}</div>
+                                        <div className="rb-featured-cat-badge">{formatCategory(featuredBlog.category)}</div>
                                         <div className="rb-featured-reading-time">{featuredBlog.reading_time || '5 min read'}</div>
                                     </div>
                                     <div className="rb-featured-body">
@@ -184,7 +198,7 @@ const Blogs: React.FC = () => {
                                                     ) : (
                                                         <div style={{fontSize: '3.5rem', color: 'white'}}>{emojis[index % emojis.length]}</div>
                                                     )}
-                                                    <div className="rb-blog-card-cat">{blog.category || 'Reflections'}</div>
+                                                    <div className="rb-blog-card-cat">{formatCategory(blog.category)}</div>
                                                 </div>
                                                 <div className="rb-blog-card-body">
                                                     <div className="rb-blog-card-date">{new Date(blog.created_at).toLocaleDateString()} · {blog.reading_time || '5 min read'}</div>
@@ -209,41 +223,37 @@ const Blogs: React.FC = () => {
 
             {/* QUICK MODAL VIEW FOR READING */}
             {activeBlog && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(59,46,36,0.9)', 
-                    display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem'
-                }} onClick={() => setActiveBlog(null)}>
-                    <article style={{
-                        background: 'var(--rb-cream)', borderRadius: '24px', maxWidth: '800px', width: '100%', 
-                        maxHeight: '90vh', overflowY: 'auto', padding: '3rem', position: 'relative',
-                        boxShadow: '0 24px 60px rgba(0,0,0,0.3)'
-                    }} onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => setActiveBlog(null)} style={{
-                            position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent',
-                            border: '1px solid rgba(59,46,36,0.2)', borderRadius: '50%', width: '40px', height: '40px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
-                            cursor: 'pointer', color: 'var(--rb-brown)', transition: 'all 0.3s'
-                        }}>×</button>
-                        
-                        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                            <div style={{ color: 'var(--rb-amber)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
-                                {activeBlog.category || 'Therapy'}
-                            </div>
-                            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--rb-brown)', lineHeight: '1.2', marginBottom: '1rem' }}>
-                                {activeBlog.title}
-                            </h2>
-                            <div style={{ color: 'var(--rb-text-muted)', fontSize: '0.9rem' }}>
+                <div className="rb-modal-overlay" onClick={() => setActiveBlog(null)}>
+                    <article className="rb-modal-card" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            type="button"
+                            className="rb-modal-close"
+                            aria-label="Close article preview"
+                            onClick={() => setActiveBlog(null)}
+                        >
+                            ×
+                        </button>
+
+                        <div className="rb-modal-head">
+                            <div className="rb-modal-topic">{formatCategory(activeBlog.category)}</div>
+                            <h2 className="rb-modal-title">{activeBlog.title}</h2>
+                            <div className="rb-modal-meta">
                                 {new Date(activeBlog.created_at).toLocaleDateString()} · {activeBlog.reading_time || '5 min read'}
                             </div>
                         </div>
 
                         {activeBlog.image_url && (
-                            <img src={resolveMediaUrl(activeBlog.image_url)} alt={activeBlog.title} 
-                                style={{ width: '100%', height: 'auto', borderRadius: '16px', marginBottom: '2rem', objectFit: 'cover', maxHeight: '400px' }} />
+                            <img
+                                src={resolveMediaUrl(activeBlog.image_url)}
+                                alt={activeBlog.title}
+                                className="rb-modal-image"
+                            />
                         )}
 
-                        <div className="blog-rich-content" dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(activeBlog.content) }} 
-                            style={{ lineHeight: '1.8', color: 'var(--rb-brown)', fontSize: '1.1rem', fontFamily: 'var(--bs-body-font-family)' }} />
+                        <div
+                            className="blog-rich-content rb-modal-content"
+                            dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(activeBlog.content) }}
+                        />
                     </article>
                 </div>
             )}

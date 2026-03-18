@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 import {
     isDobNotFuture,
@@ -249,19 +250,27 @@ const IntakeForm: React.FC = () => {
     };
 
     return (
-        <div className="ra-page-wrapper">
+        <div className="ra-page-wrapper ra-intake-page">
+            
+
             {/* Hero Section */}
-            <section className="ra-appt-hero" style={{ minHeight: '40vh', paddingBottom: '3rem' }}>
-                <div className="ra-hero-bg">
+            <section className="ra-appt-hero" style={{ minHeight: '40vh', paddingBottom: '3rem', justifyContent: 'flex-start' }}>
+                <div className="ra-hero-bg" style={{ background: 'linear-gradient(160deg, #f7f6f4 0%, #f3e8d8 72%, #f9e6d0 100%)' }}>
+                    <div style={{ position: 'relative', zIndex: 8, paddingTop: '12px', paddingLeft: '18px' }}>
+                        <Link to="/" className="ra-home-link" aria-label="Back to home page">
+                            <span className="ra-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+                            <span>Back to Home</span>
+                        </Link>
+                    </div>
                     <div className="ra-hero-blob"></div>
                     <div className="ra-hero-blob"></div>
                     <div className="ra-hero-blob"></div>
                 </div>
-                <div className="ra-hero-content" style={{ padding: '8rem 2rem 0' }}>
-                    <div className="ra-hero-eyebrow">
-                        <span className="ra-eyebrow-line"></span> Next Steps <span className="ra-eyebrow-line"></span>
+                <div className="ra-hero-content" style={{ padding: '0 2rem 0' }}>
+                    <div className="ra-hero-eyebrow" style={{ color: 'rgba(0, 55, 62, 0.72)' }}>
+                        <span className="ra-eyebrow-line" style={{ background: 'rgba(199, 129, 82, 0.55)' }}></span> Next Steps <span className="ra-eyebrow-line" style={{ background: 'rgba(199, 129, 82, 0.55)' }}></span>
                     </div>
-                    <h1 className="ra-hero-title">Patient <em>Intake</em></h1>
+                    <h1 className="ra-hero-title" style={{ color: 'var(--ra-brown)' }}>Patient <em style={{ color: 'var(--ra-amber-deep)' }}>Intake</em></h1>
                 </div>
                 <div className="ra-hero-wave">
                     <svg viewBox="0 0 1440 110" fill="none" preserveAspectRatio="none">
