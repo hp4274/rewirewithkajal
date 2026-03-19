@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, CalendarCheck, Users, Activity, Brain, Heart } from 'lucide-react';
+import { ChevronUp, ChevronDown, CalendarCheck, Users, Activity, Brain, Heart } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
@@ -343,37 +343,21 @@ const Home: React.FC = () => {
                             </div>
 
                         </div>
+                        <div className="rw-hero-slider-nav" aria-label="Hero slider controls">
+                            <div className="rw-hero-dots">
+                                {heroSlides.map((slide, index) => (
+                                    <button
+                                        type="button"
+                                        key={slide.id}
+                                        className={`rw-hero-dot ${index === activeHeroSlide ? 'active' : ''}`}
+                                        aria-label={`Go to ${slide.primaryLabel} slide`}
+                                        onClick={() => setActiveHeroSlide(index)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="rw-hero-slider-nav" aria-label="Hero slider controls">
-                        <button
-                            type="button"
-                            className="rw-hero-arrow-btn"
-                            aria-label="Previous slide"
-                            onClick={() => setActiveHeroSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-                        <div className="rw-hero-dots">
-                            {heroSlides.map((slide, index) => (
-                                <button
-                                    type="button"
-                                    key={slide.id}
-                                    className={`rw-hero-dot ${index === activeHeroSlide ? 'active' : ''}`}
-                                    aria-label={`Go to ${slide.primaryLabel} slide`}
-                                    onClick={() => setActiveHeroSlide(index)}
-                                />
-                            ))}
-                        </div>
-                        <button
-                            type="button"
-                            className="rw-hero-arrow-btn"
-                            aria-label="Next slide"
-                            onClick={() => setActiveHeroSlide((prev) => (prev + 1) % heroSlides.length)}
-                        >
-                            <ChevronRight size={18} />
-                        </button>
-                    </div>
                 </Reveal>
             </div>
 
