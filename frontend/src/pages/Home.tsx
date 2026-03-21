@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronUp, ChevronDown, CalendarCheck, Users, Activity, Brain, Heart } from 'lucide-react';
+import { ChevronUp, ChevronDown, CalendarCheck, Users, Activity, Brain, Heart, Instagram, Twitter, Youtube } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
@@ -22,55 +22,77 @@ const heroStats = [
     { value: '98%', label: 'Client Satisfaction' }
 ];
 
-const aboutHeroGirlImage = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-
 const heroSlides = [
     {
-        id: 'book',
-        eyebrow: 'Dedicated Mental Health Guidance',
-        lineOne: 'Book Your Session.',
-        lineTwo: 'Begin Your Journey to Healing.',
-        description:
-            'A safe, compassionate space to untangle anxiety, heal relationships, and reconnect with the version of you that feels steady and alive.',
+        id: 'healing',
+        eyebrow: 'Rewire Your Mind',
+        lineOne: 'Find Your Calm.',
+        lineTwo: 'Heal from Within.',
+        description: 'A compassionate space dedicated purely to your mental well-being, helping you gently untangle anxiety and overcome mental barriers.',
+        primaryLabel: 'Start Healing',
+        primaryPath: '/appointment',
+        secondaryLabel: 'Learn More',
+        secondaryPath: '/about',
+        panelTitle: 'Professional Therapy',
+        panelBody: 'Guided therapeutic methods designed to rebuild emotional resilience and bring clarity back into your daily routine.',
+        imageUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=80',
+        tags: ['Therapy', 'Anxiety', 'Growth']
+    },
+    {
+        id: 'balance',
+        eyebrow: 'Restore Your Life',
+        lineOne: 'Reclaim Your',
+        lineTwo: 'Peace of Mind.',
+        description: 'Through empathetic counseling, we work together to process deeply held emotions and lay the foundation for a healthier life.',
         primaryLabel: 'Book a Session',
         primaryPath: '/appointment',
-        secondaryLabel: '',
-        secondaryPath: '',
-        panelTitle: 'Session Booking',
-        panelBody: 'Choose your preferred date and time. Kajal personally reviews each request and confirms within 24 hours.',
-        tags: ['Private', 'Flexible', 'Guided']
+        secondaryLabel: 'Read Blogs',
+        secondaryPath: '/blogs',
+        panelTitle: 'Burnout Recovery',
+        panelBody: 'Learn sustainable strategies to manage stress, set healthy boundaries, and rediscover your joy in life.',
+        imageUrl: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=800&q=80',
+        tags: ['Balance', 'Clarity', 'Peace']
     },
     {
-        id: 'about',
-        eyebrow: 'Meet Your Therapist',
-        lineOne: 'About Kajal.',
-        lineTwo: 'Your Guide to Rewiring.',
-        description:
-            'Explore Kajal\'s approach, professional journey, and therapy philosophy to see if this space feels right for your healing path.',
-        primaryLabel: 'About Kajal',
-        primaryPath: '/about',
-        secondaryLabel: 'Book a Session',
-        secondaryPath: '/appointment',
-        panelTitle: 'Human-Centered Care',
-        panelBody: 'Evidence-based methods, trauma-informed practice, and practical emotional tools tailored to your life context.',
-        tags: ['CBT', 'Mindfulness', 'Somatic']
-    },
-    {
-        id: 'blogs',
-        eyebrow: 'Practical Mental Wellness',
-        lineOne: 'Read The Blog.',
-        lineTwo: 'Grow Between Sessions.',
-        description:
-            'Honest, research-backed insights on anxiety, relationships, boundaries, and emotional regulation for everyday life.',
-        primaryLabel: 'Explore Blogs',
-        primaryPath: '/blogs',
-        secondaryLabel: 'Book a Session',
-        secondaryPath: '/appointment',
-        panelTitle: 'Latest Insights',
-        panelBody: 'Short, practical reads designed to help you reflect, reset, and apply therapeutic ideas in real situations.',
-        tags: ['Anxiety', 'Relationships', 'Self-Growth']
+        id: 'support',
+        eyebrow: 'You Are Not Alone',
+        lineOne: 'Navigate Life’s',
+        lineTwo: 'Transitions Safely.',
+        description: 'Whether you are facing relationship challenges, career changes, or personal loss, therapy provides a secure anchor.',
+        primaryLabel: 'Book a Session',
+        primaryPath: '/appointment',
+        secondaryLabel: 'Our Services',
+        secondaryPath: '/about',
+        panelTitle: 'Deep Support',
+        panelBody: 'We combine evidence-based CBT with somatic practices to offer holistic care tailored to your unique journey.',
+        imageUrl: 'https://images.unsplash.com/photo-1471180625745-944903837c22?auto=format&fit=crop&w=800&q=80',
+        tags: ['Support', 'Wellness', 'Care']
     }
 ] as const;
+
+const HomeNavbar: React.FC = () => {
+    const navigate = useNavigate();
+    return (
+        <div className="home-hero-navbar-wrapper">
+            <div className="home-hero-navbar">
+                <div className="hhn-logo" onClick={() => navigate('/')} aria-label="Home">
+                    <img src={logoMark} alt="Rewire With Kajal" />
+                </div>
+                <nav className="hhn-links">
+                    <button onClick={() => navigate('/')}>Home</button>
+                    <button onClick={() => navigate('/about')}>About</button>
+                    <button onClick={() => navigate('/blogs')}>Blog</button>
+                    <button onClick={() => navigate('/appointment')} className="hhn-book-btn">Book Appointment</button>
+                </nav>
+                <div className="hhn-socials">
+                    <a href="https://instagram.com" aria-label="Instagram"><Instagram size={18} /></a>
+                    <a href="https://twitter.com" aria-label="Twitter"><Twitter size={18} /></a>
+                    <a href="https://youtube.com" aria-label="YouTube"><Youtube size={18} /></a>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const challengeCards = [
     {
@@ -265,6 +287,7 @@ const Home: React.FC = () => {
 
             {/* ── HERO ── */}
             <div className="rw-hero">
+                <HomeNavbar />
                 <Reveal>
                     <div className="rw-hero-panel">
                         <div className="rw-hero-copy">
@@ -306,30 +329,15 @@ const Home: React.FC = () => {
 
                         <div className="rw-hero-right">
                             <div className="rw-hero-card">
-                                <div className="rw-card-visual" aria-hidden="true">
-                                    {currentHeroSlide.id === 'book' && (
-                                        <img
-                                            src={logoMark}
-                                            alt="Rewire With Kajal logo"
-                                            className="rw-signature rw-card-logo"
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
-                                    )}
-                                    {currentHeroSlide.id === 'about' && (
-                                        <img
-                                            src={aboutHeroGirlImage}
-                                            alt="Kajal portrait"
-                                            className="rw-signature rw-card-girl"
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
-                                    )}
-                                    {currentHeroSlide.id === 'blogs' && (
-                                        <div className="rw-session-icon">
-                                            <CalendarCheck size={44} />
-                                        </div>
-                                    )}
+                                <div className="rw-card-visual" aria-hidden="true" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                                    <img
+                                        src={currentHeroSlide.imageUrl}
+                                        alt={currentHeroSlide.panelTitle}
+                                        className="rw-card-image"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
                                 </div>
                                 <h3>{currentHeroSlide.panelTitle}</h3>
                                 <p>

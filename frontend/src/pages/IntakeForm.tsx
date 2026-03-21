@@ -250,38 +250,59 @@ const IntakeForm: React.FC = () => {
     };
 
     return (
-        <div className="ra-page-wrapper ra-intake-page">
+        <div className="abt2-wrapper ra-intake-page">
             
 
-            {/* Hero Section */}
-            <section className="ra-appt-hero" style={{ minHeight: '40vh', paddingBottom: '3rem', justifyContent: 'flex-start' }}>
-                <div className="ra-hero-bg" style={{ background: 'linear-gradient(160deg, #f7f6f4 0%, #f3e8d8 72%, #f9e6d0 100%)' }}>
-                    <div style={{ position: 'relative', zIndex: 8, paddingTop: '12px', paddingLeft: '18px' }}>
-                        <Link to="/" className="ra-home-link" aria-label="Back to home page">
-                            <span className="ra-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
-                            <span>Back to Home</span>
-                        </Link>
-                    </div>
-                    <div className="ra-hero-blob"></div>
-                    <div className="ra-hero-blob"></div>
-                    <div className="ra-hero-blob"></div>
+            {/* HEADER SECTION */}
+            <div style={{
+                position: 'relative',
+                zIndex: 8,
+                paddingTop: '12px',
+                paddingLeft: '18px',
+                paddingRight: '18px',
+                paddingBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+                    <Link to="/" className="abt2-home-link" aria-label="Back to home page" style={{ margin: 0 }}>
+                        <span className="abt2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+                        <span>Back to Home</span>
+                    </Link>
                 </div>
-                <div className="ra-hero-content" style={{ padding: '0 2rem 0' }}>
-                    <div className="ra-hero-eyebrow" style={{ color: 'rgba(0, 55, 62, 0.72)' }}>
-                        <span className="ra-eyebrow-line" style={{ background: 'rgba(199, 129, 82, 0.55)' }}></span> Next Steps <span className="ra-eyebrow-line" style={{ background: 'rgba(199, 129, 82, 0.55)' }}></span>
-                    </div>
-                    <h1 className="ra-hero-title" style={{ color: 'var(--ra-brown)' }}>Patient <em style={{ color: 'var(--ra-amber-deep)' }}>Intake</em></h1>
-                </div>
-                <div className="ra-hero-wave">
-                    <svg viewBox="0 0 1440 110" fill="none" preserveAspectRatio="none">
-                        <path d="M0,55 C400,110 1000,0 1440,55 L1440,110 L0,110 Z" />
-                    </svg>
+                <div style={{ display: 'flex', justifyContent: 'center', maxWidth: '100%' }}></div>
+                <div style={{ flex: 1 }}></div>
+            </div>
+
+            {/* PREMIUM HERO */}
+            <section style={{ textAlign: 'center', padding: '20px 20px 60px', maxWidth: '1000px', margin: '0 auto' }}>
+                <div style={{ background: '#EBF1F5', borderRadius: '40px', padding: '60px 20px', boxShadow: '0 4px 30px rgba(0,0,0,0.03)' }}>
+                    <div style={{ 
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: '0.75rem', 
+                        fontWeight: 600, 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '2px', 
+                        color: '#C78152', 
+                        border: '1px solid rgba(199, 129, 82, 0.3)', 
+                        borderRadius: '100px', 
+                        padding: '6px 16px', 
+                        margin: '0 auto 24px', 
+                        display: 'inline-block' 
+                    }}>Next Steps</div>
+                    <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(3rem, 5vw, 4.5rem)', color: '#00373E', margin: '0 0 24px', lineHeight: '1.1' }}>
+                        Patient <em style={{ fontStyle: 'italic', fontWeight: '400', color: '#C78152' }}>Intake</em>
+                    </h1>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '1.1rem', color: '#00373E', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6', opacity: 0.8 }}>
+                        Please answer our highly detailed Intake Questionnaires to help us prepare for an advanced consultation.
+                    </p>
                 </div>
             </section>
 
-            <section className="ra-booking-main" style={{ paddingTop: '2rem' }}>
-                <div className="ra-booking-inner" style={{ maxWidth: '900px' }}>
-                    <div className="ra-form-card" style={{ animation: 'raRevealUp 0.8s 0.6s ease both' }}>
+            <section style={{ padding: '0 20px 80px' }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                    <div className="ra-form-card" style={{ background: '#FFFFFF', padding: '40px', borderRadius: '24px', border: '1px solid rgba(0, 55, 62, 0.05)', boxShadow: '0 8px 32px rgba(0, 55, 62, 0.04)', animation: 'raRevealUp 0.8s 0.2s ease both' }}>
                         {success ? (
                             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
                                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>

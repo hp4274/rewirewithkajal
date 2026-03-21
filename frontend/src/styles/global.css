@@ -4,9 +4,9 @@
 
 /* External font imports */
 @import url('https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=Quicksand:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand+Grotesque:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap');
 
 /* ==========================================================================
    Reset / Base Styles + Root Variables + Typography + Layout
@@ -3077,13 +3077,12 @@ code {
 .blog-rich-content * {
     max-width: 100%;
     overflow-wrap: break-word;
-    word-break: keep-all;
-    hyphens: auto;
+    word-break: normal;
+    hyphens: none;
 }
 
 .blog-rich-content p {
     text-align: left;
-    text-wrap: pretty;
 }
 
 .blog-rich-content img,
@@ -15872,7 +15871,7 @@ input:checked+.switch-slider:before {
    Home Page Redesign — RewireWithKajal
    Inspired by Solus reference design
    Colors: #f7f6f4 bg | #00373e dark-green | #f9e6d0 peach
-   Font: Bricolage Grotesque
+   Font: Quicksand
    ============================================= */
 
 /* ---- variables ---- */
@@ -15882,7 +15881,7 @@ input:checked+.switch-slider:before {
     --rw-peach: #f9e6d0;
     --rw-sand: #f3e8d8;
     --rw-white: #ffffff;
-    --rw-font: 'Bricolage Grotesque', Helvetica, sans-serif;
+    --rw-font: 'Quicksand', Helvetica, sans-serif;
     --rw-radius-lg: 60px;
     --rw-radius-md: 30px;
     --rw-radius-sm: 16px;
@@ -15925,6 +15924,122 @@ input:checked+.switch-slider:before {
     padding: 0 32px 0;
     max-width: 1200px;
     margin: 35px auto;
+}
+
+/* =============================================
+   HOME HERO NAVBAR 
+   ============================================= */
+.home-hero-navbar-wrapper {
+    margin-bottom: 24px;
+    background: var(--rw-white);
+    border-radius: var(--rw-radius-md);
+    padding: 16px 32px;
+    box-shadow: 0 4px 20px rgba(0, 55, 62, 0.04);
+}
+
+.home-hero-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hhn-logo {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.hhn-logo img {
+    height: 44px;
+    width: auto;
+}
+
+.hhn-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    flex: 2;
+}
+
+.hhn-links button {
+    background: none;
+    border: none;
+    color: var(--rw-dark-green);
+    font-family: var(--rw-font);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.hhn-links button:hover {
+    color: var(--rw-peach);
+}
+
+.hhn-links .hhn-book-btn {
+    background: var(--rw-dark-green);
+    color: var(--rw-white);
+    padding: 10px 24px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.hhn-links .hhn-book-btn:hover {
+    color: var(--rw-white);
+    opacity: 0.85;
+}
+
+.hhn-socials {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 20px;
+    flex: 1;
+}
+
+.hhn-socials a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--rw-dark-green);
+    opacity: 0.75;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.hhn-socials a:hover {
+    opacity: 1;
+    color: var(--rw-peach);
+}
+
+@media (max-width: 900px) {
+    .home-hero-navbar-wrapper {
+        padding: 16px 20px;
+    }
+    .hhn-links {
+        gap: 16px;
+    }
+    .hhn-links button {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 600px) {
+    .home-hero-navbar {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .hhn-socials {
+        justify-content: center;
+        width: 100%;
+    }
+    .hhn-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
 .rw-hero-panel {
@@ -17021,7 +17136,7 @@ input:checked+.switch-slider:before {
     --c-white: #ffffff;
     --c-line: rgba(53, 39, 31, 0.14);
 
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     color: var(--c-ink);
     background:
         radial-gradient(900px 500px at 10% -8%, rgba(227, 165, 121, 0.2), transparent 62%),
@@ -17126,7 +17241,7 @@ input:checked+.switch-slider:before {
 .abt2-wrapper h2,
 .abt2-wrapper h3,
 .abt2-wrapper h4 {
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     color: var(--c-ink);
     margin: 0;
 }
@@ -17925,7 +18040,7 @@ input:checked+.switch-slider:before {
         radial-gradient(860px 450px at 100% 0%, rgba(234, 220, 200, 0.5), transparent 68%),
         var(--rb-cream);
     color: var(--rb-ink);
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
 }
@@ -18685,39 +18800,39 @@ a {
     text-decoration: none;
 }
 
-/* @FONTWARNING[{"type": "restricted", "family": "Bricolage Grotesque-Bold", "weight": "400", "style": "normal", "allowsCrossOrigin": false}] */
+/* @FONTWARNING[{"type": "restricted", "family": "Quicksand-Bold", "weight": "400", "style": "normal", "allowsCrossOrigin": false}] */
 
 @font-face {
-    font-family: "Bricolage Grotesque-Bold";
-    src: local("Bricolage Grotesque-Bold");
+    font-family: "Quicksand-Bold";
+    src: local("Quicksand-Bold");
 }
 
-/* @FONTWARNING[{"type": "restricted", "family": "Bricolage Grotesque-Regular", "weight": "400", "style": "normal", "allowsCrossOrigin": false}] */
+/* @FONTWARNING[{"type": "restricted", "family": "Quicksand-Regular", "weight": "400", "style": "normal", "allowsCrossOrigin": false}] */
 
 @font-face {
-    font-family: "Bricolage Grotesque-Regular";
-    src: local("Bricolage Grotesque-Regular");
+    font-family: "Quicksand-Regular";
+    src: local("Quicksand-Regular");
 }
 
-/* @FONTWARNING[{"type": "restricted", "family": "Bricolage Grotesque-SemiBold", "weight": "600", "style": "normal", "allowsCrossOrigin": false}] */
+/* @FONTWARNING[{"type": "restricted", "family": "Quicksand-SemiBold", "weight": "600", "style": "normal", "allowsCrossOrigin": false}] */
 
 @font-face {
-    font-family: "Bricolage Grotesque-SemiBold";
-    src: local("Bricolage Grotesque-SemiBold");
+    font-family: "Quicksand-SemiBold";
+    src: local("Quicksand-SemiBold");
 }
 
-/* @FONTWARNING[{"type": "restricted", "family": "Bricolage Grotesque-Medium", "weight": "500", "style": "normal", "allowsCrossOrigin": false}] */
+/* @FONTWARNING[{"type": "restricted", "family": "Quicksand-Medium", "weight": "500", "style": "normal", "allowsCrossOrigin": false}] */
 
 @font-face {
-    font-family: "Bricolage Grotesque-Medium";
-    src: local("Bricolage Grotesque-Medium");
+    font-family: "Quicksand-Medium";
+    src: local("Quicksand-Medium");
 }
 
-/* @FONTWARNING[{"type": "restricted", "family": "Bricolage Grotesque", "weight": "var(--h-font-weight)", "style": "normal", "allowsCrossOrigin": false}] */
+/* @FONTWARNING[{"type": "restricted", "family": "Quicksand", "weight": "var(--h-font-weight)", "style": "normal", "allowsCrossOrigin": false}] */
 
 @font-face {
-    font-family: "Bricolage Grotesque";
-    src: local("Bricolage Grotesque");
+    font-family: "Quicksand";
+    src: local("Quicksand");
 }
 
 
@@ -18750,7 +18865,7 @@ a {
     height: 91px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     font-size: 50px;
     line-height: 91px;
@@ -18763,7 +18878,7 @@ a {
 .home .div {
     top: 35px;
     left: 0;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -18775,7 +18890,7 @@ a {
 .home .text-wrapper-2 {
     top: 35px;
     left: 121px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -18787,7 +18902,7 @@ a {
 .home .text-wrapper-3 {
     top: 35px;
     left: 244px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -18799,7 +18914,7 @@ a {
 .home .text-wrapper-4 {
     top: 35px;
     left: 843px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -18811,7 +18926,7 @@ a {
 .home .text-wrapper-5 {
     top: 35px;
     left: 1006px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -18824,7 +18939,7 @@ a {
     position: absolute;
     top: 35px;
     left: 1170px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -18871,7 +18986,7 @@ a {
     text-align: center;
     line-height: normal;
     position: absolute;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     letter-spacing: 0.50px;
@@ -18904,7 +19019,7 @@ a {
     position: relative;
     width: fit-content;
     margin-top: -1.00px;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: #ffffff;
     font-size: 20px;
@@ -18919,7 +19034,7 @@ a {
     top: 170px;
     left: calc(50.00% - 320px);
     width: 640px;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 70px;
@@ -18950,7 +19065,7 @@ a {
 .home .text-wrapper-8 {
     width: 108px;
     height: 17px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -18965,7 +19080,7 @@ a {
     height: 186px;
     width: 440px;
     align-self: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -18976,7 +19091,7 @@ a {
 .home .text-wrapper-10 {
     width: 476px;
     height: 102px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -19036,7 +19151,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -19050,7 +19165,7 @@ a {
     top: 181px;
     left: calc(50.00% - 241px);
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -19063,7 +19178,7 @@ a {
     position: absolute;
     top: 0;
     left: calc(50.00% - 38px);
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -19118,7 +19233,7 @@ a {
     position: relative;
     width: fit-content;
     margin-top: -1.00px;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 20px;
@@ -19136,7 +19251,7 @@ a {
     height: 96px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 40px;
@@ -19149,7 +19264,7 @@ a {
     top: 206px;
     left: 60px;
     width: 312px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -19183,7 +19298,7 @@ a {
     height: 96px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 40px;
@@ -19196,7 +19311,7 @@ a {
     top: 206px;
     left: 60px;
     width: 295px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -19249,7 +19364,7 @@ a {
     height: 48px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 40px;
@@ -19262,7 +19377,7 @@ a {
     top: 158px;
     left: 60px;
     width: 617px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -19314,7 +19429,7 @@ a {
     top: 221px;
     left: 0;
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -19326,7 +19441,7 @@ a {
     position: absolute;
     top: 0;
     left: 0;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -19357,7 +19472,7 @@ a {
     top: 65px;
     left: 50px;
     width: 293px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -19370,7 +19485,7 @@ a {
     top: 307px;
     left: 50px;
     width: 256px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -19401,7 +19516,7 @@ a {
     top: 65px;
     left: 61px;
     width: 293px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #ffffff;
     font-size: 20px;
@@ -19414,7 +19529,7 @@ a {
     top: 307px;
     left: 61px;
     width: 256px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #ffffff;
     font-size: 20px;
@@ -19495,7 +19610,7 @@ a {
     height: 26px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 22px;
@@ -19578,7 +19693,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -19592,7 +19707,7 @@ a {
     top: 181px;
     left: calc(50.00% - 242px);
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -19605,7 +19720,7 @@ a {
     position: absolute;
     top: 0;
     left: calc(50.00% - 68px);
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -19641,7 +19756,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -19655,7 +19770,7 @@ a {
     top: 152px;
     left: 40px;
     width: 307px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -19714,7 +19829,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -19728,7 +19843,7 @@ a {
     top: 152px;
     left: calc(50.00% - 156px);
     width: 307px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -19809,7 +19924,7 @@ a {
     position: absolute;
     top: 70px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -19841,7 +19956,7 @@ a {
     font-size: 22px;
     line-height: 34px;
     position: absolute;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     letter-spacing: 0.50px;
@@ -19891,7 +20006,7 @@ a {
     top: 221px;
     left: 50px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -19903,7 +20018,7 @@ a {
     position: absolute;
     top: 0;
     left: 50px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -20049,7 +20164,7 @@ a {
     top: 250px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -20062,7 +20177,7 @@ a {
     top: 362px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -20075,7 +20190,7 @@ a {
     top: 474px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -20088,7 +20203,7 @@ a {
     top: 732px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -20101,7 +20216,7 @@ a {
     top: 620px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -20114,7 +20229,7 @@ a {
     top: 878px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -20169,7 +20284,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -20183,7 +20298,7 @@ a {
     top: 181px;
     left: calc(50.00% - 294px);
     width: 563px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -20196,7 +20311,7 @@ a {
     position: absolute;
     top: 0;
     left: calc(50.00% - 63px);
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -20223,7 +20338,7 @@ a {
     height: 36px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -20238,7 +20353,7 @@ a {
     height: 36px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -20250,7 +20365,7 @@ a {
 .home .email-support-solus {
     top: 482px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     color: #00373e;
     position: absolute;
     font-weight: 400;
@@ -20266,7 +20381,7 @@ a {
 }
 
 .home .text-wrapper-45 {
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     letter-spacing: 0.10px;
 }
 
@@ -20274,7 +20389,7 @@ a {
     position: absolute;
     top: 852px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 20px;
@@ -20287,7 +20402,7 @@ a {
     position: absolute;
     top: 531px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 20px;
@@ -20300,7 +20415,7 @@ a {
     position: absolute;
     top: 580px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 20px;
@@ -20358,7 +20473,7 @@ a {
 .home .text-wrapper-47 {
     top: 530px;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     color: #00373e;
     position: absolute;
     font-weight: 400;
@@ -20371,7 +20486,7 @@ a {
 .home .text-wrapper-48 {
     top: 569px;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     color: #00373e33;
     position: absolute;
     font-weight: 400;
@@ -20386,7 +20501,7 @@ a {
     color: #00373e33;
     position: absolute;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 20px;
     letter-spacing: 0.50px;
@@ -20399,7 +20514,7 @@ a {
     color: #00373e;
     position: absolute;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 20px;
     letter-spacing: 0.50px;
@@ -20517,7 +20632,7 @@ a {
     position: absolute;
     top: 40px;
     left: calc(50.00% - 574px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 40px;
@@ -20530,7 +20645,7 @@ a {
     position: absolute;
     top: 128px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20542,7 +20657,7 @@ a {
     position: absolute;
     top: 170px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20554,7 +20669,7 @@ a {
     position: absolute;
     top: 212px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20566,7 +20681,7 @@ a {
     position: absolute;
     top: 254px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20578,7 +20693,7 @@ a {
     position: absolute;
     top: 128px;
     left: 385px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20590,7 +20705,7 @@ a {
     position: absolute;
     top: 170px;
     left: 385px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20602,7 +20717,7 @@ a {
     position: absolute;
     top: 374px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #b8b8b8;
     font-size: 18px;
@@ -20614,7 +20729,7 @@ a {
     position: absolute;
     top: 128px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20626,7 +20741,7 @@ a {
     position: absolute;
     top: 170px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20638,7 +20753,7 @@ a {
     position: absolute;
     top: 212px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20650,7 +20765,7 @@ a {
     position: absolute;
     top: 254px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20662,7 +20777,7 @@ a {
     position: absolute;
     top: 296px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20678,7 +20793,7 @@ a {
     height: 212px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: #ffffff;
     font-size: 44px;
@@ -20715,7 +20830,7 @@ a {
     height: 91px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     font-size: 50px;
     line-height: 91px;
@@ -20728,7 +20843,7 @@ a {
 .home .div {
     top: 35px;
     left: 0;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -20741,7 +20856,7 @@ a {
 .home .text-wrapper-2 {
     top: 35px;
     left: 121px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -20754,7 +20869,7 @@ a {
 .home .text-wrapper-3 {
     top: 35px;
     left: 244px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -20767,7 +20882,7 @@ a {
 .home .text-wrapper-4 {
     top: 35px;
     left: 843px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -20780,7 +20895,7 @@ a {
 .home .text-wrapper-5 {
     top: 35px;
     left: 1006px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 18px;
     line-height: normal;
@@ -20794,7 +20909,7 @@ a {
     position: absolute;
     top: 35px;
     left: 1170px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -20842,7 +20957,7 @@ a {
     text-align: center;
     line-height: normal;
     position: absolute;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     letter-spacing: 0.50px;
@@ -20876,7 +20991,7 @@ a {
     position: relative;
     width: fit-content;
     margin-top: -1.00px;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: #ffffff;
     font-size: 20px;
@@ -20891,7 +21006,7 @@ a {
     top: 170px;
     left: calc(50.00% - 320px);
     width: 640px;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 70px;
@@ -20922,7 +21037,7 @@ a {
 .home .text-wrapper-8 {
     width: 108px;
     height: 17px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -20937,7 +21052,7 @@ a {
     height: 186px;
     width: 440px;
     align-self: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -20948,7 +21063,7 @@ a {
 .home .text-wrapper-10 {
     width: 476px;
     height: 102px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -21009,7 +21124,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -21023,7 +21138,7 @@ a {
     top: 181px;
     left: calc(50.00% - 241px);
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -21036,7 +21151,7 @@ a {
     position: absolute;
     top: 0;
     left: calc(50.00% - 38px);
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -21092,7 +21207,7 @@ a {
     position: relative;
     width: fit-content;
     margin-top: -1.00px;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 20px;
@@ -21110,7 +21225,7 @@ a {
     height: 96px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 40px;
@@ -21123,7 +21238,7 @@ a {
     top: 206px;
     left: 60px;
     width: 312px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -21157,7 +21272,7 @@ a {
     height: 96px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 40px;
@@ -21170,7 +21285,7 @@ a {
     top: 206px;
     left: 60px;
     width: 295px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -21223,7 +21338,7 @@ a {
     height: 48px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 40px;
@@ -21236,7 +21351,7 @@ a {
     top: 158px;
     left: 60px;
     width: 617px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -21289,7 +21404,7 @@ a {
     top: 221px;
     left: 0;
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -21301,7 +21416,7 @@ a {
     position: absolute;
     top: 0;
     left: 0;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -21332,7 +21447,7 @@ a {
     top: 65px;
     left: 50px;
     width: 293px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -21345,7 +21460,7 @@ a {
     top: 307px;
     left: 50px;
     width: 256px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 20px;
@@ -21377,7 +21492,7 @@ a {
     top: 65px;
     left: 61px;
     width: 293px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #ffffff;
     font-size: 20px;
@@ -21390,7 +21505,7 @@ a {
     top: 307px;
     left: 61px;
     width: 256px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #ffffff;
     font-size: 20px;
@@ -21478,7 +21593,7 @@ a {
     height: 26px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 22px;
@@ -21561,7 +21676,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -21575,7 +21690,7 @@ a {
     top: 181px;
     left: calc(50.00% - 242px);
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -21588,7 +21703,7 @@ a {
     position: absolute;
     top: 0;
     left: calc(50.00% - 68px);
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -21624,7 +21739,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -21638,7 +21753,7 @@ a {
     top: 152px;
     left: 40px;
     width: 307px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -21698,7 +21813,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -21712,7 +21827,7 @@ a {
     top: 152px;
     left: calc(50.00% - 156px);
     width: 307px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -21794,7 +21909,7 @@ a {
     position: absolute;
     top: 70px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -21826,7 +21941,7 @@ a {
     font-size: 22px;
     line-height: 34px;
     position: absolute;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     letter-spacing: 0.50px;
@@ -21877,7 +21992,7 @@ a {
     top: 221px;
     left: 50px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -21889,7 +22004,7 @@ a {
     position: absolute;
     top: 0;
     left: 50px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -22053,7 +22168,7 @@ a {
     top: 250px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -22066,7 +22181,7 @@ a {
     top: 362px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -22079,7 +22194,7 @@ a {
     top: 474px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -22092,7 +22207,7 @@ a {
     top: 732px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -22105,7 +22220,7 @@ a {
     top: 620px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -22118,7 +22233,7 @@ a {
     top: 878px;
     left: 670px;
     width: 476px;
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: var(--dark-green);
     font-size: 20px;
@@ -22173,7 +22288,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 52px;
@@ -22187,7 +22302,7 @@ a {
     top: 181px;
     left: calc(50.00% - 294px);
     width: 563px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 22px;
@@ -22200,7 +22315,7 @@ a {
     position: absolute;
     top: 0;
     left: calc(50.00% - 63px);
-    font-family: "Bricolage Grotesque-Medium", Helvetica;
+    font-family: "Quicksand-Medium", Helvetica;
     font-weight: 500;
     color: #00373e;
     font-size: 14px;
@@ -22227,7 +22342,7 @@ a {
     height: 36px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -22242,7 +22357,7 @@ a {
     height: 36px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-SemiBold", Helvetica;
+    font-family: "Quicksand-SemiBold", Helvetica;
     font-weight: 600;
     color: var(--dark-green);
     font-size: 30px;
@@ -22254,7 +22369,7 @@ a {
 .home .email-support-solus {
     top: 482px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     color: #00373e;
     position: absolute;
     font-weight: 400;
@@ -22270,7 +22385,7 @@ a {
 }
 
 .home .text-wrapper-45 {
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     letter-spacing: 0.10px;
 }
 
@@ -22278,7 +22393,7 @@ a {
     position: absolute;
     top: 852px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 20px;
@@ -22291,7 +22406,7 @@ a {
     position: absolute;
     top: 531px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 20px;
@@ -22304,7 +22419,7 @@ a {
     position: absolute;
     top: 580px;
     left: calc(50.00% - 563px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 400;
     color: #00373e;
     font-size: 20px;
@@ -22363,7 +22478,7 @@ a {
 .home .text-wrapper-47 {
     top: 530px;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     color: #00373e;
     position: absolute;
     font-weight: 400;
@@ -22379,7 +22494,7 @@ a {
     box-sizing: border-box;
     top: 569px;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     color: #00373e33;
     position: absolute;
     font-weight: 400;
@@ -22403,7 +22518,7 @@ a {
     color: #00373e;
     position: absolute;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 20px;
     letter-spacing: 0.50px;
@@ -22419,7 +22534,7 @@ a {
     color: #00373e33;
     position: absolute;
     left: calc(50.00% + 37px);
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     font-size: 20px;
     letter-spacing: 0.50px;
@@ -22567,7 +22682,7 @@ a {
     position: absolute;
     top: 40px;
     left: calc(50.00% - 574px);
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: var(--dark-green);
     font-size: 40px;
@@ -22580,7 +22695,7 @@ a {
     position: absolute;
     top: 128px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22593,7 +22708,7 @@ a {
     position: absolute;
     top: 170px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22606,7 +22721,7 @@ a {
     position: absolute;
     top: 212px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22619,7 +22734,7 @@ a {
     position: absolute;
     top: 254px;
     left: 227px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22632,7 +22747,7 @@ a {
     position: absolute;
     top: 128px;
     left: 385px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22645,7 +22760,7 @@ a {
     position: absolute;
     top: 170px;
     left: 385px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22658,7 +22773,7 @@ a {
     position: absolute;
     top: 374px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: #b8b8b8;
     font-size: 18px;
@@ -22670,7 +22785,7 @@ a {
     position: absolute;
     top: 128px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22683,7 +22798,7 @@ a {
     position: absolute;
     top: 170px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22696,7 +22811,7 @@ a {
     position: absolute;
     top: 212px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22709,7 +22824,7 @@ a {
     position: absolute;
     top: 254px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22722,7 +22837,7 @@ a {
     position: absolute;
     top: 296px;
     left: 60px;
-    font-family: "Bricolage Grotesque-Regular", Helvetica;
+    font-family: "Quicksand-Regular", Helvetica;
     font-weight: 400;
     color: var(--dark-green);
     font-size: 18px;
@@ -22739,7 +22854,7 @@ a {
     height: 212px;
     display: flex;
     align-items: center;
-    font-family: "Bricolage Grotesque-Bold", Helvetica;
+    font-family: "Quicksand-Bold", Helvetica;
     font-weight: 700;
     color: #ffffff;
     font-size: 44px;
@@ -22749,10 +22864,538 @@ a {
 
 :root {
     --dark-green: rgba(0, 55, 62, 1);
-    --h-font-family: "Bricolage Grotesque", Helvetica;
+    --h-font-family: "Quicksand", Helvetica;
     --h-font-weight: 700;
     --h-font-size: 52px;
     --h-letter-spacing: 0.5px;
     --h-line-height: normal;
     --h-font-style: normal;
+}
+
+/* =============================================
+   PREMIUM BLOG LAYOUT
+   ============================================= */
+
+.blog-premium-filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    padding: 10px;
+    background: #FFFFFF;
+    border-radius: 999px;
+    box-shadow: 0 8px 32px rgba(0, 55, 62, 0.08);
+    border: 1px solid rgba(0, 55, 62, 0.04);
+}
+.blog-premium-filters::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+.blog-premium-filter-pill {
+    background: #F2EBE3;
+    border: 1px solid #E6DDD4;
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--dark-green, rgba(0, 55, 62, 1));
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.blog-premium-filter-pill:hover {
+    background: #EAE0D5;
+    transform: translateY(-1px);
+}
+.blog-premium-filter-pill.active {
+    background: var(--dark-green, rgba(0, 55, 62, 1));
+    color: #FFFFFF;
+    border-color: var(--dark-green, rgba(0, 55, 62, 1));
+}
+
+/* Featured Section */
+.blog-premium-featured-section {
+    padding: 0 32px 64px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.blog-premium-featured-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    color: var(--rw-dark-green);
+    margin-bottom: 24px;
+    opacity: 0.7;
+}
+
+.blog-premium-featured-card {
+    display: flex;
+    gap: 48px;
+    background: var(--rw-white);
+    border-radius: 20px;
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.blog-premium-featured-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 48px rgba(0, 55, 62, 0.08);
+}
+.blog-premium-featured-card:hover .blog-premium-featured-img img {
+    transform: scale(1.05);
+}
+
+.blog-premium-featured-img {
+    flex: 1 1 50%;
+    position: relative;
+    min-height: 480px;
+    overflow: hidden;
+    background: #FAF3EC;
+}
+.blog-premium-featured-img img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.blog-premium-img-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 6rem;
+}
+.blog-premium-cat-badge {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rw-dark-green);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.blog-premium-featured-body {
+    flex: 1 1 50%;
+    padding: 64px 64px 64px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.blog-premium-date-time {
+    font-size: 13px;
+    color: var(--rw-dark-green);
+    opacity: 0.6;
+    margin-bottom: 16px;
+}
+.blog-premium-featured-title {
+    font-size: 40px;
+    line-height: 1.15;
+    font-weight: 700;
+    color: var(--rw-dark-green);
+    margin-bottom: 24px;
+}
+.blog-premium-featured-excerpt {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--rw-dark-green);
+    opacity: 0.8;
+    margin-bottom: 48px;
+}
+
+.blog-premium-featured-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(0, 55, 62, 0.1);
+    padding-top: 24px;
+    margin-top: auto;
+}
+.blog-premium-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.blog-premium-author-avatar {
+    width: 48px;
+    height: 48px;
+    background: var(--rw-peach);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--rw-dark-green);
+}
+.blog-premium-author-info strong {
+    display: block;
+    font-size: 15px;
+    color: var(--rw-dark-green);
+}
+.blog-premium-author-info span {
+    font-size: 13px;
+    color: var(--rw-dark-green);
+    opacity: 0.6;
+}
+.blog-premium-read-btn {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--rw-dark-green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.blog-premium-read-btn .arrow {
+    transition: transform 0.3s;
+}
+.blog-premium-featured-card:hover .blog-premium-read-btn .arrow {
+    transform: translateX(4px);
+}
+
+/* Blog Grid */
+.blog-premium-grid-section {
+    padding: 64px 32px 120px;
+    background: var(--rw-white);
+}
+.blog-premium-grid-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.blog-premium-grid-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--rw-dark-green);
+    margin-bottom: 48px;
+}
+.blog-premium-grid-title em {
+    font-style: italic;
+    font-family: serif;
+    font-weight: 400;
+}
+
+.blog-premium-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 40px;
+}
+
+.blog-premium-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    border-radius: 16px;
+    background: var(--rw-white);
+    transition: transform 0.4s ease;
+}
+.blog-premium-card:hover {
+    transform: translateY(-8px);
+}
+
+.blog-premium-card-img {
+    height: 260px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 24px;
+}
+.blog-premium-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+.blog-premium-card:hover .blog-premium-card-img img {
+    transform: scale(1.05);
+}
+.blog-premium-emoji-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+.blog-premium-card-cat {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--rw-dark-green);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.blog-premium-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.blog-premium-card-meta {
+    font-size: 12px;
+    color: var(--rw-dark-green);
+    opacity: 0.6;
+    margin-bottom: 12px;
+}
+.blog-premium-card-title {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--rw-dark-green);
+    margin-bottom: 16px;
+}
+.blog-premium-card-excerpt {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--rw-dark-green);
+    opacity: 0.75;
+    margin-bottom: 32px;
+}
+
+.blog-premium-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 55, 62, 0.06);
+}
+.blog-premium-card-author {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--rw-dark-green);
+}
+.blog-premium-card-arrow {
+    font-size: 18px;
+    color: var(--rw-dark-green);
+    transition: transform 0.3s;
+}
+.blog-premium-card:hover .blog-premium-card-arrow {
+    transform: translateX(4px);
+}
+
+@media (max-width: 900px) {
+    .blog-premium-featured-card {
+        flex-direction: column;
+        gap: 0;
+    }
+    .blog-premium-featured-img {
+        min-height: 300px;
+    }
+    .blog-premium-featured-body {
+        padding: 32px;
+    }
+    .blog-premium-featured-title {
+        font-size: 28px;
+    }
+}
+@media (max-width: 600px) {
+    .blog-premium-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Premium Blog Modal */
+.blog-premium-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: blogModalFadeIn 0.3s ease;
+}
+@keyframes blogModalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.blog-premium-modal-card {
+    background: var(--rw-white, #FAF3EC);
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    border-radius: 24px;
+    position: relative;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    animation: blogModalSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes blogModalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.blog-premium-modal-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0, 55, 62, 0.05);
+    border: none;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--dark-green, rgba(0, 55, 62, 1));
+    transition: all 0.2s;
+    z-index: 10;
+}
+.blog-premium-modal-close:hover {
+    background: rgba(0, 55, 62, 0.1);
+    transform: rotate(90deg);
+}
+
+.blog-premium-modal-head {
+    padding: 64px 64px 0;
+}
+.blog-premium-modal-topic {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark-green, rgba(0, 55, 62, 1));
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+    opacity: 0.7;
+}
+.blog-premium-modal-title {
+    font-size: 48px;
+    line-height: 1.15;
+    font-weight: 700;
+    color: var(--dark-green, rgba(0, 55, 62, 1));
+    margin-bottom: 24px;
+    font-family: var(--h-font-family, inherit);
+}
+.blog-premium-modal-meta {
+    font-size: 15px;
+    color: var(--dark-green, rgba(0, 55, 62, 1));
+    opacity: 0.6;
+    margin-bottom: 48px;
+}
+
+.blog-premium-modal-image {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    object-fit: cover;
+}
+
+.blog-premium-modal-content {
+    padding: 64px;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
+    hyphens: none !important;
+}
+.blog-premium-modal-content * {
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
+    hyphens: none !important;
+}
+.blog-premium-modal-content p {
+    font-size: 20px;
+    line-height: 1.8;
+    color: rgba(0, 55, 62, 0.9);
+    margin-bottom: 28px;
+    font-family: "Georgia", "Times New Roman", serif;
+}
+.blog-premium-modal-content h1,
+.blog-premium-modal-content h2,
+.blog-premium-modal-content h3 {
+    margin: 56px 0 24px;
+    color: var(--dark-green, rgba(0, 55, 62, 1));
+    font-family: var(--h-font-family, inherit);
+    line-height: 1.3;
+}
+.blog-premium-modal-content h2 { font-size: 32px; font-weight: 700; }
+.blog-premium-modal-content h3 { font-size: 26px; font-weight: 600; }
+.blog-premium-modal-content ul,
+.blog-premium-modal-content ol {
+    margin-bottom: 32px;
+    padding-left: 24px;
+}
+.blog-premium-modal-content li {
+    font-size: 20px;
+    line-height: 1.8;
+    color: rgba(0, 55, 62, 0.9);
+    font-family: "Georgia", "Times New Roman", serif;
+    margin-bottom: 12px;
+}
+.blog-premium-modal-content blockquote {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-style: italic;
+    font-size: 24px;
+    line-height: 1.6;
+    color: rgba(0, 55, 62, 0.8);
+    border-left: 4px solid #D8CFC4;
+    padding-left: 32px;
+    margin: 48px 0;
+}
+.blog-premium-modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    margin: 48px 0;
+}
+.blog-premium-modal-content a {
+    color: #C88D70;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+.blog-premium-modal-content a:hover {
+    border-color: #C88D70;
+}
+
+
+@media (max-width: 600px) {
+    .blog-premium-modal-overlay {
+        padding: 0;
+    }
+    .blog-premium-modal-card {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+    .blog-premium-modal-head,
+    .blog-premium-modal-content {
+        padding: 32px;
+    }
+    .blog-premium-modal-title {
+        font-size: 36px;
+    }
+    .blog-premium-modal-content p,
+    .blog-premium-modal-content li {
+        font-size: 18px;
+    }
 }

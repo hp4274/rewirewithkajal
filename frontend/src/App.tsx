@@ -5,6 +5,7 @@ import './styles/global.css';
 const Home = lazy(() => import('./pages/Home'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const Blogs = lazy(() => import('./pages/Blogs'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const Appointment = lazy(() => import('./pages/Appointment'));
 const AdminLogin = lazy(() => import('./admin/AdminLogin'));
 const Admin = lazy(() => import('./admin/Admin'));
@@ -35,6 +36,7 @@ const RoutedAppShell = () => {
           <Route path="/" element={<PublicRouteLayout><Home /></PublicRouteLayout>} />
           <Route path="/about" element={<PublicRouteLayout><AboutPage /></PublicRouteLayout>} />
           <Route path="/blogs" element={<PublicRouteLayout><Blogs /></PublicRouteLayout>} />
+          <Route path="/blogs/:id" element={<PublicRouteLayout><BlogDetail /></PublicRouteLayout>} />
           <Route path="/appointment" element={<PublicRouteLayout><Appointment /></PublicRouteLayout>} />
           <Route path="/intake-form" element={<PublicRouteLayout><IntakeForm /></PublicRouteLayout>} />
 

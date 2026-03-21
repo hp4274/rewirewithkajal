@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
@@ -41,8 +41,8 @@ const Blogs: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [activeBlog, setActiveBlog] = useState<Blog | null>(null);
     const [activeTopic, setActiveTopic] = useState<string>(ALL_TOPICS);
+    const navigate = useNavigate();
 
     // Filter categories that exist dynamically, but also static topics
     // If backend returns distinct categories we could merge them.
@@ -94,7 +94,7 @@ const Blogs: React.FC = () => {
     }, [activeTopic, loading]);
 
     if (loading) {
-        return <div className="rb-page-wrapper rbv2" style={{ paddingTop: '100px', textAlign: 'center', minHeight: '100vh', background: 'var(--rb-cream)' }}>Loading mind-expanding insights...</div>;
+        return <div className="abt2-wrapper" style={{ paddingTop: '100px', textAlign: 'center', minHeight: '100vh' }}>Loading mind-expanding insights...</div>;
     }
 
     const filteredBlogs = activeTopic === ALL_TOPICS
@@ -109,45 +109,44 @@ const Blogs: React.FC = () => {
     };
 
     return (
-        <div className="rb-page-wrapper rbv2">
+        <div className="abt2-wrapper">
 
-
-            {/* HERO SECTION */}
-            <header className="rb-blog-hero">
-                <div style={{ position: 'relative', zIndex: 8, paddingLeft: '10px', width: 'fit-content', marginRight: 'auto' }}>
-                    <Link to="/" className="rbv2-home-link" aria-label="Back to home page">
-                        <span className="rbv2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
+            {/* HEADER SECTION */}
+            <div style={{
+                position: 'relative',
+                zIndex: 8,
+                paddingTop: '12px',
+                paddingLeft: '18px',
+                paddingRight: '18px',
+                paddingBottom: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+                    <Link to="/" className="abt2-home-link" aria-label="Back to home page" style={{ margin: 0 }}>
+                        <span className="abt2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
                         <span>Back to Home</span>
                     </Link>
                 </div>
-                <div className="rb-blog-hero-bg">
-                    <div className="rb-blog-hero-blob"></div>
-                    <div className="rb-blog-hero-blob"></div>
-                    <div className="rb-blog-hero-blob"></div>
-                </div>
-                <div className="rb-blog-hero-content"   >
 
-                    <div className="rb-blog-eyebrow">
-                        <span className="rb-blog-eyebrow-line"></span>
-                        Mental Wellness Insights
-                        <span className="rb-blog-eyebrow-line"></span>
-                    </div>
-                    <h1 className="rb-blog-hero-title">The <em>Rewire</em> Blog</h1>
-                    <p className="rb-blog-hero-sub">Honest, research-backed writing on anxiety, healing, relationships, and the everyday art of taking care of your mind.</p>
-
-                    <div className="rb-blog-filters rb-reveal">
+                <div style={{ display: 'flex', justifyContent: 'center', maxWidth: '100%' }}>
+                    <div className="blog-premium-filters rb-reveal" style={{ maxWidth: '100%', width: 'max-content' }}>
                         {TOPICS.map(topic => (
                             <button
                                 key={topic}
-                                className={`rb-filter-pill ${activeTopic === topic ? 'active' : ''}`}
+                                className={`blog-premium-filter-pill ${activeTopic === topic ? 'active' : ''}`}
                                 onClick={() => setActiveTopic(topic)}
+                                style={{ flexShrink: 0 }}
                             >
                                 {topic === 'All Topics' ? 'All Posts' : topic}
                             </button>
                         ))}
                     </div>
                 </div>
-            </header>
+
+                <div style={{ flex: 1 }}></div>
+            </div>
 
             {filteredBlogs.length === 0 ? (
                 <div className="rb-featured-section" style={{ textAlign: 'center', paddingBottom: '10rem' }}>
@@ -157,35 +156,35 @@ const Blogs: React.FC = () => {
                 <>
                     {/* FEATURED POST */}
                     {featuredBlog && (
-                        <section className="rb-featured-section">
-                            <div className="rb-featured-inner">
-                                <div className="rb-featured-label rb-reveal">Featured Article</div>
-                                <a href="#!" className="rb-featured-card rb-reveal rb-d1" onClick={(e) => { e.preventDefault(); setActiveBlog(featuredBlog); }}>
-                                    <div className="rb-featured-img">
+                        <section className="blog-premium-featured-section">
+                            <div className="blog-premium-featured-inner">
+                                <div className="blog-premium-featured-label rb-reveal">Featured Article</div>
+                                <a href={`/blogs/${featuredBlog.id}`} className="blog-premium-featured-card rb-reveal" onClick={(e) => { e.preventDefault(); navigate(`/blogs/${featuredBlog.id}`); }}>
+                                    <div className="blog-premium-featured-img">
                                         {featuredBlog.image_url ? (
                                             <img src={resolveMediaUrl(featuredBlog.image_url)} alt={featuredBlog.title} />
                                         ) : (
-                                            <div className="rb-featured-img-emoji">🧠</div>
+                                            <div className="blog-premium-img-emoji">🧠</div>
                                         )}
-                                        <div className="rb-featured-img-overlay"></div>
-                                        <div className="rb-featured-cat-badge">{formatCategory(featuredBlog.category)}</div>
-                                        <div className="rb-featured-reading-time">{featuredBlog.reading_time || '5 min read'}</div>
+                                        <div className="blog-premium-cat-badge">{formatCategory(featuredBlog.category)}</div>
                                     </div>
-                                    <div className="rb-featured-body">
-                                        <div className="rb-featured-date">{new Date(featuredBlog.created_at).toLocaleDateString()}</div>
-                                        <div className="rb-featured-title">{featuredBlog.title}</div>
-                                        <div className="rb-featured-excerpt">
-                                            {featuredBlog.excerpt || blogContentToPlainText(featuredBlog.content).substring(0, 150) + '...'}
+                                    <div className="blog-premium-featured-body">
+                                        <div className="blog-premium-date-time">
+                                            {new Date(featuredBlog.created_at).toLocaleDateString()} &middot; {featuredBlog.reading_time || '5 min read'}
                                         </div>
-                                        <div className="rb-featured-footer">
-                                            <div className="rb-author-chip">
-                                                <div className="rb-author-avatar">K</div>
-                                                <div>
-                                                    <div className="rb-author-name">Kajal</div>
-                                                    <div className="rb-author-role">Licensed Therapist</div>
+                                        <div className="blog-premium-featured-title">{featuredBlog.title}</div>
+                                        <div className="blog-premium-featured-excerpt">
+                                            {featuredBlog.excerpt || blogContentToPlainText(featuredBlog.content).substring(0, 160) + '...'}
+                                        </div>
+                                        <div className="blog-premium-featured-footer">
+                                            <div className="blog-premium-author">
+                                                <div className="blog-premium-author-avatar">K</div>
+                                                <div className="blog-premium-author-info">
+                                                    <strong>Kajal</strong>
+                                                    <span>Licensed Therapist</span>
                                                 </div>
                                             </div>
-                                            <button className="rb-read-btn">Read Full Article <span className="rb-read-btn-arrow">→</span></button>
+                                            <span className="blog-premium-read-btn">Read Article <span className="arrow">&rarr;</span></span>
                                         </div>
                                     </div>
                                 </a>
@@ -195,43 +194,39 @@ const Blogs: React.FC = () => {
 
                     {/* BLOG GRID */}
                     {remainingBlogs.length > 0 && (
-                        <section className="rb-blog-grid-section">
-                            <div className="rb-blog-grid-inner">
-                                <div className="rb-blog-grid-header rb-reveal">
-                                    <div className="rb-grid-label">More <em>Articles</em></div>
+                        <section className="blog-premium-grid-section">
+                            <div className="blog-premium-grid-inner">
+                                <div className="blog-premium-grid-header rb-reveal">
+                                    <h2 className="blog-premium-grid-title">More <em>Insights</em></h2>
                                 </div>
-                                <div className="rb-blog-grid">
+                                <div className="blog-premium-grid">
                                     {remainingBlogs.map((blog, index) => {
-                                        // Some pseudo-random colors for the missing images
-                                        const gradients = [
-                                            'linear-gradient(145deg,#A8C8D8,#6898B8)',
-                                            'linear-gradient(145deg,#6B5040,#3B2E24)',
-                                            'linear-gradient(145deg,#D8B0C0,#A87888)',
-                                            'linear-gradient(145deg,#C8D8B0,#88A868)',
-                                            'linear-gradient(145deg,#B8D0C0,#78A888)',
-                                            'linear-gradient(145deg,#F4C090,#D08050)'
+                                        const backgrounds = [
+                                            '#F4E8DB', '#E6EBE0', '#EAE6EB', '#F1EDEE', '#E3ECE9', '#F0E6DD'
                                         ];
-                                        const emojis = ['🔌', '🌊', '💞', '🪞', '🌱', '✨'];
+                                        const emojis = ['💡', '🌿', '✨', '🤍', '🌱', '🕊️'];
 
                                         return (
-                                            <a href="#!" key={blog.id} className={getBlogImageStyle(index + 1)} onClick={(e) => { e.preventDefault(); setActiveBlog(blog); }}>
-                                                <div className="rb-blog-card-img" style={{ background: blog.image_url ? '#FAF3EC' : gradients[index % gradients.length] }}>
+                                            <a href={`/blogs/${blog.id}`} key={blog.id} className="blog-premium-card rb-reveal" onClick={(e) => { e.preventDefault(); navigate(`/blogs/${blog.id}`); }}>
+                                                <div className="blog-premium-card-img" style={{ background: blog.image_url ? '#FAF3EC' : backgrounds[index % backgrounds.length] }}>
                                                     {blog.image_url ? (
-                                                        <img src={resolveMediaUrl(blog.image_url)} alt={blog.title} />
+                                                        <img src={resolveMediaUrl(blog.image_url)} alt={blog.title} loading="lazy" />
                                                     ) : (
-                                                        <div style={{ fontSize: '3.5rem', color: 'white' }}>{emojis[index % emojis.length]}</div>
+                                                        <div className="blog-premium-emoji-fallback" style={{ fontSize: '3rem' }}>{emojis[index % emojis.length]}</div>
                                                     )}
-                                                    <div className="rb-blog-card-cat">{formatCategory(blog.category)}</div>
+                                                    <div className="blog-premium-card-cat">{formatCategory(blog.category)}</div>
                                                 </div>
-                                                <div className="rb-blog-card-body">
-                                                    <div className="rb-blog-card-date">{new Date(blog.created_at).toLocaleDateString()} · {blog.reading_time || '5 min read'}</div>
-                                                    <div className="rb-blog-card-title">{blog.title}</div>
-                                                    <div className="rb-blog-card-excerpt">
-                                                        {blog.excerpt || blogContentToPlainText(blog.content).substring(0, 100) + '...'}
+                                                <div className="blog-premium-card-body">
+                                                    <div className="blog-premium-card-meta">
+                                                        {new Date(blog.created_at).toLocaleDateString()} &middot; {blog.reading_time || '5 min read'}
                                                     </div>
-                                                    <div className="rb-blog-card-footer">
-                                                        <span className="rb-blog-card-read">By Kajal</span>
-                                                        <span className="rb-blog-card-arrow">→</span>
+                                                    <h3 className="blog-premium-card-title">{blog.title}</h3>
+                                                    <p className="blog-premium-card-excerpt">
+                                                        {blog.excerpt || blogContentToPlainText(blog.content).substring(0, 110) + '...'}
+                                                    </p>
+                                                    <div className="blog-premium-card-footer">
+                                                        <span className="blog-premium-card-author">By Kajal</span>
+                                                        <span className="blog-premium-card-arrow">&rarr;</span>
                                                     </div>
                                                 </div>
                                             </a>
@@ -242,43 +237,6 @@ const Blogs: React.FC = () => {
                         </section>
                     )}
                 </>
-            )}
-
-            {/* QUICK MODAL VIEW FOR READING */}
-            {activeBlog && (
-                <div className="rb-modal-overlay" onClick={() => setActiveBlog(null)}>
-                    <article className="rb-modal-card" onClick={(e) => e.stopPropagation()}>
-                        <button
-                            type="button"
-                            className="rb-modal-close"
-                            aria-label="Close article preview"
-                            onClick={() => setActiveBlog(null)}
-                        >
-                            ×
-                        </button>
-
-                        <div className="rb-modal-head">
-                            <div className="rb-modal-topic">{formatCategory(activeBlog.category)}</div>
-                            <h2 className="rb-modal-title">{activeBlog.title}</h2>
-                            <div className="rb-modal-meta">
-                                {new Date(activeBlog.created_at).toLocaleDateString()} · {activeBlog.reading_time || '5 min read'}
-                            </div>
-                        </div>
-
-                        {activeBlog.image_url && (
-                            <img
-                                src={resolveMediaUrl(activeBlog.image_url)}
-                                alt={activeBlog.title}
-                                className="rb-modal-image"
-                            />
-                        )}
-
-                        <div
-                            className="blog-rich-content rb-modal-content"
-                            dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(activeBlog.content) }}
-                        />
-                    </article>
-                </div>
             )}
         </div>
     );
