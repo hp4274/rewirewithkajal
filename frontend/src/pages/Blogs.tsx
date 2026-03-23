@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
-import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
+import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
 
 interface Blog {
@@ -103,10 +103,6 @@ const Blogs: React.FC = () => {
 
     const featuredBlog = filteredBlogs.length > 0 ? filteredBlogs[0] : null;
     const remainingBlogs = filteredBlogs.length > 1 ? filteredBlogs.slice(1) : [];
-
-    const getBlogImageStyle = (index: number) => {
-        return "rb-blog-card rb-reveal rb-d1";
-    };
 
     return (
         <div className="abt2-wrapper">

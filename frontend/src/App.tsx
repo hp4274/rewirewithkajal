@@ -15,6 +15,8 @@ const IntakeForm = lazy(() => import('./pages/IntakeForm'));
 const AnimatedBackground = lazy(() => import('./components/AnimatedBackground'));
 const Footer = lazy(() => import('./components/Footer'));
 const Preloader = lazy(() => import('./components/Preloader'));
+const ScrollToTopButton = lazy(() => import('./components/ScrollToTopButton'));
+const ScrollToTop = lazy(() => import('./components/ScrollToTop'));
 
 const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <main id="main-content" tabIndex={-1}>
@@ -30,6 +32,8 @@ const RoutedAppShell = () => {
   return (
     <>
       {!isAdminRoute && <Preloader />}
+      <ScrollToTop />
+      {!isAdminRoute && <ScrollToTopButton />}
       <div className="app-container">
         {shouldShowAnimatedBackground && <AnimatedBackground />}
         <Routes>

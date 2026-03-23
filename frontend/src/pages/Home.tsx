@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronUp, ChevronDown, CalendarCheck, Users, Activity, Brain, Heart, Instagram, Twitter, Youtube } from 'lucide-react';
+import { ChevronUp, ChevronDown, Users, Activity, Brain, Heart, Instagram, Twitter, Youtube } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
