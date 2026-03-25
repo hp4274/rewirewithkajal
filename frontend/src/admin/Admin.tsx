@@ -770,9 +770,9 @@ const Admin: React.FC = () => {
                     </div>
                     <div className="a2-leads-actions">
                         <div className="a2-pill-group">
-                            <button className={`a2-pill ${activeLeadTab === 'new' ? 'active' : ''}`} onClick={() => setActiveLeadTab('new')}>New Leads</button>
-                            <button className={`a2-pill ${activeLeadTab === 'accepted' ? 'active' : ''}`} onClick={() => setActiveLeadTab('accepted')}>Accepted</button>
-                            <button className={`a2-pill ${activeLeadTab === 'rejected' ? 'active' : ''}`} onClick={() => setActiveLeadTab('rejected')}>Rejected</button>
+                            <button className={`a2-pill ${activeLeadTab === 'new' ? 'active' : ''}`} onClick={() => setActiveLeadTab('new')}>New Leads ({allLeads.filter((l: any) => l.status === 'new').length})</button>
+                            <button className={`a2-pill ${activeLeadTab === 'accepted' ? 'active' : ''}`} onClick={() => setActiveLeadTab('accepted')}>Accepted ({allLeads.filter((l: any) => l.status === 'accepted').length})</button>
+                            <button className={`a2-pill ${activeLeadTab === 'rejected' ? 'active' : ''}`} onClick={() => setActiveLeadTab('rejected')}>Rejected ({allLeads.filter((l: any) => l.status === 'rejected').length})</button>
                         </div>
                         <div className="a2-view-toggle">
                             <button
@@ -1191,8 +1191,8 @@ const Admin: React.FC = () => {
                     </div>
                     <div className="a2-leads-actions">
                         <div className="a2-pill-group">
-                            <button className={`a2-pill ${activeCustomerTab === 'active' ? 'active' : ''}`} onClick={() => setActiveCustomerTab('active')}>Active Customers</button>
-                            <button className={`a2-pill ${activeCustomerTab === 'inactive' ? 'active' : ''}`} onClick={() => setActiveCustomerTab('inactive')}>Inactive Customers</button>
+                            <button className={`a2-pill ${activeCustomerTab === 'active' ? 'active' : ''}`} onClick={() => setActiveCustomerTab('active')}>Active Customers ({allCustomers.filter((c: any) => c.is_active === true).length})</button>
+                            <button className={`a2-pill ${activeCustomerTab === 'inactive' ? 'active' : ''}`} onClick={() => setActiveCustomerTab('inactive')}>Inactive Customers ({allCustomers.filter((c: any) => c.is_active === false).length})</button>
                         </div>
                         <div className="a2-view-toggle">
                             <button
