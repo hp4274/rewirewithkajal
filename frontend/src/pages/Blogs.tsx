@@ -111,16 +111,15 @@ const Blogs: React.FC = () => {
             <div style={{
                 position: 'relative',
                 zIndex: 8,
-                paddingTop: '12px',
                 paddingLeft: '18px',
                 paddingRight: '18px',
                 paddingBottom: '40px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center'
             }}>
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
-                    <Link to="/" className="abt2-home-link" aria-label="Back to home page" style={{ margin: 0 }}>
+                    <Link to="/" className="abt2-home-link" aria-label="Back to home page">
                         <span className="abt2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
                         <span>Back to Home</span>
                     </Link>
