@@ -3,7 +3,8 @@ const hasWindow = typeof window !== 'undefined';
 const SCRIPT_SCHEME_REGEX = /^\s*javascript\s*:/i;
 
 const removeDangerousNodes = (root: ParentNode) => {
-    root.querySelectorAll('script, style, iframe, object, embed').forEach((node) => node.remove());
+    // Remove dangerous elements AND word-break hints
+    root.querySelectorAll('script, style, iframe, object, embed, wbr').forEach((node) => node.remove());
 
     root.querySelectorAll('*').forEach((el) => {
         Array.from(el.attributes).forEach((attr) => {
@@ -29,7 +30,12 @@ export const sanitizeBlogHtml = (content: string): string => {
     const parser = new DOMParser();
     const parsed = parser.parseFromString(raw, 'text/html');
     removeDangerousNodes(parsed.body);
-    return parsed.body.innerHTML;
+    // Remove soft hyphens and zero-width spaces, and replace non-breaking spaces with regular spaces
+    let html = parsed.body.innerHTML;
+    html = html.replace(/&nbsp;/gi, ' ');
+    html = html.replace(/[\u00A0]/g, ' ');
+    html = html.replace(/[\u00AD\u200B\u200C\u200D\u2060\uFEFF]/g, '');
+    return html;
 };
 
 export const blogContentToPlainText = (content: string): string => {

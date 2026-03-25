@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
-import { blogContentToPlainText } from '../utils/blogContent';
+import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
 
 interface Blog {
@@ -40,7 +40,7 @@ const formatCategory = (category?: string) => {
 const Blogs: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState<string | null>(null);
+    const [loadError, setLoadError] = useState('');
     const [activeTopic, setActiveTopic] = useState<string>(ALL_TOPICS);
     const navigate = useNavigate();
 
@@ -52,7 +52,7 @@ const Blogs: React.FC = () => {
         let isMounted = true;
 
         const fetchBlogs = async () => {
-            setLoadError(null);
+            setLoadError('');
             try {
                 const response = await requestWithApiFallback(() =>
                     axios.get(apiUrl('/api/blogs/public?limit=24&page=1'), {
@@ -92,6 +92,9 @@ const Blogs: React.FC = () => {
             reveals.forEach(el => el.classList.add('visible'));
         }, 150);
     }, [activeTopic, loading]);
+
+    // Lock body scroll when modal is open
+    // Removed body scroll lock since we no longer use a modal
 
     if (loading) {
         return <div className="abt2-wrapper" style={{ paddingTop: '100px', textAlign: 'center', minHeight: '100vh' }}>Loading mind-expanding insights...</div>;
@@ -154,7 +157,7 @@ const Blogs: React.FC = () => {
                         <section className="blog-premium-featured-section">
                             <div className="blog-premium-featured-inner">
                                 <div className="blog-premium-featured-label rb-reveal">Featured Article</div>
-                                <a href={`/blogs/${featuredBlog.id}`} className="blog-premium-featured-card rb-reveal" onClick={(e) => { e.preventDefault(); navigate(`/blogs/${featuredBlog.id}`); }}>
+                                <div className="blog-premium-featured-card rb-reveal" style={{ cursor: 'pointer' }} onClick={() => navigate(`/blogs/${featuredBlog.id}`)}>
                                     <div className="blog-premium-featured-img">
                                         {featuredBlog.image_url ? (
                                             <img src={resolveMediaUrl(featuredBlog.image_url)} alt={featuredBlog.title} />
@@ -182,7 +185,7 @@ const Blogs: React.FC = () => {
                                             <span className="blog-premium-read-btn">Read Article <span className="arrow">&rarr;</span></span>
                                         </div>
                                     </div>
-                                </a>
+                                </div>
                             </div>
                         </section>
                     )}
@@ -202,7 +205,7 @@ const Blogs: React.FC = () => {
                                         const emojis = ['💡', '🌿', '✨', '🤍', '🌱', '🕊️'];
 
                                         return (
-                                            <a href={`/blogs/${blog.id}`} key={blog.id} className="blog-premium-card rb-reveal" onClick={(e) => { e.preventDefault(); navigate(`/blogs/${blog.id}`); }}>
+                                            <div key={blog.id} className="blog-premium-card rb-reveal" style={{ cursor: 'pointer' }} onClick={() => navigate(`/blogs/${blog.id}`)}>
                                                 <div className="blog-premium-card-img" style={{ background: blog.image_url ? '#FAF3EC' : backgrounds[index % backgrounds.length] }}>
                                                     {blog.image_url ? (
                                                         <img src={resolveMediaUrl(blog.image_url)} alt={blog.title} loading="lazy" />
@@ -224,7 +227,7 @@ const Blogs: React.FC = () => {
                                                         <span className="blog-premium-card-arrow">&rarr;</span>
                                                     </div>
                                                 </div>
-                                            </a>
+                                            </div>
                                         );
                                     })}
                                 </div>
@@ -233,6 +236,8 @@ const Blogs: React.FC = () => {
                     )}
                 </>
             )}
+
+            {/* Modals removed for standalone page navigation */}
         </div>
     );
 };
