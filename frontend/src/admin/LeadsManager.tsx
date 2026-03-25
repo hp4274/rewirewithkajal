@@ -345,17 +345,23 @@ const LeadsManager: React.FC = () => {
         </div>
     );
 
+    const newLeadsCount = leads.filter(l => l.status === 'new').length;
+    const acceptedLeadsCount = leads.filter(l => l.status === 'accepted').length;
+    const rejectedLeadsCount = leads.filter(l => l.status === 'rejected').length;
+    const activeCustomersCount = customers.filter(c => c.status === 'confirmed' || (c.status !== 'deactivated' && c.status !== 'declined')).length;
+    const inactiveCustomersCount = customers.filter(c => c.status === 'deactivated' || c.status === 'declined').length;
+
     return (
         <div className="leads-manager-container">
             <div className="leads-controls-bar">
                 <div className="leads-tabs-scroll-container">
                     <div className="leads-tabs">
-                        <button className={`lead-tab ${activeTab === 'new' ? 'active' : ''}`} onClick={() => setActiveTab('new')}>New Leads</button>
-                        <button className={`lead-tab ${activeTab === 'accepted' ? 'active' : ''}`} onClick={() => setActiveTab('accepted')}>Accepted</button>
-                        <button className={`lead-tab ${activeTab === 'rejected' ? 'active' : ''}`} onClick={() => setActiveTab('rejected')}>Rejected</button>
+                        <button className={`lead-tab ${activeTab === 'new' ? 'active' : ''}`} onClick={() => setActiveTab('new')}>New Leads ({newLeadsCount})</button>
+                        <button className={`lead-tab ${activeTab === 'accepted' ? 'active' : ''}`} onClick={() => setActiveTab('accepted')}>Accepted ({acceptedLeadsCount})</button>
+                        <button className={`lead-tab ${activeTab === 'rejected' ? 'active' : ''}`} onClick={() => setActiveTab('rejected')}>Rejected ({rejectedLeadsCount})</button>
                         <div className="tab-divider" />
-                        <button className={`lead-tab ${activeTab === 'active' ? 'active' : ''}`} onClick={() => setActiveTab('active')}>Active Customers</button>
-                        <button className={`lead-tab ${activeTab === 'inactive' ? 'active' : ''}`} onClick={() => setActiveTab('inactive')}>Inactive</button>
+                        <button className={`lead-tab ${activeTab === 'active' ? 'active' : ''}`} onClick={() => setActiveTab('active')}>Active Customers ({activeCustomersCount})</button>
+                        <button className={`lead-tab ${activeTab === 'inactive' ? 'active' : ''}`} onClick={() => setActiveTab('inactive')}>Inactive ({inactiveCustomersCount})</button>
                     </div>
                 </div>
                 <div className="view-toggle-container">
