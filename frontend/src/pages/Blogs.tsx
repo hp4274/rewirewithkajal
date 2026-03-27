@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, X } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
-import { blogContentToPlainText, sanitizeBlogHtml } from '../utils/blogContent';
+import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
 
 interface Blog {

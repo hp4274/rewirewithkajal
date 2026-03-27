@@ -49,11 +49,11 @@ const Appointment: React.FC = () => {
             {/* Existing Patient Banner */}
             <section className="serene-existing-banner">
                 <div>
-                    <h3 className="serene-font-headline">Returning to Serene?</h3>
-                    <p>Access your existing profile to book follow-up appointments instantly.</p>
+                    <h3 className="serene-font-headline">Ready to dive deeper?</h3>
+                    <p>If you're ready to book an advanced consultation, please answer our highly detailed Intake Questionnaires to help us prepare.</p>
                 </div>
                 <button onClick={handleAccessForm} className="serene-btn serene-banner-btn">
-                    Existing Patients Login
+                    Patients Intake Form
                 </button>
             </section>
 
@@ -92,10 +92,10 @@ const Appointment: React.FC = () => {
             <section className="serene-intake-section" id="intake">
                 <div className="serene-intake-container">
                     <div className="serene-intake-heading">
-                        <h2 className="serene-font-headline">Intake Assessment</h2>
+                        <h2 className="serene-font-headline">Assessment1 Form</h2>
                         <p style={{ color: '#5e6059', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Secure &amp; Private</p>
                     </div>
-                    
+
                     {/* Preserve existing form element and function */}
                     <div style={{ width: '100%', maxWidth: '820px', margin: '0 auto' }}>
                         <AppointmentForm isRefactoredDesign={true} />
