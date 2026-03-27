@@ -92,7 +92,7 @@ const Appointment: React.FC = () => {
             <section className="serene-intake-section" id="intake">
                 <div className="serene-intake-container">
                     <div className="serene-intake-heading">
-                        <h2 className="serene-font-headline">Assessment1 Form</h2>
+                        <h2 className="serene-font-headline">Assessment Form</h2>
                         <p style={{ color: '#5e6059', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Secure &amp; Private</p>
                     </div>
 
@@ -105,7 +105,6 @@ const Appointment: React.FC = () => {
 
             {/* Mission Statement Pull Quote */}
             <section className="serene-quote-section">
-                <div className="serene-material-symbols serene-quote-icon">format_quote</div>
                 <blockquote className="serene-font-headline">
                     "Dedicated to helping you navigate <i>life's complexities</i> with curated grace and evidence-based precision."
                 </blockquote>
