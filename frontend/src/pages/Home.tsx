@@ -79,7 +79,6 @@ const HomeNavbar: React.FC = () => {
                     <img src={logoMark} alt="Rewire With Kajal" />
                 </div>
                 <nav className="hhn-links">
-                    <button onClick={() => navigate('/')}>Home</button>
                     <button onClick={() => navigate('/about')}>About</button>
                     <button onClick={() => navigate('/blogs')}>Blog</button>
                     <button onClick={() => navigate('/appointment')} className="hhn-book-btn">Book Appointment</button>
