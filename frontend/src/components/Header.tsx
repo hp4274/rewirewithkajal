@@ -134,9 +134,7 @@ const Header: React.FC = () => {
 
                     <nav className="header-nav" aria-label="Main navigation">
                         <ul>
-                            <li>
-                                <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
-                            </li>
+
                             <li>
                                 <NavLink to="/about" className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
                             </li>
@@ -188,7 +186,6 @@ const Header: React.FC = () => {
                             <p className="mobile-sidebar-brand">Rewire With Kajal</p>
 
                             <nav className="mobile-sidebar-nav" aria-label="Mobile navigation">
-                                <NavLink to="/" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink>
                                 <NavLink to="/about" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>About</NavLink>
                                 <NavLink to="/blogs" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Blogs</NavLink>
                                 <NavLink to="/appointment" onClick={() => closeMenu()} className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink>
