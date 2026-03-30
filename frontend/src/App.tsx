@@ -13,7 +13,6 @@ const Admin = lazy(() => import('./admin/Admin'));
 const CustomerProfile = lazy(() => import('./admin/CustomerProfile'));
 const CustomerFormDetails = lazy(() => import('./admin/CustomerFormDetails'));
 const IntakeForm = lazy(() => import('./pages/IntakeForm'));
-const AnimatedBackground = lazy(() => import('./components/AnimatedBackground'));
 const Footer = lazy(() => import('./components/Footer'));
 const Preloader = lazy(() => import('./components/Preloader'));
 const ScrollToTopButton = lazy(() => import('./components/ScrollToTopButton'));
@@ -35,7 +34,6 @@ const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 const RoutedAppShell = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const shouldShowAnimatedBackground = !isAdminRoute && location.pathname !== '/' && location.pathname !== '/appointment' && location.pathname !== '/intake-form';
 
   return (
     <>
@@ -43,7 +41,6 @@ const RoutedAppShell = () => {
       <ScrollToTop />
       {!isAdminRoute && <ScrollToTopButton />}
       <div className="app-container">
-        {shouldShowAnimatedBackground && <AnimatedBackground />}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<PublicRouteLayout><Home /></PublicRouteLayout>} />
