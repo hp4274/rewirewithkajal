@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import './styles/global.css';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -19,9 +20,16 @@ const ScrollToTopButton = lazy(() => import('./components/ScrollToTopButton'));
 const ScrollToTop = lazy(() => import('./components/ScrollToTop'));
 
 const PublicRouteLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <main id="main-content" tabIndex={-1}>
+  <motion.main 
+      id="main-content" 
+      tabIndex={-1}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.4 }}
+  >
     {children}
-  </main>
+  </motion.main>
 );
 
 const RoutedAppShell = () => {
@@ -36,19 +44,21 @@ const RoutedAppShell = () => {
       {!isAdminRoute && <ScrollToTopButton />}
       <div className="app-container">
         {shouldShowAnimatedBackground && <AnimatedBackground />}
-        <Routes>
-          <Route path="/" element={<PublicRouteLayout><Home /></PublicRouteLayout>} />
-          <Route path="/about" element={<PublicRouteLayout><AboutPage /></PublicRouteLayout>} />
-          <Route path="/blogs" element={<PublicRouteLayout><Blogs /></PublicRouteLayout>} />
-          <Route path="/blogs/:id" element={<PublicRouteLayout><BlogDetail /></PublicRouteLayout>} />
-          <Route path="/appointment" element={<PublicRouteLayout><Appointment /></PublicRouteLayout>} />
-          <Route path="/intake-form" element={<PublicRouteLayout><IntakeForm /></PublicRouteLayout>} />
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<PublicRouteLayout><Home /></PublicRouteLayout>} />
+            <Route path="/about" element={<PublicRouteLayout><AboutPage /></PublicRouteLayout>} />
+            <Route path="/blogs" element={<PublicRouteLayout><Blogs /></PublicRouteLayout>} />
+            <Route path="/blogs/:id" element={<PublicRouteLayout><BlogDetail /></PublicRouteLayout>} />
+            <Route path="/appointment" element={<PublicRouteLayout><Appointment /></PublicRouteLayout>} />
+            <Route path="/intake-form" element={<PublicRouteLayout><IntakeForm /></PublicRouteLayout>} />
 
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/customer/:id" element={<CustomerProfile />} />
-          <Route path="/admin/customer/:id/form/:formId" element={<CustomerFormDetails />} />
-          <Route path="/admin/*" element={<Admin />} />
-        </Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/customer/:id" element={<CustomerProfile />} />
+            <Route path="/admin/customer/:id/form/:formId" element={<CustomerFormDetails />} />
+            <Route path="/admin/*" element={<Admin />} />
+          </Routes>
+        </AnimatePresence>
       </div>
       {!isAdminRoute && <Footer />}
     </>

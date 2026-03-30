@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
+import Reveal from '../components/Reveal';
 
 interface Blog {
     id: number;
@@ -83,15 +84,7 @@ const Blogs: React.FC = () => {
         };
     }, []);
 
-    // Reveal Animation effect on mount and category change
-    useEffect(() => {
-        const reveals = document.querySelectorAll('.rb-reveal');
-        reveals.forEach(el => el.classList.remove('visible'));
-
-        setTimeout(() => {
-            reveals.forEach(el => el.classList.add('visible'));
-        }, 150);
-    }, [activeTopic, loading]);
+    
 
     // Lock body scroll when modal is open
     // Removed body scroll lock since we no longer use a modal
@@ -129,7 +122,7 @@ const Blogs: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', maxWidth: '100%' }}>
-                    <div className="blog-premium-filters rb-reveal" style={{ maxWidth: '100%', width: 'max-content' }}>
+                    <Reveal className="blog-premium-filters" style={{ maxWidth: '100%', width: 'max-content' }} delayMs={100}>
                         {TOPICS.map(topic => (
                             <button
                                 key={topic}
@@ -140,24 +133,24 @@ const Blogs: React.FC = () => {
                                 {topic === 'All Topics' ? 'All Posts' : topic}
                             </button>
                         ))}
-                    </div>
+                    </Reveal>
                 </div>
 
                 <div style={{ flex: 1 }}></div>
             </div>
 
             {filteredBlogs.length === 0 ? (
-                <div className="rb-featured-section" style={{ textAlign: 'center', paddingBottom: '10rem' }}>
-                    <div className="rb-reveal">{loadError || 'More insights are coming soon.'}</div>
-                </div>
+                <Reveal className="rb-featured-section" style={{ textAlign: 'center', paddingBottom: '10rem' }}>
+                    <div>{loadError || 'More insights are coming soon.'}</div>
+                </Reveal>
             ) : (
                 <>
                     {/* FEATURED POST */}
                     {featuredBlog && (
                         <section className="blog-premium-featured-section">
                             <div className="blog-premium-featured-inner">
-                                <div className="blog-premium-featured-label rb-reveal">Featured Article</div>
-                                <div className="blog-premium-featured-card rb-reveal" style={{ cursor: 'pointer' }} onClick={() => navigate(`/blogs/${featuredBlog.id}`)}>
+                                <Reveal className="blog-premium-featured-label">Featured Article</Reveal>
+                                <Reveal className="blog-premium-featured-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/blogs/${featuredBlog.id}`)} delayMs={150}>
                                     <div className="blog-premium-featured-img">
                                         {featuredBlog.image_url ? (
                                             <img src={resolveMediaUrl(featuredBlog.image_url)} alt={featuredBlog.title} />
@@ -185,7 +178,7 @@ const Blogs: React.FC = () => {
                                             <span className="blog-premium-read-btn">Read Article <span className="arrow">&rarr;</span></span>
                                         </div>
                                     </div>
-                                </div>
+                                </Reveal>
                             </div>
                         </section>
                     )}
@@ -194,9 +187,9 @@ const Blogs: React.FC = () => {
                     {remainingBlogs.length > 0 && (
                         <section className="blog-premium-grid-section">
                             <div className="blog-premium-grid-inner">
-                                <div className="blog-premium-grid-header rb-reveal">
+                                <Reveal className="blog-premium-grid-header">
                                     <h2 className="blog-premium-grid-title">More <em>Insights</em></h2>
-                                </div>
+                                </Reveal>
                                 <div className="blog-premium-grid">
                                     {remainingBlogs.map((blog, index) => {
                                         const backgrounds = [
@@ -205,7 +198,7 @@ const Blogs: React.FC = () => {
                                         const emojis = ['💡', '🌿', '✨', '🤍', '🌱', '🕊️'];
 
                                         return (
-                                            <div key={blog.id} className="blog-premium-card rb-reveal" style={{ cursor: 'pointer' }} onClick={() => navigate(`/blogs/${blog.id}`)}>
+                                            <Reveal key={blog.id} className="blog-premium-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/blogs/${blog.id}`)} delayMs={index * 100}>
                                                 <div className="blog-premium-card-img" style={{ background: blog.image_url ? '#FAF3EC' : backgrounds[index % backgrounds.length] }}>
                                                     {blog.image_url ? (
                                                         <img src={resolveMediaUrl(blog.image_url)} alt={blog.title} loading="lazy" />
@@ -227,7 +220,7 @@ const Blogs: React.FC = () => {
                                                         <span className="blog-premium-card-arrow">&rarr;</span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Reveal>
                                         );
                                     })}
                                 </div>

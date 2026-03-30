@@ -5,6 +5,7 @@ import { ArrowLeft, Clock, Calendar, Share2, Facebook, Twitter, Linkedin, Bookma
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
 import { sanitizeBlogHtml } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
+import Reveal from '../components/Reveal';
 
 interface Blog {
     id: number;
@@ -425,72 +426,78 @@ const BlogDetail: React.FC = () => {
             </div>
 
             {/* Hero Image */}
-            <div className="premium-hero">
+            <Reveal className="premium-hero" delayMs={100}>
                 {blog.image_url ? (
                     <img src={resolveMediaUrl(blog.image_url)} alt={blog.title} />
                 ) : (
                     <div style={{ width: '100%', height: '100%', background: '#efeee9' }} />
                 )}
-            </div>
+            </Reveal>
 
             {/* Progress Rail for Desktop */}
             <div className="premium-reading-rail"></div>
 
             <main className="premium-article-container">
                 {/* Article Header */}
-                <header className="premium-article-header">
-                    <div className="premium-category-label">{formatCategory(blog.category)}</div>
-                    <h1 className="premium-title">{blog.title}</h1>
-                    
-                    {blog.excerpt && (
-                        <p className="premium-excerpt">{blog.excerpt}</p>
-                    )}
-
-                    <div className="premium-meta-row">
-                        <div className="premium-meta-item">
-                            <div className="premium-author-avatar">K</div>
-                            <span style={{ color: '#1b1c19', fontWeight: 600 }}>Kajal</span>
-                            <span style={{ margin: '0 4px', color: '#bfc9c3' }}>|</span>
-                            <span>Licensed Therapist</span>
-                        </div>
-                        <div className="premium-meta-item">
-                            <Calendar size={15} />
-                            {new Date(blog.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </div>
-                        {blog.reading_time && (
-                            <div className="premium-meta-item">
-                                <Clock size={15} />
-                                {blog.reading_time}
-                            </div>
+                <Reveal delayMs={150}>
+                    <header className="premium-article-header">
+                        <div className="premium-category-label">{formatCategory(blog.category)}</div>
+                        <h1 className="premium-title">{blog.title}</h1>
+                        
+                        {blog.excerpt && (
+                            <p className="premium-excerpt">{blog.excerpt}</p>
                         )}
-                    </div>
-                </header>
+
+                        <div className="premium-meta-row">
+                            <div className="premium-meta-item">
+                                <div className="premium-author-avatar">K</div>
+                                <span style={{ color: '#1b1c19', fontWeight: 600 }}>Kajal</span>
+                                <span style={{ margin: '0 4px', color: '#bfc9c3' }}>|</span>
+                                <span>Licensed Therapist</span>
+                            </div>
+                            <div className="premium-meta-item">
+                                <Calendar size={15} />
+                                {new Date(blog.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </div>
+                            {blog.reading_time && (
+                                <div className="premium-meta-item">
+                                    <Clock size={15} />
+                                    {blog.reading_time}
+                                </div>
+                            )}
+                        </div>
+                    </header>
+                </Reveal>
 
                 {/* Content */}
-                <article
-                    className="premium-content-body blog-rich-content"
-                    dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(blog.content) }}
-                />
+                <Reveal delayMs={200}>
+                    <article
+                        className="premium-content-body blog-rich-content"
+                        dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(blog.content) }}
+                    />
+                </Reveal>
 
                 {/* Footer / Share Options */}
-                <footer className="premium-footer">
-                    <h3 style={{ fontFamily: 'Newsreader', color: '#003527', margin: 0, fontSize: '1.4rem' }}>Share this insight</h3>
-                    <div className="premium-share-row">
-                        <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blog.title)}`} target="_blank" rel="noopener noreferrer" className="premium-share-btn">
-                            <Twitter size={18} />
-                        </a>
-                        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="premium-share-btn">
-                            <Facebook size={18} />
-                        </a>
-                        <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(blog.title)}`} target="_blank" rel="noopener noreferrer" className="premium-share-btn">
-                            <Linkedin size={18} />
-                        </a>
-                    </div>
-                    
-                    <Link to="/blogs" className="premium-next-btn">
-                        Explore the Archive
-                    </Link>
-                </footer>
+                <Reveal delayMs={100}>
+                    <footer className="premium-footer">
+                        <h3 style={{ fontFamily: 'Newsreader', color: '#003527', margin: 0, fontSize: '1.4rem' }}>Share this insight</h3>
+                        <div className="premium-share-row">
+                            <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blog.title)}`} target="_blank" rel="noopener noreferrer" className="premium-share-btn">
+                                <Twitter size={18} />
+                            </a>
+                            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="premium-share-btn">
+                                <Facebook size={18} />
+                            </a>
+                            <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(blog.title)}`} target="_blank" rel="noopener noreferrer" className="premium-share-btn">
+                                <Linkedin size={18} />
+                            </a>
+                        </div>
+                        
+                        <Link to="/blogs" className="premium-next-btn">
+                            Explore the Archive
+                        </Link>
+                    </footer>
+                </Reveal>
             </main>
         </div>
     );

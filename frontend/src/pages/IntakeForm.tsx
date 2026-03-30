@@ -10,6 +10,7 @@ import {
     toDateInputString
 } from '../utils/validation';
 import { apiUrl, requestWithApiFallback } from '../utils/api';
+import Reveal from '../components/Reveal';
 
 type SlotOption = {
     label: string;
@@ -276,7 +277,7 @@ const IntakeForm: React.FC = () => {
             </div>
 
             {/* PREMIUM HERO */}
-            <section style={{ textAlign: 'center', padding: '20px 20px 60px', maxWidth: '1000px', margin: '0 auto' }}>
+            <Reveal style={{ textAlign: 'center', padding: '20px 20px 60px', maxWidth: '1000px', margin: '0 auto' }} delayMs={100}>
                 <div style={{ background: '#EBF1F5', borderRadius: '40px', padding: '60px 20px', boxShadow: '0 4px 30px rgba(0,0,0,0.03)' }}>
                     <div style={{ 
                         fontFamily: 'var(--font-heading)',
@@ -298,11 +299,11 @@ const IntakeForm: React.FC = () => {
                         Please answer our highly detailed Intake Questionnaires to help us prepare for an advanced consultation.
                     </p>
                 </div>
-            </section>
+            </Reveal>
 
-            <section style={{ padding: '0 20px 80px' }}>
+            <Reveal style={{ padding: '0 20px 80px' }} delayMs={200}>
                 <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                    <div className="ra-form-card" style={{ background: '#FFFFFF', padding: '40px', borderRadius: '24px', border: '1px solid rgba(0, 55, 62, 0.05)', boxShadow: '0 8px 32px rgba(0, 55, 62, 0.04)', animation: 'raRevealUp 0.8s 0.2s ease both' }}>
+                    <div className="ra-form-card" style={{ background: '#FFFFFF', padding: '40px', borderRadius: '24px', border: '1px solid rgba(0, 55, 62, 0.05)', boxShadow: '0 8px 32px rgba(0, 55, 62, 0.04)' }}>
                         {success ? (
                             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
                                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
@@ -492,7 +493,7 @@ const IntakeForm: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </section>
+            </Reveal>
         </div>
     );
 };

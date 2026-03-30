@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { HeartHandshake, Users, BookOpen, Clock, ChevronLeft } from 'lucide-react';
+import Reveal from '../components/Reveal';
 
 const stats = [
     { value: '200+', label: 'Clients Helped' },
@@ -155,7 +156,7 @@ const AboutPage: React.FC = () => {
             </div>
 
             <section className="abt2-hero">
-                <div className="abt2-hero-img-col">
+                <Reveal className="abt2-hero-img-col" delayMs={100}>
                     <div className="abt2-hero-img-wrapper">
                         <img
                             src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
@@ -170,8 +171,8 @@ const AboutPage: React.FC = () => {
                         </p>
                         <span>- Kajal&apos;s core belief</span>
                     </div>
-                </div>
-                <div className="abt2-hero-text-col">
+                </Reveal>
+                <Reveal className="abt2-hero-text-col" delayMs={300}>
                     <div className="abt2-kicker">The Story Behind the Space</div>
                     <h1>
                         I&apos;m Kajal.
@@ -182,20 +183,20 @@ const AboutPage: React.FC = () => {
                         untangle anxiety, heal from within, and step into their most authentic
                         selves.
                     </p>
-                </div>
+                </Reveal>
             </section>
 
             <section className="abt2-stats">
-                {stats.map((stat) => (
-                    <div className="abt2-stat-item" key={stat.label}>
+                {stats.map((stat, index) => (
+                    <Reveal className="abt2-stat-item" key={stat.label} delayMs={index * 150}>
                         <strong>{stat.value}</strong>
                         <span>{stat.label}</span>
-                    </div>
+                    </Reveal>
                 ))}
             </section>
 
             <section className="abt2-story">
-                <div className="abt2-story-content">
+                <Reveal className="abt2-story-content" delayMs={150}>
                     <div className="abt2-kicker">My Story</div>
                     <h2>
                         A Journey That Began With
@@ -223,7 +224,7 @@ const AboutPage: React.FC = () => {
                             <span>Licensed Therapist - Rewire with Kajal</span>
                         </div>
                     </div>
-                </div>
+                </Reveal>
                 <div className="abt2-story-images">
                     <div className="abt2-img-wrap main">
                         <img src={storyImages[0].image} alt={storyImages[0].title} loading="lazy" />
@@ -255,12 +256,12 @@ const AboutPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="abt2-phil-grid">
-                        {philosophyPillars.map((pillar) => (
-                            <article className="abt2-phil-card" key={pillar.title}>
+                        {philosophyPillars.map((pillar, index) => (
+                            <Reveal className="abt2-phil-card" key={pillar.title} delayMs={index * 150}>
                                 <div className="abt2-phil-icon">{pillar.icon}</div>
                                 <h3>{pillar.title}</h3>
                                 <p>{pillar.desc}</p>
-                            </article>
+                            </Reveal>
                         ))}
                     </div>
                 </div>
@@ -280,14 +281,14 @@ const AboutPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="abt2-creds-list">
-                        {credentials.map((cred) => (
-                            <article className="abt2-cred-item" key={`${cred.year}-${cred.title}`}>
+                        {credentials.map((cred, index) => (
+                            <Reveal className="abt2-cred-item" key={`${cred.year}-${cred.title}`} delayMs={index * 100}>
                                 <div className="abt2-cred-year">{cred.year}</div>
                                 <div className="abt2-cred-detail">
                                     <h3>{cred.title}</h3>
                                     <p>{cred.institute}</p>
                                 </div>
-                            </article>
+                            </Reveal>
                         ))}
                     </div>
                 </div>
@@ -304,12 +305,12 @@ const AboutPage: React.FC = () => {
                     </div>
                     <div className="abt2-mod-grid">
                         {modalities.map((mod, index) => (
-                            <article className="abt2-mod-card" key={mod.name}>
+                            <Reveal className="abt2-mod-card" key={mod.name} delayMs={index * 150}>
                                 <div className="abt2-mod-num">{String(index + 1).padStart(2, '0')}</div>
                                 <span>{mod.tag}</span>
                                 <h3>{mod.name}</h3>
                                 <p>{mod.desc}</p>
-                            </article>
+                            </Reveal>
                         ))}
                     </div>
                 </div>
@@ -323,10 +324,11 @@ const AboutPage: React.FC = () => {
                         <em>Those I&apos;ve Helped</em>
                     </h2>
                     <div className="abt2-test-grid">
-                        {testimonials.map((test) => (
-                            <article
+                        {testimonials.map((test, index) => (
+                            <Reveal
                                 className={`abt2-test-card ${test.featured ? 'featured' : ''}`}
                                 key={test.name}
+                                delayMs={index * 150}
                             >
                                 <div className="abt2-test-stars">★★★★★</div>
                                 <p className="abt2-test-quote">&quot;{test.quote}&quot;</p>
@@ -337,14 +339,14 @@ const AboutPage: React.FC = () => {
                                         <span>{test.detail}</span>
                                     </div>
                                 </div>
-                            </article>
+                            </Reveal>
                         ))}
                     </div>
                 </div>
             </section>
 
             <section className="abt2-cta">
-                <div className="abt2-cta-inner">
+                <Reveal className="abt2-cta-inner">
                     <h2>Ready to Begin?</h2>
                     <p>
                         Taking the first step can feel daunting, but you don&apos;t have to do it
@@ -358,7 +360,7 @@ const AboutPage: React.FC = () => {
                             Complete Intake Form
                         </Link>
                     </div>
-                </div>
+                </Reveal>
             </section>
         </div>
     );

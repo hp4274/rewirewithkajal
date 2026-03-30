@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronUp, ChevronDown, Users, Activity, Brain, Heart, Instagram, Twitter, Youtube } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { apiUrl, requestWithApiFallback, resolveMediaUrl } from '../utils/api';
@@ -7,6 +8,7 @@ import { blogContentToPlainText } from '../utils/blogContent';
 import { getCollectionItems } from '../utils/collections';
 import AppointmentForm from '../components/AppointmentForm';
 import logoMark from '../assets/logo3.png';
+import Reveal from '../components/Reveal';
 
 type BlogPost = {
     id: number;
@@ -180,49 +182,6 @@ const tickerItems = [
     'Life Transitions'
 ];
 
-type RevealProps = {
-    children: React.ReactNode;
-    className?: string;
-    delayMs?: number;
-    style?: React.CSSProperties;
-};
-
-const Reveal: React.FC<RevealProps> = ({ children, className = '', delayMs = 0, style }) => {
-    const ref = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const node = ref.current;
-        if (!node) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (!entry.isIntersecting) return;
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
-                });
-            },
-            { threshold: 0.14 }
-        );
-
-        observer.observe(node);
-
-        return () => {
-            observer.disconnect();
-        };
-    }, []);
-
-    return (
-        <div
-            ref={ref}
-            className={`rw-reveal ${className}`.trim()}
-            style={{ transitionDelay: `${delayMs}ms`, ...style }}
-        >
-            {children}
-        </div>
-    );
-};
-
 const Home: React.FC = () => {
     const navigate = useNavigate();
     const [openFaqIndex, setOpenFaqIndex] = useState<number>(0);
@@ -287,10 +246,19 @@ const Home: React.FC = () => {
             {/* ── HERO ── */}
             <div className="rw-hero">
                 <HomeNavbar />
-                <Reveal>
-                    <div className="rw-hero-panel">
-                        <div className="rw-hero-copy">
-                            <p className="rw-eyebrow">{currentHeroSlide.eyebrow}</p>
+                <div className="rw-hero-panel">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={currentHeroSlide.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                            className="rw-hero-animated-wrapper"
+                            style={{ display: 'flex', flexDirection: 'inherit', gap: 'inherit', width: '100%', alignItems: 'center' }}
+                        >
+                            <div className="rw-hero-copy">
+                                <p className="rw-eyebrow">{currentHeroSlide.eyebrow}</p>
                             <h1>
                                 {currentHeroSlide.lineOne}
                                 <span>{currentHeroSlide.lineTwo}</span>
@@ -350,8 +318,10 @@ const Home: React.FC = () => {
                             </div>
 
                         </div>
-                        <div className="rw-hero-slider-nav" aria-label="Hero slider controls">
-                            <div className="rw-hero-dots">
+                        </motion.div>
+                    </AnimatePresence>
+                    <div className="rw-hero-slider-nav" aria-label="Hero slider controls">
+                        <div className="rw-hero-dots">
                                 {heroSlides.map((slide, index) => (
                                     <button
                                         type="button"
@@ -364,8 +334,6 @@ const Home: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
-                </Reveal>
             </div>
 
             {/* ── TICKER ── */}

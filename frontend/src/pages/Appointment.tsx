@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import AppointmentForm from '../components/AppointmentForm';
+import Reveal from '../components/Reveal';
 
 const Appointment: React.FC = () => {
     const navigate = useNavigate();
@@ -17,7 +18,7 @@ const Appointment: React.FC = () => {
     return (
         <div className="serene-appointment-page">
             {/* Top Navigation / Header */}
-            <div style={{ position: 'relative', zIndex: 8, paddingBottom: '10px', paddingTop: '18px', paddingLeft: '18px' }}>
+            <div style={{ position: 'relative', zIndex: 8, paddingBottom: '0px', paddingTop: '10px', paddingLeft: '18px' }}>
                 <Link to="/" className="abt2-home-link" aria-label="Back to home page">
                     <span className="abt2-home-link-arrow" aria-hidden="true"><ChevronLeft size={16} strokeWidth={2.4} /></span>
                     <span>Back to Home</span>
@@ -25,7 +26,7 @@ const Appointment: React.FC = () => {
             </div>
 
             {/* Hero Section */}
-            <section className="serene-hero">
+            <Reveal className="serene-hero" delayMs={100}>
                 <div>
                     <span className="serene-hero-badge">Begin Your Journey</span>
                     <h1 className="serene-font-headline">
@@ -44,10 +45,10 @@ const Appointment: React.FC = () => {
                         <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEkWPZenPJ6-5BLcNTV-PY0Py4avSWk0SS08kRcX4fOc_LWdW-i-FmLm6zx8_ld-G4GvW_iO8y4I3aaeCJnanh-GQjv8Qs_x9J2l_KrX-GFXBriU1Vk1stA8_TNP_tUhesJk1bww8XxgdijRR_Ak-1r1wCPqM_Aetf7O1tox7CZxwSq_NmXpfwGXmvhOmjTsSwxdDbNrR7M8qLsqN5lBP4nALcUfNenpEYGVdbcGaexmXfoiD2h45lg7jU7O5LYBddd0vpaVgF-S12" alt="Hands resting peacefully" />
                     </div>
                 </div>
-            </section>
+            </Reveal>
 
             {/* Existing Patient Banner */}
-            <section className="serene-existing-banner">
+            <Reveal className="serene-existing-banner" delayMs={200}>
                 <div>
                     <h3 className="serene-font-headline">Ready to dive deeper?</h3>
                     <p>If you're ready to book an advanced consultation, please answer our highly detailed Intake Questionnaires to help us prepare.</p>
@@ -55,7 +56,7 @@ const Appointment: React.FC = () => {
                 <button onClick={handleAccessForm} className="serene-btn serene-banner-btn">
                     Patients Intake Form
                 </button>
-            </section>
+            </Reveal>
 
             {/* Three Steps Section */}
             <section className="serene-steps-section">
@@ -64,33 +65,33 @@ const Appointment: React.FC = () => {
                     <div className="serene-steps-line"></div>
                 </div>
                 <div className="serene-steps-grid">
-                    <div className="serene-step-card">
+                    <Reveal className="serene-step-card">
                         <div className="serene-step-icon c1">
                             <span className="serene-material-symbols">edit_note</span>
                         </div>
                         <h4 className="serene-font-headline">01. Fill the Form</h4>
                         <p>Share your needs and preferences through our thoughtful intake form to help us understand your journey.</p>
-                    </div>
-                    <div className="serene-step-card">
+                    </Reveal>
+                    <Reveal className="serene-step-card" delayMs={150}>
                         <div className="serene-step-icon c2">
                             <span className="serene-material-symbols">psychology</span>
                         </div>
                         <h4 className="serene-font-headline">02. Expert Review</h4>
                         <p>Kajal personally reviews every intake to ensure a perfect match with our evidence-based practices.</p>
-                    </div>
-                    <div className="serene-step-card">
+                    </Reveal>
+                    <Reveal className="serene-step-card" delayMs={300}>
                         <div className="serene-step-icon c3">
                             <span className="serene-material-symbols">verified</span>
                         </div>
                         <h4 className="serene-font-headline">03. Confirmation</h4>
                         <p>Receive a curated appointment schedule and preparatory materials for your first session within 24 hours.</p>
-                    </div>
+                    </Reveal>
                 </div>
             </section>
 
             {/* The Intake Form Section */}
             <section className="serene-intake-section" id="intake">
-                <div className="serene-intake-container">
+                <Reveal className="serene-intake-container" delayMs={100}>
                     <div className="serene-intake-heading">
                         <h2 className="serene-font-headline">Assessment Form</h2>
                         <p style={{ color: '#5e6059', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Secure &amp; Private</p>
@@ -100,40 +101,40 @@ const Appointment: React.FC = () => {
                     <div style={{ width: '100%', maxWidth: '820px', margin: '0 auto' }}>
                         <AppointmentForm isRefactoredDesign={true} />
                     </div>
-                </div>
+                </Reveal>
             </section>
 
             {/* Mission Statement Pull Quote */}
-            <section className="serene-quote-section">
+            <Reveal className="serene-quote-section" delayMs={100}>
                 <blockquote className="serene-font-headline">
                     "Dedicated to helping you navigate <i>life's complexities</i> with curated grace and evidence-based precision."
                 </blockquote>
                 <p className="serene-quote-label">— Our Commitment to You</p>
-            </section>
+            </Reveal>
 
             {/* Service Benefits / Editorial Layout */}
             <section className="serene-benefits-section" style={{ paddingBottom: 0 }}>
                 <div className="serene-benefits-grid">
-                    <div className="serene-benefit-card">
+                    <Reveal className="serene-benefit-card">
                         <span className="serene-material-symbols">science</span>
                         <h5 className="serene-font-headline">Evidence-Based</h5>
                         <p>Methods rooted in peer-reviewed science and proven clinical frameworks for lasting results.</p>
-                    </div>
-                    <div className="serene-benefit-card">
+                    </Reveal>
+                    <Reveal className="serene-benefit-card" delayMs={150}>
                         <span className="serene-material-symbols">favorite</span>
                         <h5 className="serene-font-headline">Compassionate</h5>
                         <p>A sanctuary of judgment-free care where every emotion is met with gentle professional guidance.</p>
-                    </div>
-                    <div className="serene-benefit-card">
+                    </Reveal>
+                    <Reveal className="serene-benefit-card" delayMs={300}>
                         <span className="serene-material-symbols">ads_click</span>
                         <h5 className="serene-font-headline">Goal-Oriented</h5>
                         <p>Strategic sessions focused on measurable growth and practical tools for your daily life.</p>
-                    </div>
-                    <div className="serene-benefit-card">
+                    </Reveal>
+                    <Reveal className="serene-benefit-card" delayMs={450}>
                         <span className="serene-material-symbols">self_improvement</span>
                         <h5 className="serene-font-headline">Holistic Healing</h5>
                         <p>Addressing the interconnected nature of mind, body, and spirit within your personal ecosystem.</p>
-                    </div>
+                    </Reveal>
                 </div>
             </section>
         </div>
