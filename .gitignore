@@ -1,10 +1,7 @@
 node_modules/
 .env
-.env.local
+.env.*
 .vercel/
 dist/
 build/
 .vercel
-.env*.local
-backend/.env.local
-.env.local
