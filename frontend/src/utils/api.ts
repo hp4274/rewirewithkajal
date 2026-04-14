@@ -54,6 +54,18 @@ const localApiUrl = (pathOrUrl: string): string => {
     return `${localFallbackApiBase}${normalizeApiPath(pathOrUrl)}`;
 };
 
+export const initializeApiClient = (): void => {
+    // Admin screens still use relative axios paths, so set a runtime base URL once.
+    if (configuredApiBase) {
+        axios.defaults.baseURL = configuredApiBase;
+        return;
+    }
+
+    if (isLocalHost()) {
+        axios.defaults.baseURL = localFallbackApiBase;
+    }
+};
+
 export const resolveMediaUrl = (pathOrUrl?: string | null): string => {
     const raw = String(pathOrUrl || '').trim();
     if (!raw) return '';
