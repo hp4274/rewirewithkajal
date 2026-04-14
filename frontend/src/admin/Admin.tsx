@@ -192,6 +192,7 @@ const CustomerAppointmentInput = ({ customer, checkDoubleBooking, onSave, isLock
 
 const Admin: React.FC = () => {
     const navigate = useNavigate();
+    const authRedirectedRef = useRef(false);
     const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
         try {
             const storedTheme = localStorage.getItem('adminThemeMode');
@@ -281,13 +282,21 @@ const Admin: React.FC = () => {
     const [bookingError, setBookingError] = useState<string | null>(null);
     const dashboardFetchRef = useRef<Promise<void> | null>(null);
 
+    const redirectToLogin = useCallback(() => {
+        if (authRedirectedRef.current) return;
+        authRedirectedRef.current = true;
+        localStorage.removeItem('adminToken');
+        navigate('/admin/login');
+    }, [navigate]);
+
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
         if (!token) {
-            navigate('/admin/login');
+            redirectToLogin();
             return;
         }
-    }, [navigate]);
+        authRedirectedRef.current = false;
+    }, [redirectToLogin]);
 
     useEffect(() => {
         try {
@@ -300,32 +309,9 @@ const Admin: React.FC = () => {
     const ADMIN_DATA_TICK_MS = 10000;
     const PROFILE_DATA_TICK_MS = 15000;
 
-    useEffect(() => {
-        const shouldAutoRefresh = activeMenu === 'dashboard' || activeMenu === 'leads' || activeMenu === 'customers' || activeMenu === 'blogs';
-        if (!shouldAutoRefresh) return;
-
-        let isRefreshing = false;
-        const tick = async () => {
-            if (document.visibilityState !== 'visible' || isRefreshing) return;
-            isRefreshing = true;
-            try {
-                await fetchDashboardData();
-            } finally {
-                isRefreshing = false;
-            }
-        };
-
-        void tick();
-        const refreshId = window.setInterval(() => {
-            void tick();
-        }, ADMIN_DATA_TICK_MS);
-
-        return () => window.clearInterval(refreshId);
-    }, [activeMenu]);
-
     const todayDateInput = toDateInputString(new Date());
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         if (dashboardFetchRef.current) {
             return dashboardFetchRef.current;
         }
@@ -333,6 +319,10 @@ const Admin: React.FC = () => {
         const task = (async () => {
             try {
                 const token = localStorage.getItem('adminToken');
+                if (!token) {
+                    redirectToLogin();
+                    return;
+                }
                 const headers = { Authorization: `Bearer ${token}` };
 
                 const [leadsRes, customersRes, turnoverRes, blogsRes] = await Promise.all([
@@ -371,7 +361,11 @@ const Admin: React.FC = () => {
                 });
                 setAllCustomers(filteredCustomers);
 
-            } catch (error) {
+            } catch (error: any) {
+                if (error?.response?.status === 401) {
+                    redirectToLogin();
+                    return;
+                }
                 console.error("Dashboard Fetch Error", error);
             }
         })().finally(() => {
@@ -380,7 +374,30 @@ const Admin: React.FC = () => {
 
         dashboardFetchRef.current = task;
         return task;
-    };
+    }, [redirectToLogin]);
+
+    useEffect(() => {
+        const shouldAutoRefresh = activeMenu === 'dashboard' || activeMenu === 'leads' || activeMenu === 'customers' || activeMenu === 'blogs';
+        if (!shouldAutoRefresh) return;
+
+        let isRefreshing = false;
+        const tick = async () => {
+            if (document.visibilityState !== 'visible' || isRefreshing) return;
+            isRefreshing = true;
+            try {
+                await fetchDashboardData();
+            } finally {
+                isRefreshing = false;
+            }
+        };
+
+        void tick();
+        const refreshId = window.setInterval(() => {
+            void tick();
+        }, ADMIN_DATA_TICK_MS);
+
+        return () => window.clearInterval(refreshId);
+    }, [activeMenu, fetchDashboardData]);
 
     const fetchBlogs = async () => {
         try {
